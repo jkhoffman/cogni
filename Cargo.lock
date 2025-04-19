@@ -325,6 +325,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
+ "regex",
  "syn 2.0.100",
  "trybuild",
 ]

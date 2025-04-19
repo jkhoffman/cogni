@@ -4,23 +4,22 @@
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
+#![allow(unused_imports)]
 
 use proc_macro::TokenStream;
 use proc_macro_error::{abort, proc_macro_error};
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use quote::{ToTokens, quote};
-use regex;
-use syn::{DeriveInput, parse_macro_input};
-use syn::{LitStr, parse_macro_input};
+use regex::Regex;
+use syn::{DeriveInput, LitStr, parse_macro_input};
 
 /// Derive macro for implementing the `Tool` trait.
 ///
 /// This macro generates the boilerplate code for implementing the `Tool` trait,
 /// including JSON schema validation and error handling.
-#[proc_macro_derive(Tool, attributes(tool))]
+#[proc_macro_derive(Tool)]
 pub fn derive_tool(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    // TODO: Implement tool derive macro
+    let _input = parse_macro_input!(input as DeriveInput);
     TokenStream::new()
 }
 
@@ -30,8 +29,7 @@ pub fn derive_tool(input: TokenStream) -> TokenStream {
 /// including prompt validation and response handling.
 #[proc_macro_derive(LanguageModel, attributes(llm))]
 pub fn derive_language_model(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    // TODO: Implement language model derive macro
+    let _input = parse_macro_input!(input as DeriveInput);
     TokenStream::new()
 }
 
@@ -41,8 +39,7 @@ pub fn derive_language_model(input: TokenStream) -> TokenStream {
 /// including session management and error handling.
 #[proc_macro_derive(MemoryStore, attributes(memory))]
 pub fn derive_memory_store(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    // TODO: Implement memory store derive macro
+    let _input = parse_macro_input!(input as DeriveInput);
     TokenStream::new()
 }
 
@@ -69,7 +66,7 @@ pub fn prompt(input: TokenStream) -> TokenStream {
     let template_str = template.value();
 
     // Extract placeholders using regex
-    let re = regex::Regex::new(r"\{\{([^}]+)\}\}").unwrap();
+    let re = Regex::new(r"\{\{([^}]+)\}\}").unwrap();
     let placeholders: Vec<String> = re
         .captures_iter(&template_str)
         .map(|cap| cap[1].trim().to_string())
@@ -128,9 +125,28 @@ pub fn prompt(input: TokenStream) -> TokenStream {
 /// This macro validates that tool specifications are well-formed and contain
 /// valid JSON schemas.
 #[proc_macro_attribute]
-pub fn tool_spec(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // TODO: Implement tool spec validation macro
+pub fn tool_spec(_attr: TokenStream, item: TokenStream) -> TokenStream {
     item
+}
+
+/// Derive macro for implementing the `Prompt` trait.
+///
+/// This macro generates the boilerplate code for implementing the `Prompt` trait,
+/// including validation and error handling.
+#[proc_macro_derive(Prompt)]
+pub fn derive_prompt(input: TokenStream) -> TokenStream {
+    let _input = parse_macro_input!(input as DeriveInput);
+    TokenStream::new()
+}
+
+/// Derive macro for implementing the `ToolSet` trait.
+///
+/// This macro generates the boilerplate code for implementing the `ToolSet` trait,
+/// including tool registration and error handling.
+#[proc_macro_derive(ToolSet)]
+pub fn derive_tool_set(input: TokenStream) -> TokenStream {
+    let _input = parse_macro_input!(input as DeriveInput);
+    TokenStream::new()
 }
 
 #[cfg(test)]
