@@ -212,8 +212,7 @@ impl OpenAiClient {
         };
 
         for line in text.lines() {
-            if line.starts_with("data: ") {
-                let data = &line["data: ".len()..];
+            if let Some(data) = line.strip_prefix("data: ") {
                 if data == "[DONE]" {
                     return None;
                 }
