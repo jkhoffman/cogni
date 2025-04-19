@@ -5,14 +5,13 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
-use async_trait::async_trait;
 use cogni_core::{
     error::MemoryError,
     memory::{MemoryEntry, MemoryStore, SessionId},
 };
-use redis::{Client, Commands, FromRedisValue, RedisResult};
+use redis::{Client, Commands, RedisResult};
 use serde_json;
-use tracing::{debug, instrument};
+use tracing::instrument;
 
 /// Configuration for the Redis memory store.
 #[derive(Debug, Clone)]
