@@ -98,8 +98,8 @@ impl Tool for CodeTool {
     type Input = CodeInput;
     type Output = CodeOutput;
 
-    #[instrument(skip(self, input))]
-    async fn invoke(&self, input: Self::Input) -> Result<Self::Output, ToolError> {
+    #[instrument(skip(self, _input))]
+    async fn invoke(&self, _input: Self::Input) -> Result<Self::Output, ToolError> {
         todo!("Implement code execution tool")
     }
 
