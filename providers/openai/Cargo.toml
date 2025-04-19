@@ -2,5 +2,34 @@
 name = "cogni-provider-openai"
 version = "0.1.0"
 edition = "2024"
+description = "OpenAI provider for the Cogni LLM orchestration framework"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
+cogni-core = { path = "../../core" }
+
+# Async runtime and streams
+tokio = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+pin-project = { workspace = true }
+bytes = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# HTTP client
+reqwest = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+wiremock = { workspace = true }

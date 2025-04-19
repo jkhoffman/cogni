@@ -1,14 +1,17 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+//! Core traits and types for the Cogni LLM orchestration framework.
+//!
+//! This crate provides the foundational traits and types that define the
+//! interfaces for language models, tools, and memory storage in the Cogni framework.
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#![forbid(unsafe_code)]
+#![warn(missing_docs)]
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub mod error;
+pub mod llm;
+pub mod memory;
+pub mod tool;
+
+pub use error::Error;
+pub use llm::LanguageModel;
+pub use memory::MemoryStore;
+pub use tool::Tool;

@@ -1,0 +1,49 @@
+[workspace]
+name = "cogni"
+version = "0.1.0"
+edition = "2024"
+
+members = ["core", "providers/*", "tools/*", "memory/*", "macros", "examples/*"]
+
+[workspace.package]
+authors = ["Cogni Team"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/cogni/cogni"
+
+[workspace.dependencies]
+# Async runtime and streams
+tokio = { version = "1.37", features = ["rt-multi-thread", "macros"] }
+async-trait = "0.1"
+futures = { version = "0.3", features = ["std"] }
+pin-project = "1.1"
+bytes = "1.5"
+
+# Error handling
+thiserror = "1.0"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# HTTP client
+reqwest = { version = "0.11", features = ["json", "stream"] }
+
+# Logging & tracing
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# Testing
+wiremock = "0.5"
+tokio-test = "0.4"
+
+# Time handling
+time = { version = "0.3", features = ["serde"] }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"

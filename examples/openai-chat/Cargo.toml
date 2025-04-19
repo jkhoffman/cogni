@@ -1,0 +1,12 @@
+[package]
+name = "cogni-example-openai-chat"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+cogni-core = { path = "../../core" }
+cogni-provider-openai = { path = "../../providers/openai" }
+
+tokio = { workspace = true }
+anyhow = "1.0"

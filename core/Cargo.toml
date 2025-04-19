@@ -2,5 +2,33 @@
 name = "cogni-core"
 version = "0.1.0"
 edition = "2024"
+description = "Core traits and types for the Cogni LLM orchestration framework"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
+# Async runtime
+tokio = { workspace = true }
+async-trait = { workspace = true }
+futures = "0.3"
+
+# Error handling
+thiserror = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# HTTP client
+reqwest = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Time handling
+time = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+wiremock = { workspace = true }
