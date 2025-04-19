@@ -11,7 +11,7 @@ use cogni_core::{
     memory::{MemoryEntry, MemoryStore, SessionId},
 };
 use sqlx::{Pool, Sqlite, sqlite::SqlitePool};
-use tracing::{debug, instrument};
+use tracing::instrument;
 
 /// Configuration for the SQLite memory store.
 #[derive(Debug, Clone)]
