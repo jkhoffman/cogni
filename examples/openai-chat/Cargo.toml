@@ -7,6 +7,7 @@ publish = false
 [dependencies]
 cogni-core = { path = "../../core" }
 cogni-provider-openai = { path = "../../providers/openai" }
+cogni-macros = { path = "../../macros" }
 
 tokio = { workspace = true }
 anyhow = "1.0"

@@ -344,6 +344,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cogni-core",
+ "cogni-macros",
  "cogni-provider-openai",
  "tokio",
 ]
@@ -3272,6 +3273,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cogni-core",
+ "cogni-macros",
  "cogni-provider-openai",
  "futures",
  "tokio",

@@ -1,5 +1,6 @@
 use anyhow::Result;
 use cogni_core::llm::{GenerateOptions, LanguageModel};
+use cogni_macros::chat_message;
 use cogni_provider_openai::{ChatMessage, OpenAiClient, OpenAiConfig};
 use std::env;
 use std::io::{self, Write};
@@ -15,10 +16,7 @@ async fn main() -> Result<()> {
 
     println!("Chat with GPT-4 (type 'quit' to exit)");
 
-    let mut conversation = vec![ChatMessage {
-        role: "system".to_string(),
-        content: "You are a helpful assistant.".to_string(),
-    }];
+    let mut conversation = vec![chat_message!(system: "You are a helpful assistant.")];
 
     loop {
         // Get user input

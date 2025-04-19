@@ -11,7 +11,10 @@ use proc_macro_error::{abort, proc_macro_error};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use regex::Regex;
-use syn::{DeriveInput, Ident, LitStr, parse_macro_input, parse_str};
+use syn::{
+    DeriveInput, Ident, LitStr, Token, parse::Parse, parse::ParseStream, parse_macro_input,
+    parse_str,
+};
 
 /// Derive macro for implementing the `Tool` trait.
 ///
@@ -153,4 +156,45 @@ pub fn derive_prompt(input: TokenStream) -> TokenStream {
 pub fn derive_tool_set(input: TokenStream) -> TokenStream {
     let _input = parse_macro_input!(input as DeriveInput);
     TokenStream::new()
+}
+
+/// Create a chat message with the given role and content.
+///
+/// # Example
+/// ```rust
+/// use cogni_macros::chat_message;
+///
+/// let msg = chat_message!(user: "Hello, AI!");
+/// let sys = chat_message!(system: "You are a helpful assistant.");
+/// ```
+#[proc_macro]
+#[proc_macro_error]
+pub fn chat_message(input: TokenStream) -> TokenStream {
+    #[derive(Debug)]
+    struct ChatMessageInput {
+        role: Ident,
+        content: LitStr,
+    }
+
+    impl Parse for ChatMessageInput {
+        fn parse(input: ParseStream) -> syn::Result<Self> {
+            let role = input.parse()?;
+            input.parse::<Token![:]>()?;
+            let content = input.parse()?;
+            Ok(ChatMessageInput { role, content })
+        }
+    }
+
+    let input = parse_macro_input!(input as ChatMessageInput);
+    let role = input.role;
+    let content = input.content;
+
+    let output = quote! {
+        ChatMessage {
+            role: stringify!(#role).to_string(),
+            content: #content.to_string(),
+        }
+    };
+
+    output.into()
 }

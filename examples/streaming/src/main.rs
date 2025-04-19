@@ -3,6 +3,7 @@ use cogni_core::{
     llm::{GenerateOptions, LanguageModel},
     prompt::PromptTemplate,
 };
+use cogni_macros::chat_message;
 use cogni_provider_openai::{ChatMessage, OpenAiClient, OpenAiConfig};
 use futures::StreamExt;
 use std::io::Write;
@@ -21,11 +22,8 @@ async fn main() -> Result<()> {
     let config = OpenAiConfig::new(api_key, "gpt-3.5-turbo");
     let llm = OpenAiClient::new(config)?;
 
-    // Create a simple prompt
-    let prompt = vec![ChatMessage {
-        role: "user".to_string(),
-        content: "Tell me a story about a wise AI and a curious human.".to_string(),
-    }];
+    // Create a simple prompt using the chat_message macro
+    let prompt = vec![chat_message!(user: "Tell me a story about a wise AI and a curious human.")];
 
     // Stream the response
     println!("Streaming response:\n");
