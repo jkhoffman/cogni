@@ -115,7 +115,9 @@ impl AnthropicClient {
     ) -> Result<impl Stream<Item = Result<String, LlmError>> + Send + 'static, LlmError> {
         let stream = futures::stream::unfold(response, |mut response| async move {
             match response.chunk().await {
-                Ok(Some(chunk)) => Self::parse_stream_chunk(&chunk).map(|result| (result, response)),
+                Ok(Some(chunk)) => {
+                    Self::parse_stream_chunk(&chunk).map(|result| (result, response))
+                }
                 Ok(None) => None,
                 Err(e) => Some((Err(LlmError::RequestFailed(e)), response)),
             }
@@ -168,7 +170,6 @@ impl LanguageModel for AnthropicClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     #[tokio::test]
     async fn test_client_creation() {

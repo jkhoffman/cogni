@@ -128,7 +128,9 @@ impl OllamaClient {
     ) -> Result<impl Stream<Item = Result<String, LlmError>> + Send + 'static, LlmError> {
         let stream = futures::stream::unfold(response, |mut response| async move {
             match response.chunk().await {
-                Ok(Some(chunk)) => Self::parse_stream_chunk(&chunk).map(|result| (result, response)),
+                Ok(Some(chunk)) => {
+                    Self::parse_stream_chunk(&chunk).map(|result| (result, response))
+                }
                 Ok(None) => None,
                 Err(e) => Some((Err(LlmError::RequestFailed(e)), response)),
             }
@@ -175,10 +177,7 @@ impl LanguageModel for OllamaClient {
             .map_err(LlmError::RequestFailed)?;
 
         if !response.status().is_success() {
-            let error = response
-                .text()
-                .await
-                .map_err(LlmError::RequestFailed)?;
+            let error = response.text().await.map_err(LlmError::RequestFailed)?;
             return Err(LlmError::ApiError(error));
         }
 
@@ -211,10 +210,7 @@ impl LanguageModel for OllamaClient {
             .map_err(LlmError::RequestFailed)?;
 
         if !response.status().is_success() {
-            let error = response
-                .text()
-                .await
-                .map_err(LlmError::RequestFailed)?;
+            let error = response.text().await.map_err(LlmError::RequestFailed)?;
             return Err(LlmError::ApiError(error));
         }
 
