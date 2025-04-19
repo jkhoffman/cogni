@@ -11,8 +11,8 @@ use cogni_core::{
     tool::{Tool, ToolSpec},
 };
 use serde::{Deserialize, Serialize};
-use tracing::{debug, instrument};
-use wasmtime::{Engine, Linker, Module, Store};
+use tracing::instrument;
+use wasmtime::Engine;
 
 /// Input for the code execution tool.
 #[derive(Debug, Clone, Serialize, Deserialize)]
