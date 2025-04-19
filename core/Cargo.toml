@@ -29,6 +29,10 @@ tracing = { workspace = true }
 # Time handling
 time = { workspace = true }
 
+# Template handling
+handlebars = "5.1"
+regex = "1.10"
+
 [dev-dependencies]
 tokio-test = { workspace = true }
 wiremock = { workspace = true }

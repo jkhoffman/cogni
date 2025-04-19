@@ -211,17 +211,23 @@ impl OpenAiClient {
             Err(e) => return Some(Err(LlmError::InvalidResponse(e.to_string()))),
         };
 
+        let mut results = Vec::new();
+
         for line in text.lines() {
             if let Some(data) = line.strip_prefix("data: ") {
                 if data == "[DONE]" {
-                    return None;
+                    if results.is_empty() {
+                        return None;
+                    } else {
+                        break;
+                    }
                 }
 
                 match serde_json::from_str::<ChatCompletionChunk>(data) {
                     Ok(chunk) => {
                         if let Some(choice) = chunk.choices.first() {
                             if let Some(content) = &choice.delta.content {
-                                return Some(Ok(content.to_string()));
+                                results.push(content.to_string());
                             }
                         }
                     }
@@ -230,7 +236,11 @@ impl OpenAiClient {
             }
         }
 
-        None
+        if results.is_empty() {
+            None
+        } else {
+            Some(Ok(results.join("")))
+        }
     }
 }
 
@@ -383,10 +393,15 @@ mod tests {
             .unwrap();
 
         let mut result = String::new();
+        let mut chunks = Vec::new();
         while let Some(chunk) = stream.next().await {
-            result.push_str(&chunk.unwrap());
+            let chunk_text = chunk.unwrap();
+            chunks.push(chunk_text.clone());
+            result.push_str(&chunk_text);
         }
 
+        println!("Chunks received: {:?}", chunks);
+        println!("Final result: {:?}", result);
         assert_eq!(result, "Hello, world!");
     }
 }

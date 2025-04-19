@@ -11,7 +11,7 @@ use proc_macro_error::{abort, proc_macro_error};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use regex::Regex;
-use syn::{DeriveInput, LitStr, parse_macro_input};
+use syn::{DeriveInput, Ident, LitStr, parse_macro_input, parse_str};
 
 /// Derive macro for implementing the `Tool` trait.
 ///
@@ -52,6 +52,8 @@ pub fn derive_memory_store(input: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```rust
+/// use cogni_macros::prompt;
+///
 /// let template = prompt!("Hello {{name}}, you are {{age}} years old!");
 /// // Generates:
 /// // struct TemplateArgs {
@@ -81,7 +83,11 @@ pub fn prompt(input: TokenStream) -> TokenStream {
 
     // Generate the struct fields
     let fields = placeholders.iter().map(|name| {
-        let ident = syn::Ident::new(name, proc_macro2::Span::call_site());
+        // Validate that the placeholder is a valid Rust identifier
+        let ident = match parse_str::<Ident>(name) {
+            Ok(ident) => ident,
+            Err(_) => abort!(template.span(), "`{}` is not a valid identifier", name),
+        };
         quote! {
             pub #ident: String
         }
@@ -89,10 +95,10 @@ pub fn prompt(input: TokenStream) -> TokenStream {
 
     // Generate validation impl
     let validation = placeholders.iter().map(|name| {
-        let ident = syn::Ident::new(name, proc_macro2::Span::call_site());
+        let ident = parse_str::<Ident>(name).unwrap();
         quote! {
             if self.#ident.is_empty() {
-                return Err(MissingPlaceholderError {
+                return Err(cogni_core::prompt::MissingPlaceholderError {
                     name: stringify!(#ident).to_string()
                 });
             }
@@ -147,18 +153,4 @@ pub fn derive_prompt(input: TokenStream) -> TokenStream {
 pub fn derive_tool_set(input: TokenStream) -> TokenStream {
     let _input = parse_macro_input!(input as DeriveInput);
     TokenStream::new()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_prompt_macro() {
-        let input = "Hello {{name}}, you are {{age}} years old!"
-            .parse()
-            .unwrap();
-        let output = prompt(input);
-        println!("{}", output);
-    }
 }

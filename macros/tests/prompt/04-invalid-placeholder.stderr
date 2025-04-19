@@ -1,0 +1,13 @@
+error: `name!` is not a valid identifier
+ --> tests/prompt/04-invalid-placeholder.rs:5:28
+  |
+5 |     let template = prompt!("Hello {{name!}}!"); // Should fail: invalid placeholder name
+  |                            ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `serde::Serialize`
+ --> tests/prompt/04-invalid-placeholder.rs:2:5
+  |
+2 | use serde::Serialize;
+  |     ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default

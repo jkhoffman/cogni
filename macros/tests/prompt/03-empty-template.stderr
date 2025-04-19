@@ -1,0 +1,13 @@
+error: prompt template must contain at least one placeholder
+ --> tests/prompt/03-empty-template.rs:5:28
+  |
+5 |     let template = prompt!("Hello world!"); // Should fail: no placeholders
+  |                            ^^^^^^^^^^^^^^
+
+warning: unused import: `serde::Serialize`
+ --> tests/prompt/03-empty-template.rs:2:5
+  |
+2 | use serde::Serialize;
+  |     ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default

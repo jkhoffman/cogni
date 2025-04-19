@@ -9,9 +9,11 @@
 pub mod error;
 pub mod llm;
 pub mod memory;
+pub mod prompt;
 pub mod tool;
 
 pub use error::Error;
 pub use llm::LanguageModel;
 pub use memory::MemoryStore;
+pub use prompt::{MissingPlaceholderError, PromptArgs, PromptTemplate};
 pub use tool::Tool;
