@@ -96,6 +96,12 @@ pub enum MathOutput {
 /// The math tool.
 pub struct MathTool;
 
+impl Default for MathTool {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MathTool {
     /// Create a new math tool.
     pub fn new() -> Self {
@@ -217,7 +223,7 @@ impl Tool for MathTool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    
 
     #[tokio::test]
     async fn test_tool_creation() {

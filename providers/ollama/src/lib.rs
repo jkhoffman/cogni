@@ -6,20 +6,16 @@
 #![warn(missing_docs)]
 
 use async_trait::async_trait;
-use bytes::Bytes;
 use cogni_core::{
     error::LlmError,
     llm::{GenerateOptions, LanguageModel},
 };
 use futures::{Stream, StreamExt};
 use pin_project::pin_project;
-use reqwest::{
-    Client,
-    header::{HeaderMap, HeaderValue},
-};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::pin::Pin;
-use tracing::{debug, instrument};
+use tracing::instrument;
 
 #[pin_project]
 pub struct ChatStream {
@@ -132,10 +128,7 @@ impl OllamaClient {
     ) -> Result<impl Stream<Item = Result<String, LlmError>> + Send + 'static, LlmError> {
         let stream = futures::stream::unfold(response, |mut response| async move {
             match response.chunk().await {
-                Ok(Some(chunk)) => match Self::parse_stream_chunk(&chunk) {
-                    Some(result) => Some((result, response)),
-                    None => None,
-                },
+                Ok(Some(chunk)) => Self::parse_stream_chunk(&chunk).map(|result| (result, response)),
                 Ok(None) => None,
                 Err(e) => Some((Err(LlmError::RequestFailed(e)), response)),
             }
@@ -185,7 +178,7 @@ impl LanguageModel for OllamaClient {
             let error = response
                 .text()
                 .await
-                .map_err(|e| LlmError::RequestFailed(e))?;
+                .map_err(LlmError::RequestFailed)?;
             return Err(LlmError::ApiError(error));
         }
 
@@ -221,7 +214,7 @@ impl LanguageModel for OllamaClient {
             let error = response
                 .text()
                 .await
-                .map_err(|e| LlmError::RequestFailed(e))?;
+                .map_err(LlmError::RequestFailed)?;
             return Err(LlmError::ApiError(error));
         }
 

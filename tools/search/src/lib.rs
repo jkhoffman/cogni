@@ -144,10 +144,7 @@ impl Tool for SearchTool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wiremock::{
-        Mock, MockServer, ResponseTemplate,
-        matchers::{method, path, query_param},
-    };
+    
 
     #[tokio::test]
     async fn test_tool_creation() {

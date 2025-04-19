@@ -10,7 +10,6 @@ use cogni_core::{
     memory::{MemoryEntry, MemoryStore, SessionId},
 };
 use redis::{Client, Commands, RedisResult};
-use serde_json;
 use tracing::instrument;
 
 /// Configuration for the Redis memory store.
