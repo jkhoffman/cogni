@@ -43,7 +43,7 @@ impl Stream for ChatStream {
 pub struct OpenAiConfig {
     /// The API key for authentication
     pub api_key: String,
-    /// Base URL for the API (defaults to "https://api.openai.com/v1")
+    /// Base URL for the API (defaults to "<https://api.openai.com/v1>")
     pub base_url: String,
     /// The model to use
     pub model: String,

@@ -41,16 +41,15 @@ impl Stream for ChatStream {
 
 /// Configuration for the Anthropic client.
 #[derive(Debug, Clone)]
-#[allow(dead_code)] // Fields will be used in future implementations
 pub struct AnthropicConfig {
     /// The API key for authentication
-    api_key: String,
-    /// The model to use (e.g., "claude-3-opus-20240229")
-    model: String,
-    /// Base URL for the API (defaults to "https://api.anthropic.com/v1")
-    base_url: String,
+    pub api_key: String,
+    /// Base URL for the API (defaults to "<https://api.anthropic.com/v1>")
+    pub base_url: String,
+    /// The model to use
+    pub model: String,
     /// HTTP client configuration
-    client: Option<Client>,
+    pub client: Option<Client>,
 }
 
 impl AnthropicConfig {
