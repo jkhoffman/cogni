@@ -10,11 +10,8 @@ use cogni_core::{
     error::ToolError,
     tool::{Tool, ToolSpec},
 };
-use nalgebra as na;
-use num::complex::Complex64;
 use serde::{Deserialize, Serialize};
-use statrs::distribution::{ContinuousCDF, Normal};
-use tracing::{debug, instrument};
+use tracing::instrument;
 
 /// Input for the math tool.
 #[derive(Debug, Clone, Serialize, Deserialize)]
