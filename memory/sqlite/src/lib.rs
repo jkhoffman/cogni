@@ -10,7 +10,7 @@ use cogni_core::{
     error::MemoryError,
     memory::{MemoryEntry, MemoryStore, Role, SessionId},
 };
-use sqlx::{Pool, Sqlite, sqlite::SqlitePool};
+use sqlx::{Pool, Row, Sqlite, sqlite::SqlitePool};
 use time::OffsetDateTime;
 use tracing::instrument;
 
@@ -97,40 +97,49 @@ impl MemoryStore for SqliteStore {
         // Query the latest n entries for the session, ordered by timestamp
         let session_str = session.to_string();
         let limit = n as i64;
-        let entries = sqlx::query!(
+
+        let rows = sqlx::query(
             r#"
             SELECT role, content, timestamp
             FROM memory_entries
             WHERE session_id = ?
-            ORDER BY timestamp DESC
+            ORDER BY timestamp ASC
             LIMIT ?
             "#,
-            session_str,
-            limit
         )
+        .bind(session_str)
+        .bind(limit)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| MemoryError::Database(e.to_string()))?;
 
         // Convert rows to MemoryEntry structs
-        let mut result = Vec::with_capacity(entries.len());
-        for entry in entries {
-            let role = Self::parse_role(&entry.role)?;
+        let mut result = Vec::with_capacity(rows.len());
+        for row in rows {
+            let role: String = row
+                .try_get("role")
+                .map_err(|e| MemoryError::Database(e.to_string()))?;
+            let content: String = row
+                .try_get("content")
+                .map_err(|e| MemoryError::Database(e.to_string()))?;
+            let timestamp_str: String = row
+                .try_get("timestamp")
+                .map_err(|e| MemoryError::Database(e.to_string()))?;
+
+            let role = Self::parse_role(&role)?;
             let timestamp = OffsetDateTime::parse(
-                &entry.timestamp,
+                &timestamp_str,
                 &time::format_description::well_known::Rfc3339,
             )
             .map_err(|e| MemoryError::InvalidFormat(e.to_string()))?;
 
             result.push(MemoryEntry {
                 role,
-                content: entry.content,
+                content,
                 timestamp,
             });
         }
 
-        // Reverse to get chronological order
-        result.reverse();
         Ok(result)
     }
 
@@ -151,16 +160,16 @@ impl MemoryStore for SqliteStore {
             .format(&time::format_description::well_known::Rfc3339)
             .map_err(|e| MemoryError::InvalidFormat(e.to_string()))?;
 
-        sqlx::query!(
+        sqlx::query(
             r#"
             INSERT INTO memory_entries (session_id, role, content, timestamp)
             VALUES (?, ?, ?, ?)
             "#,
-            session_str,
-            role_str,
-            entry.content,
-            timestamp_str
         )
+        .bind(session_str)
+        .bind(role_str)
+        .bind(entry.content)
+        .bind(timestamp_str)
         .execute(&mut *tx)
         .await
         .map_err(|e| MemoryError::Database(e.to_string()))?;
@@ -179,10 +188,30 @@ mod tests {
     use super::*;
     use time::macros::datetime;
 
+    async fn create_test_store() -> SqliteStore {
+        let test_id = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let db_path = format!("/tmp/cogni-test-{}.db", test_id);
+
+        // Ensure the file doesn't exist
+        let _ = std::fs::remove_file(&db_path);
+
+        let config = SqliteConfig::new(&db_path);
+        SqliteStore::new(config).await.unwrap()
+    }
+
+    impl Drop for SqliteStore {
+        fn drop(&mut self) {
+            // Close all connections
+            let _ = self.pool.close();
+        }
+    }
+
     #[tokio::test]
     async fn test_store_creation() {
-        let config = SqliteConfig::new(":memory:");
-        let store = SqliteStore::new(config).await.unwrap();
+        let store = create_test_store().await;
 
         // Test saving and loading entries
         let session = SessionId::new("test-session");
@@ -205,8 +234,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_multiple_entries() {
-        let config = SqliteConfig::new(":memory:");
-        let store = SqliteStore::new(config).await.unwrap();
+        let store = create_test_store().await;
         let session = SessionId::new("test-session");
 
         // Save multiple entries
@@ -252,8 +280,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_invalid_role() {
-        let config = SqliteConfig::new(":memory:");
-        let store = SqliteStore::new(config).await.unwrap();
+        let _store = create_test_store().await;
 
         // Try to parse an invalid role
         let result = SqliteStore::parse_role("invalid");

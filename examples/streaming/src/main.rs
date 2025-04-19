@@ -1,8 +1,5 @@
 use anyhow::Result;
-use cogni_core::{
-    llm::{GenerateOptions, LanguageModel},
-    prompt::PromptTemplate,
-};
+use cogni_core::llm::{GenerateOptions, LanguageModel};
 use cogni_macros::chat_message;
 use cogni_provider_openai::{ChatMessage, OpenAiClient, OpenAiConfig};
 use futures::StreamExt;
