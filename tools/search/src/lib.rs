@@ -42,6 +42,7 @@ pub struct SearchOutput {
 
 /// Configuration for the search tool.
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // Fields will be used in future implementations
 pub struct SearchConfig {
     /// The API key for the search service
     api_key: String,
@@ -66,6 +67,7 @@ impl SearchConfig {
 }
 
 /// The search tool.
+#[allow(dead_code)] // Fields will be used in future implementations
 pub struct SearchTool {
     config: SearchConfig,
     client: reqwest::Client,
@@ -84,8 +86,8 @@ impl Tool for SearchTool {
     type Input = SearchInput;
     type Output = SearchOutput;
 
-    #[instrument(skip(self, input))]
-    async fn invoke(&self, input: Self::Input) -> Result<Self::Output, ToolError> {
+    #[instrument(skip_all)]
+    async fn invoke(&self, _input: Self::Input) -> Result<Self::Output, ToolError> {
         todo!("Implement search tool")
     }
 
@@ -147,9 +149,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_tool_creation() {
-        let config = SearchConfig::new("test_key");
-        let tool = SearchTool::new(config).unwrap();
-
-        // Test will be expanded when invoke is implemented
+        let config = SearchConfig {
+            api_key: "test".to_string(),
+            base_url: "https://api.search.test".to_string(),
+        };
+        let _tool = SearchTool::new(config).unwrap();
     }
 }

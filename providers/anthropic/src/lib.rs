@@ -10,7 +10,7 @@ use cogni_core::{
     error::LlmError,
     llm::{GenerateOptions, LanguageModel},
 };
-use futures::{Stream, StreamExt};
+use futures::Stream;
 use pin_project::pin_project;
 use reqwest::{
     Client,
@@ -20,6 +20,8 @@ use serde::{Deserialize, Serialize};
 use std::pin::Pin;
 use tracing::instrument;
 
+/// A stream of chat responses from the Anthropic API.
+/// This struct implements the Stream trait to provide asynchronous access to streaming responses.
 #[pin_project]
 pub struct ChatStream {
     #[pin]
@@ -39,6 +41,7 @@ impl Stream for ChatStream {
 
 /// Configuration for the Anthropic client.
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // Fields will be used in future implementations
 pub struct AnthropicConfig {
     /// The API key for authentication
     api_key: String,
@@ -84,6 +87,7 @@ pub struct ChatMessage {
 }
 
 /// The Anthropic language model client.
+#[allow(dead_code)] // Fields will be used in future implementations
 pub struct AnthropicClient {
     config: AnthropicConfig,
     client: Client,
@@ -110,6 +114,7 @@ impl AnthropicClient {
         Ok(Self { config, client })
     }
 
+    #[allow(dead_code)] // Will be used when streaming is implemented
     async fn process_stream_response(
         response: reqwest::Response,
     ) -> Result<impl Stream<Item = Result<String, LlmError>> + Send + 'static, LlmError> {
@@ -126,6 +131,7 @@ impl AnthropicClient {
         Ok(stream)
     }
 
+    #[allow(dead_code)] // Will be used when streaming is implemented
     fn parse_stream_chunk(bytes: &[u8]) -> Option<Result<String, LlmError>> {
         match String::from_utf8(bytes.to_vec()) {
             Ok(text) => {
@@ -147,8 +153,8 @@ impl LanguageModel for AnthropicClient {
     #[instrument(name = "anthropic_generate", skip_all, err)]
     async fn generate(
         &self,
-        prompt: Self::Prompt,
-        opts: GenerateOptions,
+        _prompt: Self::Prompt,
+        _opts: GenerateOptions,
     ) -> Result<Self::Response, LlmError> {
         todo!("Implement Anthropic chat completion")
     }
@@ -156,8 +162,8 @@ impl LanguageModel for AnthropicClient {
     #[instrument(name = "anthropic_stream_generate", skip_all, err)]
     async fn stream_generate(
         &self,
-        prompt: Self::Prompt,
-        opts: GenerateOptions,
+        _prompt: Self::Prompt,
+        _opts: GenerateOptions,
     ) -> Result<Pin<Box<Self::TokenStream>>, LlmError> {
         todo!("Implement Anthropic streaming chat completion")
     }

@@ -79,18 +79,37 @@ pub enum StatOperation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "result")]
 pub enum MathOutput {
-    /// Scalar result
+    /// A single real number result
     #[serde(rename = "scalar")]
     Scalar(f64),
-    /// Vector result
+    /// A vector of real numbers
     #[serde(rename = "vector")]
     Vector(Vec<f64>),
-    /// Matrix result
+    /// A matrix of real numbers
     #[serde(rename = "matrix")]
     Matrix(Vec<Vec<f64>>),
-    /// Complex number result
+    /// A complex number result with real and imaginary parts
     #[serde(rename = "complex")]
-    Complex { real: f64, imag: f64 },
+    Complex {
+        /// The real part of the complex number
+        real: f64,
+        /// The imaginary part of the complex number
+        imag: f64,
+    },
+}
+
+/// A number type that can be either real or complex.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Number {
+    /// A real number value
+    Real(f64),
+    /// A complex number with real and imaginary components
+    Complex {
+        /// The real component of the complex number
+        real: f64,
+        /// The imaginary component of the complex number
+        imag: f64,
+    },
 }
 
 /// The math tool.
@@ -114,9 +133,9 @@ impl Tool for MathTool {
     type Input = MathInput;
     type Output = MathOutput;
 
-    #[instrument(skip(self, input))]
-    async fn invoke(&self, input: Self::Input) -> Result<Self::Output, ToolError> {
-        todo!("Implement math tool")
+    #[instrument(skip_all)]
+    async fn invoke(&self, _input: Self::Input) -> Result<Self::Output, ToolError> {
+        todo!("Implement math operations")
     }
 
     fn spec(&self) -> ToolSpec {
@@ -224,10 +243,9 @@ impl Tool for MathTool {
 mod tests {
     use super::*;
 
-    #[tokio::test]
-    async fn test_tool_creation() {
-        let tool = MathTool::new();
-
-        // Test will be expanded when invoke is implemented
+    #[test]
+    fn test_tool_creation() {
+        let _tool = MathTool::new();
+        // More tests will be added when operations are implemented
     }
 }

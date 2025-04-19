@@ -49,6 +49,7 @@ pub struct ExecutionStats {
 
 /// Configuration for the code execution tool.
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // Fields will be used in future implementations
 pub struct CodeConfig {
     /// Default timeout in seconds
     timeout: u64,
@@ -80,6 +81,7 @@ impl CodeConfig {
 }
 
 /// The code execution tool.
+#[allow(dead_code)] // Fields will be used in future implementations
 pub struct CodeTool {
     config: CodeConfig,
     engine: Engine,
@@ -177,7 +179,7 @@ mod tests {
     #[tokio::test]
     async fn test_tool_creation() {
         let config = CodeConfig::default();
-        let tool = CodeTool::new(config).unwrap();
+        let _tool = CodeTool::new(config).unwrap();
 
         // Test will be expanded when invoke is implemented
     }

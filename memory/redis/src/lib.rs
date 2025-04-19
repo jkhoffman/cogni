@@ -14,10 +14,11 @@ use tracing::instrument;
 
 /// Configuration for the Redis memory store.
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // Fields will be used in future implementations
 pub struct RedisConfig {
     /// The Redis URL
     url: String,
-    /// Key prefix for stored entries
+    /// The prefix for Redis keys
     prefix: String,
 }
 
@@ -101,9 +102,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_store_creation() {
-        let config = RedisConfig::new("redis://localhost:6379");
-        let store = RedisMemory::new(&config.url, &config.prefix).unwrap();
-
-        // Test will be expanded when load/save are implemented
+        let config = RedisConfig {
+            url: "redis://localhost".to_string(),
+            prefix: "test".to_string(),
+        };
+        let _store = RedisMemory::new(&config.url, &config.prefix).unwrap();
     }
 }

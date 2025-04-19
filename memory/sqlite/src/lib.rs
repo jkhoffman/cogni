@@ -39,6 +39,7 @@ impl SqliteConfig {
 }
 
 /// A SQLite-based memory store.
+#[allow(dead_code)] // Fields will be used in future implementations
 pub struct SqliteStore {
     pool: Pool<Sqlite>,
 }
@@ -70,12 +71,12 @@ impl SqliteStore {
 #[async_trait]
 impl MemoryStore for SqliteStore {
     #[instrument(skip(self))]
-    async fn load(&self, session: &SessionId, n: usize) -> Result<Vec<MemoryEntry>, MemoryError> {
+    async fn load(&self, session: &SessionId, _n: usize) -> Result<Vec<MemoryEntry>, MemoryError> {
         todo!("Implement memory loading")
     }
 
     #[instrument(skip(self))]
-    async fn save(&self, session: &SessionId, entry: MemoryEntry) -> Result<(), MemoryError> {
+    async fn save(&self, session: &SessionId, _entry: MemoryEntry) -> Result<(), MemoryError> {
         todo!("Implement memory saving")
     }
 }
@@ -83,12 +84,11 @@ impl MemoryStore for SqliteStore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use time::OffsetDateTime;
 
     #[tokio::test]
     async fn test_store_creation() {
         let config = SqliteConfig::new(":memory:");
-        let store = SqliteStore::new(config).await.unwrap();
+        let _store = SqliteStore::new(config).await.unwrap();
 
         // Test will be expanded when load/save are implemented
     }

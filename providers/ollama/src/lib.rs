@@ -10,13 +10,15 @@ use cogni_core::{
     error::LlmError,
     llm::{GenerateOptions, LanguageModel},
 };
-use futures::{Stream, StreamExt};
+use futures::Stream;
 use pin_project::pin_project;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::pin::Pin;
 use tracing::instrument;
 
+/// A stream of chat responses from the Ollama API.
+/// This struct implements the Stream trait to provide asynchronous access to streaming responses.
 #[pin_project]
 pub struct ChatStream {
     #[pin]
