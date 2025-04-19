@@ -1,0 +1,12 @@
+[package]
+name = "streaming-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cogni-core = { path = "../../core" }
+cogni-provider-openai = { path = "../../providers/openai" }
+tokio = { workspace = true, features = ["full"] }
+tracing-subscriber = { workspace = true }
+futures = { workspace = true }
+anyhow = "1.0"
