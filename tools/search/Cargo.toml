@@ -1,5 +1,5 @@
 [package]
-name = "search"
+name = "cogni-tool-search"
 version = "0.1.0"
 edition = "2021"
 description = "Search tool for the Cogni framework"

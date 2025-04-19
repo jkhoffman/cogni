@@ -10,7 +10,7 @@ use cogni_core::{
     error::MemoryError,
     memory::{MemoryEntry, MemoryStore, SessionId},
 };
-use sqlx::{sqlite::SqlitePool, Pool, Sqlite};
+use sqlx::{Pool, Sqlite, sqlite::SqlitePool};
 use tracing::{debug, instrument};
 
 /// Configuration for the SQLite memory store.
@@ -89,7 +89,7 @@ mod tests {
     async fn test_store_creation() {
         let config = SqliteConfig::new(":memory:");
         let store = SqliteStore::new(config).await.unwrap();
-        
+
         // Test will be expanded when load/save are implemented
     }
-} 
+}
