@@ -11,7 +11,7 @@ use cogni_core::{
     tool::{Tool, ToolSpec},
 };
 use serde::{Deserialize, Serialize};
-use tracing::{debug, instrument};
+use tracing::instrument;
 
 /// Input for the search tool.
 #[derive(Debug, Clone, Serialize, Deserialize)]
