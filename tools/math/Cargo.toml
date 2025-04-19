@@ -1,7 +1,7 @@
 [package]
 name = "cogni-tool-math"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = "Math tool for the Cogni framework"
 authors.workspace = true
 license.workspace = true

@@ -2,13 +2,14 @@
 name = "cogni"
 version = "0.1.0"
 edition = "2024"
+resolver = "3"
 
 members = ["core", "providers/*", "tools/*", "memory/*", "macros", "examples/*"]
 
 [workspace.package]
 authors = ["Cogni Team"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/cogni/cogni"
+repository = "https://github.com/jkhoffman/cogni"
 
 [workspace.dependencies]
 # Async runtime and streams
