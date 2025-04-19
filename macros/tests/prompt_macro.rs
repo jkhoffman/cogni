@@ -1,5 +1,5 @@
 use cogni_macros::prompt;
-use trybuild;
+use trybuild::TestCases;
 
 #[test]
 fn test_basic_prompt() {
@@ -10,7 +10,7 @@ fn test_basic_prompt() {
 
 #[test]
 fn test_prompt_macro() {
-    let t = trybuild::TestCases::new();
+    let t = TestCases::new();
     t.pass("tests/prompt/01-basic.rs");
     t.pass("tests/prompt/02-multiple-placeholders.rs");
     t.compile_fail("tests/prompt/03-empty-template.rs");
