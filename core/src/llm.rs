@@ -5,12 +5,11 @@ use futures::Stream;
 use serde::{Serialize, de::DeserializeOwned};
 use std::fmt::Debug;
 use std::pin::Pin;
-use tracing::instrument;
 
 use crate::error::LlmError;
 
 /// Options for generating text from a language model.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct GenerateOptions {
     /// Maximum number of tokens to generate
     pub max_tokens: Option<u32>,
@@ -20,16 +19,6 @@ pub struct GenerateOptions {
 
     /// Timeout for the generation request
     pub timeout: Option<std::time::Duration>,
-}
-
-impl Default for GenerateOptions {
-    fn default() -> Self {
-        Self {
-            max_tokens: None,
-            temperature: None,
-            timeout: None,
-        }
-    }
 }
 
 /// A trait representing a language model that can generate text.
