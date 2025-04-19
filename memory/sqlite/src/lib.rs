@@ -202,13 +202,6 @@ mod tests {
         SqliteStore::new(config).await.unwrap()
     }
 
-    impl Drop for SqliteStore {
-        fn drop(&mut self) {
-            // Close all connections
-            let _ = self.pool.close();
-        }
-    }
-
     #[tokio::test]
     async fn test_store_creation() {
         let store = create_test_store().await;
