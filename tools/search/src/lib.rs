@@ -145,15 +145,15 @@ impl Tool for SearchTool {
 mod tests {
     use super::*;
     use wiremock::{
-        matchers::{method, path, query_param},
         Mock, MockServer, ResponseTemplate,
+        matchers::{method, path, query_param},
     };
 
     #[tokio::test]
     async fn test_tool_creation() {
         let config = SearchConfig::new("test_key");
         let tool = SearchTool::new(config).unwrap();
-        
+
         // Test will be expanded when invoke is implemented
     }
 }

@@ -178,7 +178,7 @@ mod tests {
     async fn test_tool_creation() {
         let config = CodeConfig::default();
         let tool = CodeTool::new(config).unwrap();
-        
+
         // Test will be expanded when invoke is implemented
     }
 }

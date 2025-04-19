@@ -222,7 +222,7 @@ mod tests {
     #[tokio::test]
     async fn test_tool_creation() {
         let tool = MathTool::new();
-        
+
         // Test will be expanded when invoke is implemented
     }
 }
