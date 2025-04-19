@@ -1,0 +1,43 @@
+{
+    "db": "SQLite",
+    "2e3c3d6c9f8a7b5e4d2c1f0e9d8c7b6a": {
+        "describe": {
+            "columns": [
+                {
+                    "name": "role",
+                    "ordinal": 0,
+                    "type_info": "Text"
+                },
+                {
+                    "name": "content",
+                    "ordinal": 1,
+                    "type_info": "Text"
+                },
+                {
+                    "name": "timestamp",
+                    "ordinal": 2,
+                    "type_info": "Text"
+                }
+            ],
+            "nullable": [
+                false,
+                false,
+                false
+            ],
+            "parameters": {
+                "Right": 2
+            }
+        },
+        "query": "SELECT role, content, timestamp\n            FROM memory_entries\n            WHERE session_id = ?\n            ORDER BY timestamp DESC\n            LIMIT ?"
+    },
+    "4a1b3c2d9e8f7a6b5c4d3e2f1a0b9c8d": {
+        "describe": {
+            "columns": [],
+            "nullable": [],
+            "parameters": {
+                "Right": 4
+            }
+        },
+        "query": "INSERT INTO memory_entries (session_id, role, content, timestamp)\n            VALUES (?, ?, ?, ?)"
+    }
+}

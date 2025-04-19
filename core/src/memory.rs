@@ -26,7 +26,7 @@ impl SessionId {
 }
 
 /// The role of a participant in a conversation
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum Role {
     /// The user
     User,

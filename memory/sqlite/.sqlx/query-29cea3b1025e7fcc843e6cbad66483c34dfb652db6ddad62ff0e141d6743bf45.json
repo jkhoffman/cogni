@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO memory_entries (session_id, role, content, timestamp)\n            VALUES (?, ?, ?, ?)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "29cea3b1025e7fcc843e6cbad66483c34dfb652db6ddad62ff0e141d6743bf45"
+}

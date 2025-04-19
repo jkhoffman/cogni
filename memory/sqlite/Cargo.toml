@@ -22,11 +22,20 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 # Database
-sqlx = { version = "0.8", features = ["runtime-tokio-native-tls", "sqlite"] }
+sqlx = { version = "0.8", features = [
+    "runtime-tokio-native-tls",
+    "sqlite",
+    "time",
+    "sqlite",
+    "migrate",
+    "macros",
+] }
+
+# Time handling
+time = { version = "0.3", features = ["formatting", "macros", "parsing"] }
 
 # Logging
 tracing = { workspace = true }
-chrono = "0.4.40"
 
 [dev-dependencies]
 tokio-test = { workspace = true }

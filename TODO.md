@@ -35,10 +35,47 @@
   - [x] Implement cancellation handling
 
 - [ ] SQLite Memory Backend
-  - [ ] Implement schema design
-  - [ ] Add CRUD operations
-  - [ ] Handle session management
-  - [ ] Add migration system
+  - [x] Implement schema design
+  - [x] Add CRUD operations
+  - [x] Handle session management
+  - [x] Add migration system
+
+## Pre-Milestone 3 Refactoring (New)
+- [ ] Complete SQLite Memory Backend (Blocker)
+  - [x] Implement transaction support
+  - [x] Add connection pooling
+  - [x] Add proper error handling
+  - [x] Implement comprehensive tests
+
+- [ ] Enhance Tool Trait
+  - [ ] Add lifecycle methods (init/shutdown)
+  - [ ] Add configuration validation
+  - [ ] Implement capability querying
+  - [ ] Add proper documentation
+
+- [ ] Error System Enhancement
+  - [ ] Create specific tool error types
+  - [ ] Implement error context system
+  - [ ] Add retry policies
+  - [ ] Add error reporting interfaces
+
+- [ ] Chain Executor Hardening
+  - [ ] Add resource cleanup for parallel chains
+  - [ ] Implement timeout handling
+  - [ ] Add telemetry/tracing support
+  - [ ] Enhance error propagation
+
+- [ ] Architectural Improvements
+  - [ ] Split core traits into modules
+  - [ ] Add feature flag isolation
+  - [ ] Implement builder pattern for tools
+  - [ ] Restructure project layout
+
+- [ ] Testing Infrastructure
+  - [ ] Create mock implementations
+  - [ ] Add test utilities
+  - [ ] Create integration test harness
+  - [ ] Add error path coverage
 
 ## Milestone 3 (Target: Jun 27, 2025) - Tool Framework
 - [ ] Tool Plugin System
