@@ -22,17 +22,17 @@
   - [x] Unit tests
 
 ## Milestone 2 (Target: May 30, 2025) - Prompts & Chains
-- [ ] Prompt System
-  - [ ] Implement `PromptTemplate`
-  - [ ] Create procedural macros for compile-time validation
-  - [ ] Add template rendering system
-  - [ ] Write macro tests using trybuild
+- [x] Prompt System
+  - [x] Implement `PromptTemplate`
+  - [x] Create procedural macros for compile-time validation
+  - [x] Add template rendering system
+  - [x] Write macro tests using trybuild
 
-- [ ] Chain Executor
-  - [ ] Implement `ChainStep` enum
-  - [ ] Create `Chain` struct with type-safe composition
-  - [ ] Add parallel execution support
-  - [ ] Implement cancellation handling
+- [x] Chain Executor
+  - [x] Implement `ChainStep` enum
+  - [x] Create `Chain` struct with type-safe composition
+  - [x] Add parallel execution support
+  - [x] Implement cancellation handling
 
 - [ ] SQLite Memory Backend
   - [ ] Implement schema design
