@@ -29,3 +29,7 @@ hex = "0.4.3"
 [dev-dependencies]
 tokio-test = "0.4"
 wiremock = { workspace = true }
+
+[[example]]
+name = "search_example"
+path = "examples/search_example.rs"
