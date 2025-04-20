@@ -4,48 +4,56 @@ version = "0.1.0"
 edition = "2021"
 description = "A Rust framework for LLM orchestration"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/yourusername/cogni"
+repository = "https://github.com/jkhoffman/cogni"
+authors = ["Cogni Team"]
 
 [workspace]
-resolver = "3"
-
-members = ["core", "macros", "tools", "memory", "providers"]
+resolver = "2"
+members = ["core", "macros", "tools/*", "memory/*", "providers/*"]
 
 [workspace.package]
-authors = ["Cogni Team"]
+version = "0.1.0"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/jkhoffman/cogni"
+authors = ["Cogni Team"]
 
 [workspace.dependencies]
-# Async runtime and streams
-tokio = { version = "1.37", features = ["rt-multi-thread", "macros"] }
+# Core dependencies
+anyhow = "1.0"
+thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Async & Runtime
+tokio = { version = "1.37", features = ["full"] }
 async-trait = "0.1"
 futures = { version = "0.3", features = ["std"] }
 pin-project = "1.1"
 bytes = "1.5"
 
-# Error handling
-thiserror = "2.0"
-
-# Serialization
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-
-# HTTP client
+# HTTP & Networking
 reqwest = { version = "0.11", features = ["json", "stream"] }
 
-# Logging & tracing
+# Templating & Text Processing
+handlebars = "4.3"
+regex = "1.9"
+
+# Time
+chrono = "0.4"
+time = { version = "0.3", features = ["serde", "formatting", "parsing"] }
+
+# Logging & Diagnostics
 tracing = "0.1"
-tracing-subscriber = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Testing
-wiremock = "0.5"
 tokio-test = "0.4"
+wiremock = "0.5"
+pretty_assertions = "1.0"
+test-log = { version = "0.2", features = ["trace"] }
 
-# Time handling
-time = { version = "0.3", features = ["serde"] }
-
-# Proc macros
+# Proc Macro Support
 quote = "1.0"
 proc-macro2 = "1.0"
 
@@ -69,20 +77,23 @@ full = ["llm", "tool", "memory", "prompt", "chain"]
 minimal = []
 
 [dependencies]
-cogni-core = { path = "core", version = "0.1.0" }
+# Internal crates
+cogni-core = { path = "core", version = "0.1.0", features = ["full"] }
 cogni-macros = { path = "macros", version = "0.1.0", optional = true }
-anyhow = "1.0"
-async-trait = "0.1"
-futures = "0.3"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-thiserror = "1.0"
-tokio = { version = "1.0", features = ["full"] }
-tracing = "0.1"
-time = { version = "0.3", features = ["serde"] }
+
+# External dependencies
+anyhow.workspace = true
+async-trait.workspace = true
+futures.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+time.workspace = true
 
 [dev-dependencies]
-tokio-test = "0.4"
-pretty_assertions = "1.0"
-test-log = { version = "0.2", features = ["trace"] }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio-test.workspace = true
+pretty_assertions.workspace = true
+test-log.workspace = true
+tracing-subscriber.workspace = true

@@ -12,20 +12,14 @@ use crate::{
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::{
-    StreamExt, TryStreamExt,
-    stream::{self, Empty, FuturesUnordered, Stream},
+    stream::{self, FuturesUnordered, Stream},
+    StreamExt,
 };
-use serde::{Serialize, de::DeserializeOwned};
-use serde_json::Value;
+use serde::{de::DeserializeOwned, Serialize};
 use std::{
-    any::Any,
     fmt::{self, Debug, Display},
-    marker::PhantomData,
     pin::Pin,
-    sync::{
-        Arc, Mutex,
-        atomic::{AtomicUsize, Ordering},
-    },
+    sync::{Arc, Mutex},
     time::{Duration, SystemTime},
 };
 use thiserror::Error;
@@ -33,11 +27,48 @@ use tokio::{
     sync::{broadcast, mpsc},
     time::timeout,
 };
-use tracing::{Instrument, Level, Span, debug, error, field, info, info_span, instrument, warn};
+use tracing::{debug, error, info, info_span, warn, Instrument};
 
 /// Placeholder for NoopLanguageModel
 #[derive(Debug, Default, Clone)]
 struct NoopLanguageModel;
+
+#[async_trait]
+impl Tool for NoopLanguageModel {
+    type Input = String;
+    type Output = String;
+    type Config = ();
+
+    fn try_new(_config: Self::Config) -> Result<Self, ToolError> {
+        Ok(Self)
+    }
+
+    async fn initialize(&mut self) -> Result<(), ToolError> {
+        Ok(())
+    }
+
+    async fn shutdown(&mut self) -> Result<(), ToolError> {
+        Ok(())
+    }
+
+    fn capabilities(&self) -> Vec<ToolCapability> {
+        vec![ToolCapability::Stateless, ToolCapability::ThreadSafe]
+    }
+
+    async fn invoke(&self, _input: Self::Input) -> Result<Self::Output, ToolError> {
+        Ok(String::new())
+    }
+
+    fn spec(&self) -> ToolSpec {
+        ToolSpec {
+            name: "noop".into(),
+            description: "A no-op language model".into(),
+            input_schema: serde_json::json!({"type": "string"}),
+            output_schema: serde_json::json!({"type": "string"}),
+            examples: vec![],
+        }
+    }
+}
 
 #[async_trait]
 impl LanguageModel for NoopLanguageModel {
@@ -295,7 +326,7 @@ where
                 > + Send
                 + Sync,
         >,
-        prompt: Arc<PromptTemplate>,
+        _prompt: Arc<PromptTemplate>,
         timeout: Duration,
     },
     Tool {
@@ -314,12 +345,12 @@ where
         match self {
             ChainStep::Llm {
                 model,
-                prompt,
+                _prompt,
                 timeout,
             } => f
                 .debug_struct("Llm")
                 .field("model", &model.name())
-                .field("prompt", prompt)
+                .field("prompt", &**_prompt)
                 .field("timeout", timeout)
                 .finish(),
             ChainStep::Tool { tool, timeout } => f
@@ -482,7 +513,7 @@ where
 
         self.steps.push(ChainStep::Llm {
             model: model_arc,
-            prompt: prompt_arc,
+            _prompt: prompt_arc,
             timeout: timeout.unwrap_or(self.config.default_step_timeout),
         });
         self
@@ -554,7 +585,7 @@ where
             match step {
                 ChainStep::Llm {
                     model,
-                    prompt,
+                    _prompt,
                     timeout,
                 } => {
                     *self.current_step.lock().unwrap() = Some(StepType::LLM);
@@ -563,7 +594,7 @@ where
                     let result = self
                         .execute_llm_step(
                             model.clone(),
-                            prompt.clone(),
+                            _prompt.clone(),
                             step_input,
                             Some(*timeout),
                             &mut cancel_rx,
@@ -734,7 +765,7 @@ where
             let chain_instance = chain_arc.clone();
             let input_clone = input.clone();
             let results_clone = Arc::clone(&chain_results);
-            let mut chain_cancel_rx = self.cancel_tx.subscribe();
+            let _chain_cancel_rx = self.cancel_tx.subscribe();
 
             futures.push(
                 async move {
@@ -876,12 +907,13 @@ mod tests {
     use crate::error::ToolError;
     use crate::traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec};
     use async_trait::async_trait;
-    use futures::{StreamExt, stream};
+    use futures::{stream, StreamExt};
     use std::fmt::{self, Debug};
 
     #[derive(Clone, Debug)]
     struct MockTool {
         name: String,
+        invocations: Arc<Mutex<Vec<String>>>,
     }
 
     #[async_trait]
@@ -890,14 +922,11 @@ mod tests {
         type Output = String;
         type Config = ();
 
-        fn spec(&self) -> ToolSpec {
-            ToolSpec {
-                name: self.name.clone(),
-                description: "A mock tool for testing".to_string(),
-                input_schema: serde_json::json!(null),
-                output_schema: serde_json::json!(null),
-                examples: vec![],
-            }
+        fn try_new(_config: Self::Config) -> Result<Self, ToolError> {
+            Ok(Self {
+                name: "mock_tool".into(),
+                invocations: Arc::new(Mutex::new(Vec::new())),
+            })
         }
 
         async fn initialize(&mut self) -> Result<(), ToolError> {
@@ -913,7 +942,18 @@ mod tests {
         }
 
         async fn invoke(&self, input: Self::Input) -> Result<Self::Output, ToolError> {
-            Ok(format!("Mock tool '{}' processed: {}", self.name, input))
+            self.invocations.lock().await.push(input.clone());
+            Ok(format!("Processed: {}", input))
+        }
+
+        fn spec(&self) -> ToolSpec {
+            ToolSpec {
+                name: self.name.clone(),
+                description: "A mock tool for testing".into(),
+                input_schema: serde_json::json!({"type": "string"}),
+                output_schema: serde_json::json!({"type": "string"}),
+                examples: vec![],
+            }
         }
     }
 
@@ -929,6 +969,7 @@ mod tests {
 
         let tool = MockTool {
             name: "tool1".into(),
+            invocations: Arc::new(Mutex::new(Vec::new())),
         };
         let chain_with_tool: Chain<String, String> = Chain::new()
             .add_tool(tool.clone(), Some(Duration::from_secs(30)))

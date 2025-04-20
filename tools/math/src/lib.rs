@@ -172,6 +172,10 @@ impl Tool for MathTool {
     type Output = MathOutput;
     type Config = MathConfig;
 
+    fn try_new(config: Self::Config) -> Result<Self, ToolError> {
+        Ok(Self::new(config))
+    }
+
     async fn initialize(&mut self) -> Result<(), ToolError> {
         // No initialization needed for math tool
         Ok(())

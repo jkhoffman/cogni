@@ -111,6 +111,10 @@ impl Tool for CodeTool {
     type Output = CodeOutput;
     type Config = CodeConfig;
 
+    fn try_new(config: Self::Config) -> Result<Self, ToolError> {
+        Ok(Self::new(config))
+    }
+
     async fn initialize(&mut self) -> Result<(), ToolError> {
         self.engine = Some(Engine::default());
         Ok(())

@@ -17,35 +17,15 @@
 //! Each module is feature-gated to allow for minimal builds when only
 //! specific functionality is needed.
 
-#[cfg(feature = "llm")]
+pub mod builder;
+pub mod chain;
 pub mod llm;
-
-#[cfg(feature = "memory")]
 pub mod memory;
-
-#[cfg(feature = "prompt")]
 pub mod prompt;
-
-#[cfg(feature = "tool")]
 pub mod tool;
 
-#[cfg(feature = "chain")]
-pub mod chain;
-
-pub mod builder;
-
-// Re-exports for convenience
-#[cfg(feature = "llm")]
-pub use llm::LanguageModel;
-
-#[cfg(feature = "memory")]
+// Re-export commonly used traits and types
+pub use llm::{GenerateOptions, LanguageModel};
 pub use memory::MemoryStore;
-
-#[cfg(feature = "prompt")]
 pub use prompt::{PromptArgs, PromptTemplate};
-
-#[cfg(feature = "tool")]
-pub use tool::Tool;
-
-#[cfg(feature = "chain")]
-pub use chain::Chain;
+pub use tool::{Tool, ToolCapability, ToolConfig, ToolSpec};

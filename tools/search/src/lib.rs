@@ -108,6 +108,10 @@ impl Tool for SearchTool {
     type Output = SearchOutput;
     type Config = SearchConfig;
 
+    fn try_new(config: Self::Config) -> Result<Self, ToolError> {
+        Ok(Self::new(config))
+    }
+
     async fn initialize(&mut self) -> Result<(), ToolError> {
         self.client = Some(reqwest::Client::new());
         Ok(())

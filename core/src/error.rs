@@ -13,7 +13,7 @@ use std::{
     time::Duration,
 };
 use thiserror::Error;
-use time::{OffsetDateTime, format_description};
+use time::OffsetDateTime;
 use tokio::task::JoinError;
 
 /// Error context containing additional information about an error.
@@ -144,109 +144,42 @@ pub enum Error {
 /// Error type for language model operations
 #[derive(Debug, Error)]
 pub enum LlmError {
-    /// Error making HTTP request
-    #[error("Request failed: {0}")]
-    RequestFailed(#[from] reqwest::Error),
-
-    /// Error parsing response
-    #[error("Invalid response: {0}")]
-    InvalidResponse(String),
-
-    /// Error with configuration
+    /// The LLM request timed out
+    #[error("LLM request timed out after {duration_secs} seconds at {timestamp}")]
+    Timeout {
+        duration_secs: u64,
+        timestamp: OffsetDateTime,
+    },
+    /// The LLM returned an error
+    #[error("LLM error: {0}")]
+    LlmError(String),
+    /// Failed to parse LLM response
+    #[error("Failed to parse LLM response: {0}")]
+    ParseError(String),
     #[error("Configuration error: {0}")]
     ConfigError(String),
-
-    /// API returned an error
+    #[error("Request failed: {0}")]
+    RequestFailed(#[from] reqwest::Error),
+    #[error("Invalid response: {0}")]
+    InvalidResponse(String),
+    #[error("Other error: {0}")]
+    Other(String),
     #[error("API error: {0}")]
     ApiError(String),
-
-    /// Rate limit exceeded
-    #[error("Rate limit exceeded")]
-    RateLimit,
 }
 
 /// Errors that can occur during tool operations.
 #[derive(Error, Debug)]
 pub enum ToolError {
-    /// The tool execution failed
-    #[error("Tool execution failed: {context}")]
-    ExecutionFailed {
-        /// Error context
-        context: ErrorContext,
-        /// Underlying error message
-        message: String,
-        /// Whether the error is retryable
-        retryable: bool,
-    },
-
-    /// Invalid input provided to the tool
-    #[error("Invalid tool input: {context}")]
-    InvalidInput {
-        /// Error context
-        context: ErrorContext,
-        /// Validation errors
-        validation_errors: Vec<String>,
-    },
-
-    /// Tool timed out
-    #[error("Tool timed out after {duration:?}: {context}")]
-    Timeout {
-        /// Error context
-        context: ErrorContext,
-        /// Duration after which the timeout occurred
-        duration: Duration,
-    },
-
-    /// Resource not found
-    #[error("Resource not found: {context}")]
-    NotFound {
-        /// Error context
-        context: ErrorContext,
-        /// Resource identifier
-        resource_id: String,
-    },
-
-    /// Permission denied
-    #[error("Permission denied: {context}")]
-    PermissionDenied {
-        /// Error context
-        context: ErrorContext,
-        /// Required permission
-        required_permission: String,
-    },
-
-    /// Resource exhausted
-    #[error("Resource exhausted: {context}")]
-    ResourceExhausted {
-        /// Error context
-        context: ErrorContext,
-        /// Resource type
-        resource_type: String,
-        /// Current usage
-        current_usage: u64,
-        /// Resource limit
-        limit: u64,
-    },
-
-    /// Network error
-    #[error("Network error: {context}")]
-    NetworkError {
-        /// Error context
-        context: ErrorContext,
-        /// Underlying error
-        error: reqwest::Error,
-        /// Whether to retry the request
-        retryable: bool,
-    },
-
-    /// Rate limit exceeded
-    #[error("Rate limit exceeded: {context}")]
-    RateLimit {
-        /// Error context
-        context: ErrorContext,
-        /// Time until reset
-        reset_after: Duration,
-    },
+    /// The tool request timed out
+    #[error("Tool request timed out")]
+    Timeout,
+    /// The tool returned an error
+    #[error("Tool error: {0}")]
+    ToolError(String),
+    /// Failed to parse tool response
+    #[error("Failed to parse tool response: {0}")]
+    ParseError(String),
 }
 
 /// Errors that can occur during memory operations.
