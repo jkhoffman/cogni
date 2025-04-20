@@ -749,6 +749,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "cogni-tool-mcp"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "cogni-core",
+ "cogni-tools-common",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio 1.44.2",
+]
+
+[[package]]
 name = "cogni-tool-search"
 version = "0.1.0"
 dependencies = [

@@ -97,11 +97,15 @@
   - [x] Complete `invoke` method implementation
   - [x] Add error retry mechanism
 
-- [ ] MCP Integration
-  - [ ] Implement MCP client
-  - [ ] Add protocol handlers
-  - [ ] Implement security measures
-  - [ ] Add tool routing
+- [x] MCP Integration
+  - [x] Protocol types & error mapping
+  - [x] Transport connect/list-tools
+  - [x] Routing adapter (local tools)
+  - [x] call_tool round-trip
+  - [ ] Concurrency / rate-limit / retries
+  - [ ] Tests + example
+  - [ ] Add to workspace & CI
+  - [ ] Documentation (TDD, public API, example)
 
 - [ ] Common Tool Utilities
   - [ ] Create shared HTTP client implementation
@@ -283,4 +287,28 @@
 - Track progress by checking off items as they're completed
 - Add new items as needed during implementation
 - Update target dates if schedule changes
-- Document any major design decisions in TDD.md 
+- Document any major design decisions in TDD.md
+
+## MCP Integration (Model Context Protocol)
+- [x] Protocol types & error mapping
+- [x] Transport connect/list-tools
+- [x] Routing adapter (local tools)
+- [x] call_tool round-trip
+- [ ] Concurrency / rate-limit / retries
+- [ ] Tests + example
+- [ ] Add to workspace & CI
+- [ ] Documentation (TDD, public API, example)
+
+### Plan
+1. Public API & Crate Layout
+   - Crate: tools/mcp
+   - Modules: client.rs, protocol.rs, routing.rs, error.rs
+2. Protocol Layer: serde types for ToolSpec, ToolCall, ToolResult, ErrorEnvelope
+3. Transport & Client: async abstraction over stdio, config, connect, list_tools, call_tool, shutdown
+4. Routing Layer: HashMap<String, Arc<dyn Tool>>, handle_call, register_tool
+5. Glue: client passes call_tool to router, supports concurrency
+6. Error Mapping: McpError, From<McpError> for ToolError
+7. Testing: unit, integration, security
+8. CI: workspace, clippy, MSRV
+9. Documentation: TDD, examples
+10. Milestones: see above checklist 

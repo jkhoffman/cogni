@@ -1,0 +1,20 @@
+[package]
+name = "cogni-tool-mcp"
+version = "0.1.0"
+edition = "2024"
+description = "MCP integration for the Cogni framework"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+cogni-core = { path = "../../core" }
+async-trait = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+thiserror = { workspace = true }
+cogni-tools-common = { path = "../common" }
+
+[dev-dependencies]
+tempfile = "3"
