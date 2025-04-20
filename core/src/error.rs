@@ -6,12 +6,14 @@
 //! - Retry policies for transient failures
 //! - Error reporting interfaces
 
+use chrono::{DateTime, Utc};
 use std::{
     collections::HashMap,
     fmt::{self, Display},
     time::Duration,
 };
 use thiserror::Error;
+use time::{OffsetDateTime, format_description};
 
 /// Error context containing additional information about an error.
 #[derive(Debug, Clone)]
@@ -24,6 +26,8 @@ pub struct ErrorContext {
     pub timestamp: time::OffsetDateTime,
     /// Additional metadata about the error
     pub metadata: HashMap<String, String>,
+    pub message: String,
+    pub details: Option<String>,
 }
 
 impl Display for ErrorContext {
@@ -59,6 +63,8 @@ impl ErrorContext {
             operation: operation.into(),
             timestamp: time::OffsetDateTime::now_utc(),
             metadata: HashMap::new(),
+            message: String::new(),
+            details: None,
         }
     }
 
@@ -66,6 +72,19 @@ impl ErrorContext {
     pub fn with_metadata(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.metadata.insert(key.into(), value.into());
         self
+    }
+}
+
+impl Default for ErrorContext {
+    fn default() -> Self {
+        Self {
+            source: String::new(),
+            operation: String::new(),
+            timestamp: time::OffsetDateTime::now_utc(),
+            metadata: HashMap::new(),
+            message: String::new(),
+            details: None,
+        }
     }
 }
 
@@ -245,20 +264,115 @@ pub enum MemoryError {
     InvalidFormat(String),
 }
 
-/// Errors that can occur during chain execution.
-#[derive(Error, Debug)]
-pub enum ChainError {
-    /// A step in the chain failed
-    #[error("Chain step failed: {0}")]
-    StepFailed(String),
+/// Error type for chain execution
+#[derive(Debug, Error)]
+pub struct ChainError {
+    /// Error variant
+    pub kind: ChainErrorKind,
+    /// Error context
+    pub context: ErrorContext,
+    /// Retry policy
+    pub retry_policy: RetryPolicy,
+    /// Timestamp when the error occurred
+    pub timestamp: DateTime<Utc>,
+}
+
+impl fmt::Display for ChainError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} [{}::{} at {}]",
+            self.kind,
+            self.context.source,
+            self.context.operation,
+            self.timestamp.to_rfc3339()
+        )?;
+        if !self.context.metadata.is_empty() {
+            write!(f, " {{")?;
+            for (i, (key, value)) in self.context.metadata.iter().enumerate() {
+                if i > 0 {
+                    write!(f, ", ")?;
+                }
+                write!(f, "{}={}", key, value)?;
+            }
+            write!(f, "}}")?;
+        }
+        Ok(())
+    }
+}
+
+/// Chain error variants
+#[derive(Debug, Error)]
+pub enum ChainErrorKind {
+    /// Chain execution timed out
+    #[error("Chain execution timed out after {duration:?} in {step_type} step")]
+    Timeout {
+        /// Duration after which the timeout occurred
+        duration: Duration,
+        /// Type of step that timed out
+        step_type: &'static str,
+    },
 
     /// Chain execution was cancelled
-    #[error("Chain execution cancelled")]
+    #[error("Chain execution was cancelled")]
     Cancelled,
 
-    /// Chain timeout
-    #[error("Chain timed out after {0:?}")]
-    Timeout(Duration),
+    /// Error in parallel chain execution
+    #[error("Parallel chain error: {message}")]
+    ParallelError {
+        /// Error message
+        message: String,
+        /// Results from successful parallel executions
+        successful_results: Vec<Box<dyn std::any::Any + Send>>,
+    },
+
+    /// Chain execution failed
+    #[error("Chain execution failed: {message}")]
+    Failed {
+        /// Error message
+        message: String,
+    },
+}
+
+impl ChainError {
+    /// Create a new chain error
+    pub fn new(kind: ChainErrorKind) -> Self {
+        Self {
+            kind,
+            context: ErrorContext::default(),
+            retry_policy: RetryPolicy::default(),
+            timestamp: Utc::now(),
+        }
+    }
+
+    /// Create a new timeout error
+    pub fn timeout(duration: Duration, step_type: &'static str) -> Self {
+        Self::new(ChainErrorKind::Timeout {
+            duration,
+            step_type,
+        })
+    }
+
+    /// Create a new cancelled error
+    pub fn cancelled() -> Self {
+        Self::new(ChainErrorKind::Cancelled)
+    }
+
+    /// Create a new parallel error
+    pub fn parallel_error(
+        message: String,
+        successful_results: Vec<Box<dyn std::any::Any + Send>>,
+    ) -> Self {
+        Self::new(ChainErrorKind::ParallelError {
+            message,
+            successful_results,
+        })
+    }
+
+    /// Create a new failed error
+    pub fn failed(message: String) -> Self {
+        Self::new(ChainErrorKind::Failed { message })
+    }
 }
 
 /// Interface for error reporting.

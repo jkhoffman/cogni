@@ -27,11 +27,14 @@ reqwest = { workspace = true }
 tracing = { workspace = true }
 
 # Time handling
-time = { workspace = true }
+time = { workspace = true, features = ["formatting"] }
 
 # Template handling
 handlebars = "5.1"
 regex = "1.10"
+
+# Date and time handling
+chrono = "0.4"
 
 [dev-dependencies]
 tokio-test = { workspace = true }

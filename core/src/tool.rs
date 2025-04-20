@@ -21,7 +21,7 @@
 //! 4. Implement the required methods
 //!
 //! ```rust,no_run
-//! use cogni_core::tool::{Tool, ToolSpec, ToolConfig, ToolCapability};
+//! use cogni_core::{tool::{Tool, ToolSpec, ToolConfig, ToolCapability}, error::ToolError};
 //! use serde::{Serialize, Deserialize};
 //! use async_trait::async_trait;
 //!
@@ -54,12 +54,12 @@
 //!     type Output = String;
 //!     type Config = MyToolConfig;
 //!
-//!     async fn initialize(&mut self) -> Result<(), crate::error::ToolError> {
+//!     async fn initialize(&mut self) -> Result<(), ToolError> {
 //!         self.client = Some(reqwest::Client::new());
 //!         Ok(())
 //!     }
 //!
-//!     async fn shutdown(&mut self) -> Result<(), crate::error::ToolError> {
+//!     async fn shutdown(&mut self) -> Result<(), ToolError> {
 //!         self.client = None;
 //!         Ok(())
 //!     }
@@ -72,7 +72,24 @@
 //!         ]
 //!     }
 //!
-//!     // ... other required methods ...
+//!     async fn invoke(&self, input: Self::Input) -> Result<Self::Output, ToolError> {
+//!         // Example implementation
+//!         Ok(format!("Processed: {}", input))
+//!     }
+//!
+//!     fn spec(&self) -> ToolSpec {
+//!         ToolSpec {
+//!             name: "my_tool".into(),
+//!             description: "An example tool".into(),
+//!             input_schema: serde_json::json!({
+//!                 "type": "string"
+//!             }),
+//!             output_schema: serde_json::json!({
+//!                 "type": "string"
+//!             }),
+//!             examples: vec![],
+//!         }
+//!     }
 //! }
 //! ```
 
@@ -187,9 +204,7 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Returns `ToolError` if initialization fails.
-    async fn initialize(&mut self) -> Result<(), ToolError> {
-        Ok(()) // Default no-op implementation
-    }
+    async fn initialize(&mut self) -> Result<(), ToolError>;
 
     /// Shut down the tool.
     ///
@@ -198,9 +213,7 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Returns `ToolError` if shutdown fails.
-    async fn shutdown(&mut self) -> Result<(), ToolError> {
-        Ok(()) // Default no-op implementation
-    }
+    async fn shutdown(&mut self) -> Result<(), ToolError>;
 
     /// Get the capabilities of this tool.
     ///
