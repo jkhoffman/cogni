@@ -6,12 +6,9 @@
 #![warn(missing_docs)]
 
 use anyhow::Result;
-use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use cogni_core::error::MemoryError;
 use cogni_core::traits::memory::{MemoryEntry, MemoryStore, SessionId};
 use redis::{Client, Commands, RedisResult};
-use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
 /// Configuration for the Redis memory store.

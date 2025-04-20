@@ -13,7 +13,6 @@ use cogni_core::{
 };
 use log::warn;
 use serde::{Deserialize, Serialize};
-use std::num::NonZeroUsize;
 use tracing::instrument;
 
 /// Configuration for the math tool.

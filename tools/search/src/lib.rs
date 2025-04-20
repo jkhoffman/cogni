@@ -14,7 +14,6 @@ use cogni_core::{
 use log::warn;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use url::Url;
 
 /// Input for the search tool.
 #[derive(Debug, Clone, Serialize, Deserialize)]

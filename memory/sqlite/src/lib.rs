@@ -7,12 +7,11 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use cogni_core::error::MemoryError;
 use cogni_core::traits::memory::{MemoryEntry, MemoryStore, Role, SessionId};
 use sqlx::{Pool, Row, Sqlite, sqlite::SqlitePool};
 use time::OffsetDateTime;
-use tracing::{debug, error, info, instrument};
+use tracing::instrument;
 
 /// Configuration for the SQLite memory store.
 #[derive(Debug, Clone)]
