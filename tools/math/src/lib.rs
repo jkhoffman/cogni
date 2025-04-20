@@ -8,10 +8,46 @@
 use async_trait::async_trait;
 use cogni_core::{
     error::ToolError,
-    tool::{Tool, ToolSpec},
+    tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+
+/// Configuration for the math tool.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MathConfig {
+    /// Maximum matrix size for operations
+    pub max_matrix_size: usize,
+    /// Maximum number of iterations for convergence
+    pub max_iterations: usize,
+    /// Numerical precision threshold
+    pub precision: f64,
+}
+
+impl Default for MathConfig {
+    fn default() -> Self {
+        Self {
+            max_matrix_size: 100,
+            max_iterations: 1000,
+            precision: 1e-10,
+        }
+    }
+}
+
+impl ToolConfig for MathConfig {
+    fn validate(&self) -> Result<(), String> {
+        if self.max_matrix_size == 0 {
+            return Err("max_matrix_size must be greater than 0".into());
+        }
+        if self.max_iterations == 0 {
+            return Err("max_iterations must be greater than 0".into());
+        }
+        if self.precision <= 0.0 {
+            return Err("precision must be greater than 0".into());
+        }
+        Ok(())
+    }
+}
 
 /// Input for the math tool.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -113,18 +149,20 @@ pub enum Number {
 }
 
 /// The math tool.
-pub struct MathTool;
+pub struct MathTool {
+    config: MathConfig,
+}
 
 impl Default for MathTool {
     fn default() -> Self {
-        Self::new()
+        Self::new(MathConfig::default())
     }
 }
 
 impl MathTool {
-    /// Create a new math tool.
-    pub fn new() -> Self {
-        Self
+    /// Create a new math tool with the given configuration.
+    pub fn new(config: MathConfig) -> Self {
+        Self { config }
     }
 }
 
@@ -132,6 +170,25 @@ impl MathTool {
 impl Tool for MathTool {
     type Input = MathInput;
     type Output = MathOutput;
+    type Config = MathConfig;
+
+    async fn initialize(&mut self) -> Result<(), ToolError> {
+        // No initialization needed for math tool
+        Ok(())
+    }
+
+    async fn shutdown(&mut self) -> Result<(), ToolError> {
+        // No cleanup needed for math tool
+        Ok(())
+    }
+
+    fn capabilities(&self) -> Vec<ToolCapability> {
+        vec![
+            ToolCapability::Stateless,
+            ToolCapability::ThreadSafe,
+            ToolCapability::CpuIntensive,
+        ]
+    }
 
     #[instrument(skip_all)]
     async fn invoke(&self, _input: Self::Input) -> Result<Self::Output, ToolError> {
@@ -245,7 +302,47 @@ mod tests {
 
     #[test]
     fn test_tool_creation() {
-        let _tool = MathTool::new();
-        // More tests will be added when operations are implemented
+        let config = MathConfig::default();
+        let _tool = MathTool::new(config);
+    }
+
+    #[test]
+    fn test_config_validation() {
+        let valid_config = MathConfig::default();
+        assert!(valid_config.validate().is_ok());
+
+        let invalid_config = MathConfig {
+            max_matrix_size: 0,
+            ..MathConfig::default()
+        };
+        assert!(invalid_config.validate().is_err());
+
+        let invalid_config = MathConfig {
+            max_iterations: 0,
+            ..MathConfig::default()
+        };
+        assert!(invalid_config.validate().is_err());
+
+        let invalid_config = MathConfig {
+            precision: 0.0,
+            ..MathConfig::default()
+        };
+        assert!(invalid_config.validate().is_err());
+    }
+
+    #[tokio::test]
+    async fn test_lifecycle() {
+        let mut tool = MathTool::default();
+        assert!(tool.initialize().await.is_ok());
+        assert!(tool.shutdown().await.is_ok());
+    }
+
+    #[test]
+    fn test_capabilities() {
+        let tool = MathTool::default();
+        let capabilities = tool.capabilities();
+        assert!(capabilities.contains(&ToolCapability::Stateless));
+        assert!(capabilities.contains(&ToolCapability::ThreadSafe));
+        assert!(capabilities.contains(&ToolCapability::CpuIntensive));
     }
 }

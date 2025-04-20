@@ -47,17 +47,17 @@
   - [x] Add proper error handling
   - [x] Implement comprehensive tests
 
-- [ ] Enhance Tool Trait
-  - [ ] Add lifecycle methods (init/shutdown)
-  - [ ] Add configuration validation
-  - [ ] Implement capability querying
-  - [ ] Add proper documentation
+- [x] Enhance Tool Trait
+  - [x] Add lifecycle methods (init/shutdown)
+  - [x] Add configuration validation
+  - [x] Implement capability querying
+  - [x] Add proper documentation
 
-- [ ] Error System Enhancement
-  - [ ] Create specific tool error types
-  - [ ] Implement error context system
-  - [ ] Add retry policies
-  - [ ] Add error reporting interfaces
+- [x] Error System Enhancement
+  - [x] Create specific tool error types
+  - [x] Implement error context system
+  - [x] Add retry policies
+  - [x] Add error reporting interfaces
 
 - [ ] Chain Executor Hardening
   - [ ] Add resource cleanup for parallel chains

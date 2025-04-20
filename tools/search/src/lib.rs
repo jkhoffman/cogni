@@ -8,7 +8,7 @@
 use async_trait::async_trait;
 use cogni_core::{
     error::ToolError,
-    tool::{Tool, ToolSpec},
+    tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -42,42 +42,62 @@ pub struct SearchOutput {
 
 /// Configuration for the search tool.
 #[derive(Debug, Clone)]
-#[allow(dead_code)] // Fields will be used in future implementations
 pub struct SearchConfig {
     /// The API key for the search service
-    api_key: String,
+    pub api_key: String,
     /// Base URL for the API
-    base_url: String,
+    pub base_url: String,
+    /// Rate limit in requests per second
+    pub rate_limit: f64,
+    /// Cache duration in seconds
+    pub cache_duration: u64,
 }
 
-impl SearchConfig {
-    /// Create a new configuration with the given API key.
-    pub fn new(api_key: impl Into<String>) -> Self {
+impl Default for SearchConfig {
+    fn default() -> Self {
         Self {
-            api_key: api_key.into(),
+            api_key: String::new(),
             base_url: "https://serpapi.com/search".to_string(),
+            rate_limit: 10.0,
+            cache_duration: 3600,
         }
     }
+}
 
-    /// Set a custom base URL for the API.
-    pub fn with_base_url(mut self, url: impl Into<String>) -> Self {
-        self.base_url = url.into();
-        self
+impl ToolConfig for SearchConfig {
+    fn validate(&self) -> Result<(), String> {
+        if self.api_key.is_empty() {
+            return Err("api_key cannot be empty".into());
+        }
+        if self.base_url.is_empty() {
+            return Err("base_url cannot be empty".into());
+        }
+        if !self.base_url.starts_with("http") {
+            return Err("base_url must be a valid HTTP(S) URL".into());
+        }
+        if self.rate_limit <= 0.0 {
+            return Err("rate_limit must be greater than 0".into());
+        }
+        if self.cache_duration == 0 {
+            return Err("cache_duration must be greater than 0".into());
+        }
+        Ok(())
     }
 }
 
 /// The search tool.
-#[allow(dead_code)] // Fields will be used in future implementations
 pub struct SearchTool {
     config: SearchConfig,
-    client: reqwest::Client,
+    client: Option<reqwest::Client>,
 }
 
 impl SearchTool {
     /// Create a new search tool with the given configuration.
-    pub fn new(config: SearchConfig) -> Result<Self, ToolError> {
-        let client = reqwest::Client::new();
-        Ok(Self { config, client })
+    pub fn new(config: SearchConfig) -> Self {
+        Self {
+            config,
+            client: None,
+        }
     }
 }
 
@@ -85,6 +105,21 @@ impl SearchTool {
 impl Tool for SearchTool {
     type Input = SearchInput;
     type Output = SearchOutput;
+    type Config = SearchConfig;
+
+    async fn initialize(&mut self) -> Result<(), ToolError> {
+        self.client = Some(reqwest::Client::new());
+        Ok(())
+    }
+
+    async fn shutdown(&mut self) -> Result<(), ToolError> {
+        self.client = None;
+        Ok(())
+    }
+
+    fn capabilities(&self) -> Vec<ToolCapability> {
+        vec![ToolCapability::ThreadSafe, ToolCapability::NetworkAccess]
+    }
 
     #[instrument(skip_all)]
     async fn invoke(&self, _input: Self::Input) -> Result<Self::Output, ToolError> {
@@ -147,12 +182,64 @@ impl Tool for SearchTool {
 mod tests {
     use super::*;
 
+    fn create_test_config() -> SearchConfig {
+        SearchConfig {
+            api_key: "test_key".to_string(),
+            base_url: "https://api.search.test".to_string(),
+            rate_limit: 10.0,
+            cache_duration: 3600,
+        }
+    }
+
     #[tokio::test]
     async fn test_tool_creation() {
-        let config = SearchConfig {
-            api_key: "test".to_string(),
-            base_url: "https://api.search.test".to_string(),
+        let config = create_test_config();
+        let mut tool = SearchTool::new(config);
+        assert!(tool.initialize().await.is_ok());
+        assert!(tool.shutdown().await.is_ok());
+    }
+
+    #[test]
+    fn test_config_validation() {
+        let valid_config = create_test_config();
+        assert!(valid_config.validate().is_ok());
+
+        let invalid_config = SearchConfig {
+            api_key: "".to_string(),
+            ..create_test_config()
         };
-        let _tool = SearchTool::new(config).unwrap();
+        assert!(invalid_config.validate().is_err());
+
+        let invalid_config = SearchConfig {
+            base_url: "".to_string(),
+            ..create_test_config()
+        };
+        assert!(invalid_config.validate().is_err());
+
+        let invalid_config = SearchConfig {
+            base_url: "invalid_url".to_string(),
+            ..create_test_config()
+        };
+        assert!(invalid_config.validate().is_err());
+
+        let invalid_config = SearchConfig {
+            rate_limit: 0.0,
+            ..create_test_config()
+        };
+        assert!(invalid_config.validate().is_err());
+
+        let invalid_config = SearchConfig {
+            cache_duration: 0,
+            ..create_test_config()
+        };
+        assert!(invalid_config.validate().is_err());
+    }
+
+    #[test]
+    fn test_capabilities() {
+        let tool = SearchTool::new(create_test_config());
+        let capabilities = tool.capabilities();
+        assert!(capabilities.contains(&ToolCapability::ThreadSafe));
+        assert!(capabilities.contains(&ToolCapability::NetworkAccess));
     }
 }

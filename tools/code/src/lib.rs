@@ -8,7 +8,7 @@
 use async_trait::async_trait;
 use cogni_core::{
     error::ToolError,
-    tool::{Tool, ToolSpec},
+    tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -49,14 +49,13 @@ pub struct ExecutionStats {
 
 /// Configuration for the code execution tool.
 #[derive(Debug, Clone)]
-#[allow(dead_code)] // Fields will be used in future implementations
 pub struct CodeConfig {
     /// Default timeout in seconds
-    timeout: u64,
+    pub timeout: u64,
     /// Default memory limit in MB
-    memory_limit: u64,
+    pub memory_limit: u64,
     /// Path to WASI SDK
-    wasi_sdk_path: String,
+    pub wasi_sdk_path: String,
 }
 
 impl Default for CodeConfig {
@@ -69,29 +68,40 @@ impl Default for CodeConfig {
     }
 }
 
-impl CodeConfig {
-    /// Create a new configuration with custom settings.
-    pub fn new(timeout: u64, memory_limit: u64, wasi_sdk_path: impl Into<String>) -> Self {
-        Self {
-            timeout,
-            memory_limit,
-            wasi_sdk_path: wasi_sdk_path.into(),
+impl ToolConfig for CodeConfig {
+    fn validate(&self) -> Result<(), String> {
+        if self.timeout == 0 {
+            return Err("timeout must be greater than 0".into());
         }
+        if self.memory_limit == 0 {
+            return Err("memory_limit must be greater than 0".into());
+        }
+        if self.wasi_sdk_path.is_empty() {
+            return Err("wasi_sdk_path cannot be empty".into());
+        }
+        if !std::path::Path::new(&self.wasi_sdk_path).exists() {
+            return Err(format!(
+                "wasi_sdk_path {} does not exist",
+                self.wasi_sdk_path
+            ));
+        }
+        Ok(())
     }
 }
 
 /// The code execution tool.
-#[allow(dead_code)] // Fields will be used in future implementations
 pub struct CodeTool {
     config: CodeConfig,
-    engine: Engine,
+    engine: Option<Engine>,
 }
 
 impl CodeTool {
     /// Create a new code execution tool with the given configuration.
-    pub fn new(config: CodeConfig) -> Result<Self, ToolError> {
-        let engine = Engine::default();
-        Ok(Self { config, engine })
+    pub fn new(config: CodeConfig) -> Self {
+        Self {
+            config,
+            engine: None,
+        }
     }
 }
 
@@ -99,6 +109,26 @@ impl CodeTool {
 impl Tool for CodeTool {
     type Input = CodeInput;
     type Output = CodeOutput;
+    type Config = CodeConfig;
+
+    async fn initialize(&mut self) -> Result<(), ToolError> {
+        self.engine = Some(Engine::default());
+        Ok(())
+    }
+
+    async fn shutdown(&mut self) -> Result<(), ToolError> {
+        self.engine = None;
+        Ok(())
+    }
+
+    fn capabilities(&self) -> Vec<ToolCapability> {
+        vec![
+            ToolCapability::ThreadSafe,
+            ToolCapability::CpuIntensive,
+            ToolCapability::MemoryIntensive,
+            ToolCapability::FileSystem,
+        ]
+    }
 
     #[instrument(skip(self, _input))]
     async fn invoke(&self, _input: Self::Input) -> Result<Self::Output, ToolError> {
@@ -179,8 +209,42 @@ mod tests {
     #[tokio::test]
     async fn test_tool_creation() {
         let config = CodeConfig::default();
-        let _tool = CodeTool::new(config).unwrap();
+        let mut tool = CodeTool::new(config);
+        assert!(tool.initialize().await.is_ok());
+        assert!(tool.shutdown().await.is_ok());
+    }
 
-        // Test will be expanded when invoke is implemented
+    #[test]
+    fn test_config_validation() {
+        let valid_config = CodeConfig::default();
+        assert!(valid_config.validate().is_err()); // Will fail if WASI SDK not installed
+
+        let invalid_config = CodeConfig {
+            timeout: 0,
+            ..CodeConfig::default()
+        };
+        assert!(invalid_config.validate().is_err());
+
+        let invalid_config = CodeConfig {
+            memory_limit: 0,
+            ..CodeConfig::default()
+        };
+        assert!(invalid_config.validate().is_err());
+
+        let invalid_config = CodeConfig {
+            wasi_sdk_path: "".to_string(),
+            ..CodeConfig::default()
+        };
+        assert!(invalid_config.validate().is_err());
+    }
+
+    #[test]
+    fn test_capabilities() {
+        let tool = CodeTool::new(CodeConfig::default());
+        let capabilities = tool.capabilities();
+        assert!(capabilities.contains(&ToolCapability::ThreadSafe));
+        assert!(capabilities.contains(&ToolCapability::CpuIntensive));
+        assert!(capabilities.contains(&ToolCapability::MemoryIntensive));
+        assert!(capabilities.contains(&ToolCapability::FileSystem));
     }
 }
