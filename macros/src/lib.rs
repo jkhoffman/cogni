@@ -163,6 +163,7 @@ pub fn derive_tool_set(input: TokenStream) -> TokenStream {
 /// # Example
 /// ```rust
 /// use cogni_macros::chat_message;
+/// use cogni_provider_openai::ChatMessage;
 ///
 /// let msg = chat_message!(user: "Hello, AI!");
 /// let sys = chat_message!(system: "You are a helpful assistant.");

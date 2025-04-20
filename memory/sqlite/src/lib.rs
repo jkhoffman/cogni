@@ -271,11 +271,9 @@ mod tests {
         assert_eq!(limited[1].content, entries[1].content);
     }
 
-    #[tokio::test]
-    async fn test_invalid_role() {
-        let _store = create_test_store().await;
-
-        // Try to parse an invalid role
+    #[test]
+    fn test_invalid_role() {
+        // This test doesn't need a database connection
         let result = SqliteStore::parse_role("invalid");
         assert!(matches!(result, Err(MemoryError::InvalidFormat(_))));
     }

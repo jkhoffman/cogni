@@ -325,6 +325,7 @@ name = "cogni-macros"
 version = "0.1.0"
 dependencies = [
  "cogni-core",
+ "cogni-provider-openai",
  "proc-macro-error",
  "proc-macro2",
  "quote",

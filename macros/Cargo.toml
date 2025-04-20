@@ -19,5 +19,6 @@ regex = "1.10"
 
 [dev-dependencies]
 cogni-core = { path = "../core" }
+cogni-provider-openai = { path = "../providers/openai" }
 trybuild = "1.0"
 serde = { version = "1.0", features = ["derive"] }
