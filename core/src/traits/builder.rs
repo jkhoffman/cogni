@@ -10,9 +10,10 @@
 pub trait Builder {
     /// The type that this builder constructs
     type Output;
+    type Error;
 
     /// Build the component
-    fn build(self) -> Result<Self::Output, String>;
+    fn build(self) -> Result<Self::Output, Self::Error>;
 }
 
 #[cfg(feature = "tool")]
@@ -20,6 +21,7 @@ mod tool_builder {
     use std::fmt::Debug;
     use std::marker::PhantomData;
 
+    use crate::error::ToolConfigError;
     use crate::traits::tool::{Tool, ToolCapability, ToolConfig};
 
     /// A builder for constructing tools with a fluent API.
@@ -86,20 +88,22 @@ mod tool_builder {
         O: Debug,
     {
         type Output = T;
+        type Error = ToolConfigError;
 
-        fn build(self) -> Result<Self::Output, String> {
+        fn build(self) -> Result<Self::Output, Self::Error> {
             // Validate the configuration
-            self.config.validate().map_err(|e| e.to_string())?;
+            self.config.validate()?;
 
             // Create and initialize the tool
-            let mut tool =
-                T::try_new(self.config).map_err(|e| format!("Failed to create tool: {}", e))?;
+            let mut tool = T::try_new(self.config)?;
 
             // Initialize the tool
             tokio::runtime::Runtime::new()
                 .unwrap()
                 .block_on(tool.initialize())
-                .map_err(|e| format!("Failed to initialize tool: {}", e))?;
+                .map_err(|e| {
+                    ToolConfigError::ValidationFailed(format!("Failed to initialize tool: {}", e))
+                })?;
 
             Ok(tool)
         }
