@@ -60,10 +60,10 @@
   - [x] Add error reporting interfaces
 
 - [ ] Chain Executor Hardening
-  - [ ] Add resource cleanup for parallel chains
-  - [ ] Implement timeout handling
+  - [x] Add resource cleanup for parallel chains
+  - [x] Implement timeout handling
   - [ ] Add telemetry/tracing support
-  - [ ] Enhance error propagation
+  - [x] Enhance error propagation
 
 - [ ] Architectural Improvements
   - [ ] Split core traits into modules
