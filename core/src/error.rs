@@ -189,6 +189,30 @@ pub enum ToolError {
         /// Whether the error is retryable
         retryable: bool,
     },
+
+    /// Tool initialization failed
+    #[error("Tool initialization failed: {0}")]
+    InitializationFailed(String),
+
+    /// Tool shutdown failed
+    #[error("Tool shutdown failed: {0}")]
+    ShutdownFailed(String),
+}
+
+/// Errors that can occur during tool configuration validation.
+#[derive(Error, Debug)]
+pub enum ToolConfigError {
+    /// A required configuration field is missing
+    #[error("Missing configuration field: {field_name}")]
+    MissingField { field_name: String },
+
+    /// An invalid value was provided for a configuration field
+    #[error("Invalid configuration value for field '{field_name}': {message}")]
+    InvalidValue { field_name: String, message: String },
+
+    /// A general validation error
+    #[error("Configuration validation failed: {0}")]
+    ValidationFailed(String),
 }
 
 /// Errors that can occur during memory operations.
@@ -211,36 +235,13 @@ pub enum MemoryError {
 #[derive(Debug, Error)]
 pub struct ChainError {
     /// Error variant
+    #[source]
     pub kind: ChainErrorKind,
-    /// Error context
-    pub context: ErrorContext,
-    /// Retry policy
-    pub retry_policy: RetryPolicy,
-    /// Timestamp when the error occurred
-    pub timestamp: DateTime<Utc>,
 }
 
 impl fmt::Display for ChainError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} [{}::{} at {}]",
-            self.kind,
-            self.context.source,
-            self.context.operation,
-            self.timestamp.to_rfc3339()
-        )?;
-        if !self.context.metadata.is_empty() {
-            write!(f, " {{")?;
-            for (i, (key, value)) in self.context.metadata.iter().enumerate() {
-                if i > 0 {
-                    write!(f, ", ")?;
-                }
-                write!(f, "{}={}", key, value)?;
-            }
-            write!(f, "}}")?;
-        }
-        Ok(())
+        write!(f, "{}", self.kind)
     }
 }
 
@@ -275,17 +276,43 @@ pub enum ChainErrorKind {
         /// Error message
         message: String,
     },
+
+    /// An underlying LLM error occurred during a chain step
+    #[error("LLM step failed: {0}")]
+    Llm(#[from] LlmError),
+
+    /// An underlying Tool error occurred during a chain step
+    #[error("Tool step failed: {0}")]
+    Tool(#[from] ToolError),
+
+    /// An underlying Memory error occurred during a chain step
+    #[error("Memory step failed: {0}")]
+    Memory(#[from] MemoryError),
+
+    /// An invalid step transition occurred
+    #[error("Invalid chain step transition: {0}")]
+    InvalidTransition(String),
 }
 
 impl ChainError {
-    /// Create a new chain error
+    /// Create a new chain error from a specific kind.
     pub fn new(kind: ChainErrorKind) -> Self {
-        Self {
-            kind,
-            context: ErrorContext::default(),
-            retry_policy: RetryPolicy::default(),
-            timestamp: Utc::now(),
-        }
+        Self { kind }
+    }
+
+    /// Create a new chain error directly from an underlying LLM error.
+    pub fn from_llm(error: LlmError) -> Self {
+        Self::new(ChainErrorKind::Llm(error))
+    }
+
+    /// Create a new chain error directly from an underlying Tool error.
+    pub fn from_tool(error: ToolError) -> Self {
+        Self::new(ChainErrorKind::Tool(error))
+    }
+
+    /// Create a new chain error directly from an underlying Memory error.
+    pub fn from_memory(error: MemoryError) -> Self {
+        Self::new(ChainErrorKind::Memory(error))
     }
 
     /// Create a new timeout error

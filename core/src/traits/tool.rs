@@ -21,8 +21,9 @@
 //! 4. Implement the required methods
 //!
 //! ```rust,no_run
+//! // NOTE: ToolConfig implementation example moved to ToolConfig trait docs
 //! use cogni_core::traits::tool::{Tool, ToolSpec, ToolConfig, ToolCapability};
-//! use cogni_core::error::ToolError;
+//! use cogni_core::error::{ToolError, ToolConfigError};
 //! use serde::{Serialize, Deserialize};
 //! use async_trait::async_trait;
 //!
@@ -33,12 +34,15 @@
 //! }
 //!
 //! impl ToolConfig for MyToolConfig {
-//!     fn validate(&self) -> Result<(), String> {
+//!     fn validate(&self) -> Result<(), ToolConfigError> {
 //!         if self.api_key.is_empty() {
-//!             return Err("API key cannot be empty".into());
+//!             return Err(ToolConfigError::MissingField { field_name: "api_key".into() });
 //!         }
 //!         if self.timeout == 0 {
-//!             return Err("Timeout must be greater than 0".into());
+//!             return Err(ToolConfigError::InvalidValue {
+//!                 field_name: "timeout".into(),
+//!                 message: "Timeout must be greater than 0".into(),
+//!             });
 //!         }
 //!         Ok(())
 //!     }
@@ -92,7 +96,7 @@
 //!         }
 //!     }
 //!
-//!     fn try_new(config: Self::Config) -> Result<Self, Box<ToolError>>
+//!     fn try_new(config: Self::Config) -> Result<Self, ToolConfigError>
 //!     where
 //!         Self: Sized,
 //!     {
@@ -108,6 +112,7 @@ use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Debug;
 
+use crate::error::ToolConfigError;
 use crate::error::ToolError;
 
 /// Configuration for a tool.
@@ -115,6 +120,35 @@ use crate::error::ToolError;
 /// This trait should be implemented by types that provide configuration
 /// for tools. It enables validation of configuration parameters before
 /// a tool is initialized.
+///
+/// # Example Implementation
+///
+/// ```rust,no_run
+/// use cogni_core::traits::tool::ToolConfig;
+/// use cogni_core::error::ToolConfigError;
+/// use serde::{Serialize, Deserialize};
+///
+/// #[derive(Debug, Serialize, Deserialize)]
+/// struct MyToolConfig {
+///     api_key: String,
+///     timeout: u64,
+/// }
+///
+/// impl ToolConfig for MyToolConfig {
+///     fn validate(&self) -> Result<(), ToolConfigError> {
+///         if self.api_key.is_empty() {
+///             return Err(ToolConfigError::MissingField { field_name: "api_key".into() });
+///         }
+///         if self.timeout == 0 {
+///             return Err(ToolConfigError::InvalidValue {
+///                 field_name: "timeout".into(),
+///                 message: "Timeout must be greater than 0".into(),
+///             });
+///         }
+///         Ok(())
+///     }
+/// }
+/// ```
 pub trait ToolConfig: Debug + Send + Sync {
     /// Validate the configuration.
     ///
@@ -123,8 +157,8 @@ pub trait ToolConfig: Debug + Send + Sync {
     ///
     /// # Returns
     /// - `Ok(())` if the configuration is valid
-    /// - `Err(String)` with a description of what is invalid
-    fn validate(&self) -> Result<(), String>;
+    /// - `Err(ToolConfigError)` describing the validation failure
+    fn validate(&self) -> Result<(), ToolConfigError>;
 }
 
 /// Capabilities that a tool can declare.
@@ -216,7 +250,7 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Returns `Box<ToolError>` if creation fails.
-    fn try_new(config: Self::Config) -> Result<Self, Box<ToolError>>
+    fn try_new(config: Self::Config) -> Result<Self, ToolConfigError>
     where
         Self: Sized;
 
