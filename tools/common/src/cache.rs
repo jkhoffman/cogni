@@ -142,6 +142,12 @@ pub struct ToolCache {
     bytes_stored: Arc<AtomicU64>,
 }
 
+impl Default for ToolCache {
+    fn default() -> Self {
+        Self::new(CacheConfig::default())
+    }
+}
+
 impl ToolCache {
     /// Create a new tool cache with the given configuration.
     ///
@@ -162,14 +168,6 @@ impl ToolCache {
             explicit_evictions: Arc::new(AtomicU64::new(0)),
             bytes_stored: Arc::new(AtomicU64::new(0)),
         }
-    }
-
-    /// Create a new tool cache with default configuration.
-    ///
-    /// # Returns
-    /// A new `ToolCache` instance with default configuration
-    pub fn default() -> Self {
-        Self::new(CacheConfig::default())
     }
 
     /// Get a value from the cache.

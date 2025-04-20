@@ -172,7 +172,7 @@ impl Default for HttpClientConfig {
             rate_limit_rps: DEFAULT_RATE_LIMIT_RPS,
             max_concurrent_requests: DEFAULT_MAX_CONCURRENT_REQUESTS,
             default_headers,
-            user_agent: format!("cogni-http-client/0.1.0"),
+            user_agent: "cogni-http-client/0.1.0".to_string(),
             follow_redirects: true,
             enable_cookies: true,
             connect_timeout_secs: 10,
@@ -195,6 +195,12 @@ pub struct HttpClient {
     backoff_config: ExponentialBackoff,
     /// Client-specific headers that are added to all requests.
     client_headers: Arc<DashMap<String, String>>,
+}
+
+impl Default for HttpClient {
+    fn default() -> Self {
+        Self::with_default_config().expect("Failed to create default HTTP client")
+    }
 }
 
 impl HttpClient {
@@ -265,7 +271,7 @@ impl HttpClient {
     ///
     /// # Errors
     /// Returns an error if the client could not be created.
-    pub fn default() -> Result<Self, HttpError> {
+    pub fn with_default_config() -> Result<Self, HttpError> {
         Self::new(HttpClientConfig::default())
     }
 
@@ -557,7 +563,7 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
     use serde::Deserialize;
-    
+
     use wiremock::{
         matchers::{method, path},
         Mock, MockServer, ResponseTemplate,
@@ -581,7 +587,7 @@ mod tests {
             .await;
 
         // Create an HTTP client
-        let client = HttpClient::default().unwrap();
+        let client = HttpClient::with_default_config().unwrap();
 
         // Make a request
         let url = format!("{}/test", mock_server.uri());
@@ -617,7 +623,7 @@ mod tests {
             .await;
 
         // Create an HTTP client
-        let client = HttpClient::default().unwrap();
+        let client = HttpClient::with_default_config().unwrap();
 
         // Make a request
         let url = format!("{}/test-json", mock_server.uri());
@@ -661,7 +667,7 @@ mod tests {
             .await;
 
         // Create an HTTP client
-        let client = HttpClient::default().unwrap();
+        let client = HttpClient::with_default_config().unwrap();
 
         // Make a request
         let url = format!("{}/test-post", mock_server.uri());
@@ -752,7 +758,7 @@ mod tests {
             .await;
 
         // Create an HTTP client
-        let client = HttpClient::default().unwrap();
+        let client = HttpClient::with_default_config().unwrap();
 
         // Set a client-specific header
         client.set_header("X-Test", "test-value");

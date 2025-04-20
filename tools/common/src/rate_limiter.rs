@@ -141,6 +141,12 @@ pub struct ToolRateLimiter {
     last_updated: Arc<Mutex<HashMap<String, Instant>>>,
 }
 
+impl Default for ToolRateLimiter {
+    fn default() -> Self {
+        Self::new(RateLimiterConfig::default())
+    }
+}
+
 impl ToolRateLimiter {
     /// Create a new rate limiter with the given configuration.
     ///
@@ -186,14 +192,6 @@ impl ToolRateLimiter {
         }
     }
 
-    /// Create a new rate limiter with default configuration.
-    ///
-    /// # Returns
-    /// A new `ToolRateLimiter` instance with default configuration
-    pub fn default() -> Self {
-        Self::new(RateLimiterConfig::default())
-    }
-
     /// Check if a request to the given URL is allowed by the rate limiter.
     ///
     /// This method extracts the domain from the URL and checks it against
@@ -223,8 +221,8 @@ impl ToolRateLimiter {
                     let parts: Vec<&str> = host.split('.').collect();
                     if parts.len() >= 2 {
                         // Get the last two parts (e.g., example.com)
-                        let main_domain = parts[parts.len() - 2..].join(".");
-                        main_domain
+
+                        parts[parts.len() - 2..].join(".")
                     } else {
                         host.to_string()
                     }
