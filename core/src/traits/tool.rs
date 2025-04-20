@@ -91,6 +91,16 @@
 //!             examples: vec![],
 //!         }
 //!     }
+//!
+//!     fn try_new(config: Self::Config) -> Result<Self, ToolError>
+//!     where
+//!         Self: Sized,
+//!     {
+//!         Ok(Self {
+//!             config,
+//!             client: None,
+//!         })
+//!     }
 //! }
 //! ```
 
@@ -197,6 +207,18 @@ pub trait Tool: Send + Sync {
 
     /// The type containing tool configuration
     type Config: ToolConfig;
+
+    /// Try to create a new instance of the tool with the given configuration.
+    ///
+    /// This is used by the builder pattern to construct tool instances.
+    /// Implementations should validate the configuration and perform any
+    /// necessary setup that doesn't require async operations.
+    ///
+    /// # Errors
+    /// Returns `ToolError` if creation fails.
+    fn try_new(config: Self::Config) -> Result<Self, ToolError>
+    where
+        Self: Sized;
 
     /// Initialize the tool.
     ///
