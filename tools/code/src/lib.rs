@@ -92,7 +92,7 @@ impl ToolConfig for CodeConfig {
         if !std::path::Path::new(&self.wasi_sdk_path).exists() {
             return Err(ToolConfigError::InvalidValue {
                 field_name: "wasi_sdk_path".into(),
-                message: format!("wasi_sdk_path {} does not exist", self.wasi_sdk_path).into(),
+                message: format!("wasi_sdk_path {} does not exist", self.wasi_sdk_path),
             });
         }
         Ok(())
