@@ -59,7 +59,7 @@
   - [x] Add retry policies
   - [x] Add error reporting interfaces
 
-- [ ] Chain Executor Hardening
+- [x] Chain Executor Hardening
   - [x] Add resource cleanup for parallel chains
   - [x] Implement timeout handling
   - [x] Add telemetry/tracing support
@@ -76,6 +76,8 @@
   - [ ] Add test utilities
   - [ ] Create integration test harness
   - [ ] Add error path coverage
+  - [ ] Add performance regression tests
+  - [ ] Implement fuzzing for critical components
 
 ## Milestone 3 (Target: Jun 27, 2025) - Tool Framework
 - [ ] Tool Plugin System
@@ -83,6 +85,9 @@
   - [ ] Add tool specification system
   - [ ] Create tool invocation tracking
   - [ ] Add tool error handling
+  - [ ] Implement tool versioning and compatibility checks
+  - [ ] Add tool dependency resolution
+  - [ ] Create tool validation framework
 
 - [ ] Search Tool
   - [ ] Implement SerpAPI integration
@@ -178,6 +183,13 @@
 - [ ] Web UI components
 - [ ] Additional LLM providers
 - [ ] Enhanced tool ecosystem
+- [ ] Fine-tuning support for local models
+- [ ] Multi-model orchestration and fallback
+- [ ] Semantic caching for LLM responses
+- [ ] Prompt optimization and auto-tuning
+- [ ] Model performance benchmarking suite
+- [ ] Privacy-preserving inference options
+- [ ] Distributed tool execution framework
 
 ## Notes
 - Track progress by checking off items as they're completed
