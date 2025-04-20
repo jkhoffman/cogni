@@ -180,6 +180,9 @@ impl Default for HttpClientConfig {
     }
 }
 
+/// Type alias for the rate limiter used by the HTTP client to reduce type complexity.
+type HttpRateLimiter = RateLimiter<NotKeyed, InMemoryState, DefaultClock, NoOpMiddleware>;
+
 /// HTTP client for making requests with retries, rate limiting, and concurrency control.
 #[derive(Debug, Clone)]
 pub struct HttpClient {
@@ -188,7 +191,7 @@ pub struct HttpClient {
     /// The configuration for this client.
     config: HttpClientConfig,
     /// Rate limiter for throttling requests.
-    rate_limiter: Arc<RateLimiter<NotKeyed, InMemoryState, DefaultClock, NoOpMiddleware>>,
+    rate_limiter: Arc<HttpRateLimiter>,
     /// Semaphore for limiting concurrent requests.
     concurrency_limit: Arc<Mutex<()>>,
     /// Exponential backoff configuration for retries.

@@ -34,6 +34,9 @@ pub const DEFAULT_GLOBAL_RPS: f64 = 20.0;
 /// The default burst size for the global rate limiter.
 pub const DEFAULT_GLOBAL_BURST_SIZE: u32 = 10;
 
+/// Default timeout for HTTP requests in seconds.
+pub const DEFAULT_TIMEOUT_SECS: u64 = 30;
+
 /// Errors that can occur during rate limiting.
 #[derive(Error, Debug)]
 pub enum RateLimitError {
@@ -117,6 +120,12 @@ impl Default for RateLimiterConfig {
     }
 }
 
+/// Type alias for the rate limiter used internally to reduce type complexity.
+type ToolRateLimiterInner = RateLimiter<NotKeyed, InMemoryState, DefaultClock, NoOpMiddleware>;
+
+/// Type alias for domain or group rate limiter maps.
+type RateLimiterMap = Arc<DashMap<String, ToolRateLimiterInner>>;
+
 /// A rate limiter for tools.
 ///
 /// The rate limiter supports:
@@ -128,15 +137,11 @@ pub struct ToolRateLimiter {
     /// The configuration for this rate limiter.
     config: RateLimiterConfig,
     /// The global rate limiter.
-    global_limiter: Option<Arc<RateLimiter<NotKeyed, InMemoryState, DefaultClock, NoOpMiddleware>>>,
+    global_limiter: Option<Arc<ToolRateLimiterInner>>,
     /// Domain-specific rate limiters.
-    domain_limiters: Option<
-        Arc<DashMap<String, RateLimiter<NotKeyed, InMemoryState, DefaultClock, NoOpMiddleware>>>,
-    >,
+    domain_limiters: Option<RateLimiterMap>,
     /// Group-specific rate limiters.
-    group_limiters: Option<
-        Arc<DashMap<String, RateLimiter<NotKeyed, InMemoryState, DefaultClock, NoOpMiddleware>>>,
-    >,
+    group_limiters: Option<RateLimiterMap>,
     /// Last updated time for adaptive rate limiters
     last_updated: Arc<Mutex<HashMap<String, Instant>>>,
 }
