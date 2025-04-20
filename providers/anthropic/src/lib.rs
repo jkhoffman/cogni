@@ -10,13 +10,12 @@ use cogni_core::error::LlmError;
 use cogni_core::traits::llm::{GenerateOptions, LanguageModel};
 use futures::Stream;
 use futures::TryStreamExt;
-use futures::stream::StreamExt;
+use futures::stream::BoxStream;
 use pin_project::pin_project;
 use reqwest::{
-    Client, RequestBuilder,
+    Client,
     header::{HeaderMap, HeaderValue},
 };
-use reqwest_eventsource::Error as EventSourceError;
 use reqwest_eventsource::{Event, EventSource, RequestBuilderExt};
 use serde::{Deserialize, Serialize};
 use std::pin::Pin;
@@ -335,7 +334,7 @@ impl LanguageModel for AnthropicClient {
             .json(&request_body)
             .send()
             .await
-            .map_err(|e| LlmError::RequestFailed(e))?;
+            .map_err(LlmError::RequestFailed)?;
 
         if !response.status().is_success() {
             let status = response.status();
