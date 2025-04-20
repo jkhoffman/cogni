@@ -170,8 +170,8 @@ pub enum LlmError {
 #[derive(Error, Debug)]
 pub enum ToolError {
     /// The tool request timed out
-    #[error("Tool request timed out")]
-    Timeout,
+    #[error("Tool request timed out after {0} seconds")]
+    Timeout(u64),
     /// The tool returned an error
     #[error("Tool error: {0}")]
     ToolError(String),

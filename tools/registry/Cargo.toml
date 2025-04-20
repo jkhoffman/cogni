@@ -1,0 +1,32 @@
+[package]
+name = "cogni-tools-registry"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Tool registry for the Cogni framework"
+
+[dependencies]
+# Internal crates
+cogni-core = { path = "../../core", version = "0.1.0", features = ["tool"] }
+
+# External dependencies
+anyhow.workspace = true
+async-trait.workspace = true
+futures.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+dashmap = "5.5.3"
+semver = "1.0.20"
+jsonschema = "0.17.1"
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+tokio-test.workspace = true
+pretty_assertions.workspace = true
+test-log.workspace = true
+tracing-subscriber.workspace = true
