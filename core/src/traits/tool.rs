@@ -92,7 +92,7 @@
 //!         }
 //!     }
 //!
-//!     fn try_new(config: Self::Config) -> Result<Self, ToolError>
+//!     fn try_new(config: Self::Config) -> Result<Self, Box<ToolError>>
 //!     where
 //!         Self: Sized,
 //!     {
@@ -105,7 +105,7 @@
 //! ```
 
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Debug;
 
 use crate::error::ToolError;
@@ -215,8 +215,8 @@ pub trait Tool: Send + Sync {
     /// necessary setup that doesn't require async operations.
     ///
     /// # Errors
-    /// Returns `ToolError` if creation fails.
-    fn try_new(config: Self::Config) -> Result<Self, ToolError>
+    /// Returns `Box<ToolError>` if creation fails.
+    fn try_new(config: Self::Config) -> Result<Self, Box<ToolError>>
     where
         Self: Sized;
 

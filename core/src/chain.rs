@@ -29,6 +29,19 @@ use tokio::{
 };
 use tracing::{debug, error, info, info_span, warn, Instrument};
 
+/// Type alias for a language model with specific input and output types
+pub type LanguageModelArc<I, O> = Arc<
+    dyn LanguageModel<
+            Prompt = I,
+            Response = O,
+            TokenStream = Pin<Box<dyn Stream<Item = Result<String, LlmError>> + Send + 'static>>,
+        > + Send
+        + Sync,
+>;
+
+/// Type alias for tool with specific input and output types
+pub type ToolArc<I, O> = Arc<dyn Tool<Input = I, Output = O, Config = ()> + Send + Sync>;
+
 /// Placeholder for NoopLanguageModel
 #[derive(Debug, Default, Clone)]
 struct NoopLanguageModel;
@@ -39,7 +52,7 @@ impl Tool for NoopLanguageModel {
     type Output = String;
     type Config = ();
 
-    fn try_new(_config: Self::Config) -> Result<Self, ToolError> {
+    fn try_new(_config: Self::Config) -> Result<Self, Box<ToolError>> {
         Ok(Self)
     }
 
@@ -316,21 +329,12 @@ where
     O: Clone + Send + Sync + Serialize + DeserializeOwned + Debug + 'static,
 {
     Llm {
-        model: Arc<
-            dyn LanguageModel<
-                    Prompt = I,
-                    Response = O,
-                    TokenStream = Pin<
-                        Box<dyn Stream<Item = Result<String, LlmError>> + Send + 'static>,
-                    >,
-                > + Send
-                + Sync,
-        >,
+        model: LanguageModelArc<I, O>,
         _prompt: Arc<PromptTemplate>,
         timeout: Duration,
     },
     Tool {
-        tool: Arc<dyn Tool<Input = I, Output = O, Config = ()> + Send + Sync>,
+        tool: ToolArc<I, O>,
         timeout: Duration,
     },
     Parallel(Vec<Arc<Chain<I, O>>>),
@@ -369,7 +373,7 @@ where
     I: Clone + Send + Sync + Serialize + DeserializeOwned + Debug + 'static,
     O: Clone + Send + Sync + Serialize + DeserializeOwned + Debug + 'static,
 {
-    pub tools: Vec<Arc<dyn Tool<Input = I, Output = O, Config = ()> + Send + Sync>>,
+    pub tools: Vec<ToolArc<I, O>>,
     pub parallel_chains: Vec<Arc<Chain<I, O>>>,
     pub resources: Vec<ResourceHandle>,
     pub config: ChainConfig,
@@ -648,16 +652,7 @@ where
 
     async fn execute_llm_step(
         &self,
-        model: Arc<
-            dyn LanguageModel<
-                    Prompt = I,
-                    Response = O,
-                    TokenStream = Pin<
-                        Box<dyn Stream<Item = Result<String, LlmError>> + Send + 'static>,
-                    >,
-                > + Send
-                + Sync,
-        >,
+        model: LanguageModelArc<I, O>,
         _prompt: Arc<PromptTemplate>,
         input: I,
         timeout_duration: Option<Duration>,
@@ -707,7 +702,7 @@ where
 
     async fn execute_tool_step(
         &self,
-        tool: Arc<dyn Tool<Input = I, Output = O, Config = ()> + Send + Sync>,
+        tool: ToolArc<I, O>,
         input: I,
         timeout_duration: Option<Duration>,
         cancel_rx: &mut broadcast::Receiver<()>,
@@ -919,9 +914,9 @@ mod tests {
         type Output = String;
         type Config = ();
 
-        fn try_new(_config: Self::Config) -> Result<Self, ToolError> {
+        fn try_new(_config: Self::Config) -> Result<Self, Box<ToolError>> {
             Ok(Self {
-                name: "mock_tool".into(),
+                name: "mock".to_string(),
                 invocations: Arc::new(Mutex::new(Vec::new())),
             })
         }
