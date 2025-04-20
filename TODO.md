@@ -94,6 +94,8 @@
   - [ ] Add result parsing
   - [ ] Implement rate limiting
   - [ ] Add caching layer
+  - [ ] Complete `invoke` method implementation
+  - [ ] Add error retry mechanism
 
 - [ ] MCP Integration
   - [ ] Implement MCP client
@@ -101,18 +103,54 @@
   - [ ] Implement security measures
   - [ ] Add tool routing
 
-## Milestone 4 (Target: Jul 18, 2025) - Additional Tools & Models
+- [ ] Common Tool Utilities
+  - [ ] Create shared HTTP client implementation
+  - [ ] Add rate limiting utilities
+  - [ ] Implement caching mechanisms
+  - [ ] Create common validation helpers
+
+## Milestone 4 (Target: Jul 18, 2025) - Agent Foundation
+- [ ] Agent Implementation
+  - [ ] Define `Agent` trait
+  - [ ] Implement basic agent structure
+  - [ ] Add tool selection logic
+  - [ ] Create memory integration
+  - [ ] Implement planning capabilities
+
+- [ ] Agent Builder
+  - [ ] Create fluent builder API
+  - [ ] Add configuration validation
+  - [ ] Implement preset strategies
+  - [ ] Add extension mechanism
+
+- [ ] Basic Agent Strategies
+  - [ ] Implement ReAct pattern
+  - [ ] Add basic chain-of-thought reasoning
+  - [ ] Create simple planning mechanism
+  - [ ] Implement context management
+
+- [ ] Agent-Tool Integration
+  - [ ] Create tool discovery mechanism
+  - [ ] Implement tool invocation framework
+  - [ ] Add tool result handling
+  - [ ] Create error recovery strategies
+
+## Milestone 5 (Target: Aug 08, 2025) - Additional Tools & Models
 - [ ] Code Interpreter Tool
   - [ ] Implement WASI sandbox
   - [ ] Add security constraints
   - [ ] Create execution environment
   - [ ] Add resource limits
+  - [ ] Complete `invoke` method implementation
+  - [ ] Add code analysis capabilities
 
 - [ ] Math Tool
   - [ ] Implement expression parser
   - [ ] Add computation engine
   - [ ] Create safety checks
   - [ ] Add numerical stability tests
+  - [ ] Complete `invoke` method implementation
+  - [ ] Add symbolic math capabilities
 
 - [ ] Candle Integration
   - [ ] Add local model support
@@ -120,7 +158,13 @@
   - [ ] Add model loading
   - [ ] Create performance benchmarks
 
-## Milestone 5 (Target: Aug 08, 2025) - Memory & Features
+- [ ] Comprehensive Examples
+  - [ ] Create basic chatbot example
+  - [ ] Implement tool-using agent example
+  - [ ] Add memory-backed conversation example
+  - [ ] Create parallel chain processing example
+
+## Milestone 6 (Target: Aug 29, 2025) - Advanced Memory & Agent Strategies
 - [ ] Redis Memory Backend
   - [ ] Implement Redis client integration
   - [ ] Add data structures
@@ -133,24 +177,63 @@
   - [ ] Add indexing
   - [ ] Create migration system
 
+- [ ] Vector Memory Backend
+  - [ ] Implement embedding handling
+  - [ ] Add similarity search
+  - [ ] Create vector indexing
+  - [ ] Integrate with existing memory interface
+
+- [ ] Advanced Agent Strategies
+  - [ ] Enhance ReAct implementation
+  - [ ] Improve chain-of-thought reasoning
+  - [ ] Create autonomous planning
+  - [ ] Add multiple agent coordination
+
 - [ ] Feature Flag System
   - [ ] Implement conditional compilation
   - [ ] Add feature documentation
   - [ ] Create feature tests
   - [ ] Verify minimal builds
 
-## Milestone 6 (Target: Aug 29, 2025) - Beta Release
+## Milestone 7 (Target: Sep 12, 2025) - Feature Completion & Refinement
+- [ ] Advanced Macros
+  - [ ] Complete procedural macros for all traits
+  - [ ] Create DSL for chain definition
+  - [ ] Add compile-time validation for agents
+  - [ ] Implement code generation for common patterns
+
+- [ ] Performance Optimization
+  - [ ] Implement batch processing
+  - [ ] Add parallel tool execution
+  - [ ] Create memory optimization strategies
+  - [ ] Reduce allocation overhead
+
+- [ ] Error Handling Refinement
+  - [ ] Enhance error recovery
+  - [ ] Improve error reporting
+  - [ ] Add diagnostic tools
+  - [ ] Create error handling guidelines
+
+- [ ] Documentation Drafts
+  - [ ] Write initial tutorials
+  - [ ] Create preliminary how-to guides
+  - [ ] Draft API reference documentation
+  - [ ] Add architecture explanation docs
+
+## Milestone 8 (Target: Sep 19, 2025) - Beta Release
 - [ ] Documentation
-  - [ ] Write tutorials
-  - [ ] Create how-to guides
-  - [ ] Generate API reference
+  - [ ] Finalize tutorials
+  - [ ] Complete how-to guides
+  - [ ] Generate comprehensive API reference
   - [ ] Add explanation docs
+  - [ ] Create advanced pattern examples
 
 - [ ] Testing
   - [ ] Complete unit test coverage
   - [ ] Add integration tests
   - [ ] Create end-to-end tests
   - [ ] Implement benchmarks
+  - [ ] Add property-based testing for complex components
 
 - [ ] Beta Release
   - [ ] Perform security audit
@@ -158,18 +241,20 @@
   - [ ] Create release notes
   - [ ] Deploy documentation site
 
-## Milestone 7 (Target: Sep 26, 2025) - v1.0 Release
+## Milestone 9 (Target: Sep 26, 2025) - v1.0 Release
 - [ ] Final Testing
   - [ ] Complete regression testing
   - [ ] Verify all examples
   - [ ] Test all providers
   - [ ] Validate documentation
+  - [ ] Performance benchmark across providers
 
 - [ ] Release Preparation
   - [ ] Update CHANGELOG
   - [ ] Create migration guide
   - [ ] Write blog post
   - [ ] Prepare announcements
+  - [ ] Finalize API stabilization
 
 - [ ] Publishing
   - [ ] Publish to crates.io
@@ -179,7 +264,6 @@
 
 ## Future Considerations (Post v1.0)
 - [ ] Autonomous planner / ReAct loop helper
-- [ ] Vector-search memory backend
 - [ ] Web UI components
 - [ ] Additional LLM providers
 - [ ] Enhanced tool ecosystem
@@ -190,6 +274,10 @@
 - [ ] Model performance benchmarking suite
 - [ ] Privacy-preserving inference options
 - [ ] Distributed tool execution framework
+- [ ] Provider abstraction with shared patterns
+- [ ] Batch/pipeline optimization for multiple requests
+- [ ] Advanced error recovery strategies
+- [ ] Plug-and-play UI components
 
 ## Notes
 - Track progress by checking off items as they're completed
