@@ -1,30 +1,38 @@
 //! Chain execution for the Cogni framework.
 
-use crate::error::{LlmError, ToolError};
-use crate::traits::{
-    llm::{GenerateOptions, LanguageModel},
-    prompt::PromptTemplate,
-    tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
+use crate::{
+    error::{LlmError, ToolError},
+    traits::{
+        llm::{GenerateOptions, LanguageModel},
+        prompt::PromptTemplate,
+        tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
+    },
 };
+
 use anyhow::Result;
 use async_trait::async_trait;
-use futures::stream::{Empty, Stream};
 use futures::{
     StreamExt, TryStreamExt,
-    stream::{self, FuturesUnordered},
+    stream::{self, Empty, FuturesUnordered, Stream},
 };
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
-use std::any::Any;
-use std::fmt::{self, Debug, Display};
-use std::marker::PhantomData;
-use std::pin::Pin;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex};
-use std::time::{Duration, SystemTime};
+use std::{
+    any::Any,
+    fmt::{self, Debug, Display},
+    marker::PhantomData,
+    pin::Pin,
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicUsize, Ordering},
+    },
+    time::{Duration, SystemTime},
+};
 use thiserror::Error;
-use tokio::sync::{broadcast, mpsc};
-use tokio::time::timeout;
+use tokio::{
+    sync::{broadcast, mpsc},
+    time::timeout,
+};
 use tracing::{Instrument, Level, Span, debug, error, field, info, info_span, instrument, warn};
 
 /// Placeholder for NoopLanguageModel
@@ -152,7 +160,7 @@ impl ChainMetrics {
         }
 
         if let Some(mem) = get_current_memory_usage() {
-            if self.peak_memory_bytes.map_or(true, |peak| mem > peak) {
+            if self.peak_memory_bytes.is_none_or(|peak| mem > peak) {
                 self.peak_memory_bytes = Some(mem);
             }
         }
