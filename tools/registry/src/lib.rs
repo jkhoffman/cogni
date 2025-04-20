@@ -11,7 +11,6 @@ mod validation;
 use std::{collections::HashSet, fmt::Debug, sync::Arc};
 
 use anyhow::Result;
-use async_trait::async_trait;
 use cogni_core::{
     error::{ToolConfigError, ToolError},
     traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
@@ -773,7 +772,7 @@ impl ToolRegistry {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use std::sync::atomic::{AtomicBool, Ordering};
+    
 
     // A simple implementation of ToolConfig for the tests
     #[derive(Debug, Default, Clone, Serialize, Deserialize)]

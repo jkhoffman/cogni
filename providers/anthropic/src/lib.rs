@@ -10,7 +10,6 @@ use cogni_core::error::LlmError;
 use cogni_core::traits::llm::{GenerateOptions, LanguageModel};
 use futures::Stream;
 use futures::TryStreamExt;
-use futures::stream::BoxStream;
 use pin_project::pin_project;
 use reqwest::{
     Client,

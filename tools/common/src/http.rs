@@ -557,7 +557,7 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
     use serde::Deserialize;
-    use std::sync::Arc;
+    
     use wiremock::{
         matchers::{method, path},
         Mock, MockServer, ResponseTemplate,

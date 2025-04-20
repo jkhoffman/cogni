@@ -431,16 +431,32 @@ impl ToolCache {
         // Calculate how many entries to evict (20% of max or at least 1)
         let to_evict = (self.config.max_entries / 5).max(1);
 
-        // Find the oldest entries
+        // Get the current length
+        let current_len = self.cache.len();
+
+        // If we don't need to evict anything, return early
+        if current_len <= self.config.max_entries {
+            return 0;
+        }
+
+        // Find the oldest entries - sort by creation time and ensure stable order with key
         let mut entries = self
             .cache
             .iter()
             .map(|entry| (entry.key().clone(), entry.created_at, entry.size_bytes))
             .collect::<Vec<_>>();
 
-        entries.sort_by_key(|(_, created_at, _)| *created_at);
+        // Sort by creation time (oldest first)
+        entries.sort_by(|(key_a, time_a, _), (key_b, time_b, _)| {
+            // First compare by timestamp
+            time_a
+                .cmp(time_b)
+                // If timestamps are equal, use key for stable ordering
+                .then_with(|| key_a.cmp(key_b))
+        });
 
-        // Take just the oldest ones
+        // Take just enough of the oldest ones to bring us under the limit
+        let to_evict = std::cmp::min(to_evict, current_len - self.config.max_entries);
         let oldest = entries.into_iter().take(to_evict).collect::<Vec<_>>();
 
         let mut evicted = 0;
