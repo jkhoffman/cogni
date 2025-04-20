@@ -186,25 +186,46 @@ impl MemoryStore for SqliteStore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Once;
+    use std::sync::atomic::{AtomicU64, Ordering};
     use time::macros::datetime;
 
-    async fn create_test_store() -> SqliteStore {
-        let test_id = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let db_path = format!("/tmp/cogni-test-{}.db", test_id);
+    static INIT: Once = Once::new();
+    static NEXT_TEST_ID: AtomicU64 = AtomicU64::new(0);
+
+    fn init() {
+        INIT.call_once(|| {
+            // Ensure the temp directory exists
+            let _ = std::fs::create_dir_all("/tmp/cogni-test");
+        });
+    }
+
+    async fn create_test_store() -> (SqliteStore, String) {
+        init();
+
+        let test_id = NEXT_TEST_ID.fetch_add(1, Ordering::SeqCst);
+        let db_path = format!("/tmp/cogni-test/test-{}.db", test_id);
 
         // Ensure the file doesn't exist
         let _ = std::fs::remove_file(&db_path);
 
         let config = SqliteConfig::new(&db_path);
-        SqliteStore::new(config).await.unwrap()
+        let store = SqliteStore::new(config).await.unwrap();
+
+        (store, db_path)
+    }
+
+    async fn cleanup_store(store: SqliteStore, db_path: String) {
+        // Close all connections in the pool
+        store.pool.close().await;
+
+        // Remove the database file
+        let _ = std::fs::remove_file(db_path);
     }
 
     #[tokio::test]
     async fn test_store_creation() {
-        let store = create_test_store().await;
+        let (store, db_path) = create_test_store().await;
 
         // Test saving and loading entries
         let session = SessionId::new("test-session");
@@ -223,11 +244,13 @@ mod tests {
         assert_eq!(loaded[0].role, Role::User);
         assert_eq!(loaded[0].content, "Hello");
         assert_eq!(loaded[0].timestamp, datetime!(2024-04-01 12:00:00.0 UTC));
+
+        cleanup_store(store, db_path).await;
     }
 
     #[tokio::test]
     async fn test_multiple_entries() {
-        let store = create_test_store().await;
+        let (store, db_path) = create_test_store().await;
         let session = SessionId::new("test-session");
 
         // Save multiple entries
@@ -269,6 +292,8 @@ mod tests {
         assert_eq!(limited.len(), 2);
         assert_eq!(limited[0].content, entries[0].content);
         assert_eq!(limited[1].content, entries[1].content);
+
+        cleanup_store(store, db_path).await;
     }
 
     #[test]
