@@ -1,4 +1,4 @@
-use cogni_core::traits::prompt::{MissingPlaceholderError, PromptArgs};
+use cogni_core::prompt::{MissingPlaceholderError, PromptArgs};
 use cogni_macros::prompt;
 use serde::Serialize;
 

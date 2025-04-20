@@ -942,7 +942,7 @@ mod tests {
         }
 
         async fn invoke(&self, input: Self::Input) -> Result<Self::Output, ToolError> {
-            self.invocations.lock().await.push(input.clone());
+            self.invocations.lock().unwrap().push(input.clone());
             Ok(format!("Processed: {}", input))
         }
 

@@ -180,6 +180,16 @@ pub enum ToolError {
     /// Failed to parse tool response
     #[error("Failed to parse tool response: {0}")]
     ParseError(String),
+    /// Tool execution failed
+    #[error("Tool execution failed: {message}")]
+    ExecutionFailed {
+        /// Error context
+        context: ErrorContext,
+        /// Error message
+        message: String,
+        /// Whether the error is retryable
+        retryable: bool,
+    },
 }
 
 /// Errors that can occur during memory operations.
