@@ -89,13 +89,13 @@
   - [x] Add tool dependency resolution
   - [x] Create tool validation framework
 
-- [ ] Search Tool
-  - [ ] Implement SerpAPI integration
-  - [ ] Add result parsing
-  - [ ] Implement rate limiting
-  - [ ] Add caching layer
-  - [ ] Complete `invoke` method implementation
-  - [ ] Add error retry mechanism
+- [x] Search Tool
+  - [x] Implement SerpAPI integration
+  - [x] Add result parsing
+  - [x] Implement rate limiting
+  - [x] Add caching layer
+  - [x] Complete `invoke` method implementation
+  - [x] Add error retry mechanism
 
 - [ ] MCP Integration
   - [ ] Implement MCP client

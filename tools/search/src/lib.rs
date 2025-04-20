@@ -11,8 +11,12 @@ use cogni_core::{
     error::{ToolConfigError, ToolError},
     traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
 };
+use cogni_tools_common::{CacheConfig, RateLimiterConfig, ToolCache, ToolRateLimiter};
+use hex;
 use log::warn;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::sync::Arc;
 use tracing::instrument;
 
 /// Input for the search tool.
@@ -104,22 +108,34 @@ impl ToolConfig for SearchConfig {
 pub struct SearchTool {
     _config: SearchConfig,
     client: Option<reqwest::Client>,
+    cache: Arc<ToolCache>,
+    rate_limiter: Arc<ToolRateLimiter>,
 }
 
 impl SearchTool {
     /// Create a new search tool with the given configuration.
     pub fn new(config: SearchConfig) -> Self {
+        let cache = Arc::new(ToolCache::new(CacheConfig {
+            ttl_secs: config.cache_duration,
+            ..CacheConfig::default()
+        }));
+        let rate_limiter = Arc::new(ToolRateLimiter::new(RateLimiterConfig {
+            global_rps: config.rate_limit,
+            ..RateLimiterConfig::default()
+        }));
         Self {
             _config: config,
             client: None,
+            cache,
+            rate_limiter,
         }
     }
 }
 
 #[async_trait]
 impl Tool for SearchTool {
-    type Input = String;
-    type Output = String;
+    type Input = SearchInput;
+    type Output = SearchOutput;
     type Config = SearchConfig;
 
     fn try_new(config: Self::Config) -> Result<Self, ToolConfigError> {
@@ -142,8 +158,95 @@ impl Tool for SearchTool {
     }
 
     #[instrument(skip_all)]
-    async fn invoke(&self, _input: Self::Input) -> Result<Self::Output, ToolError> {
-        todo!("Implement search tool")
+    async fn invoke(&self, input: Self::Input) -> Result<Self::Output, ToolError> {
+        use cogni_tools_common::http::HttpClient;
+        use serde_json::Value;
+
+        // Cache key: hash of query+max_results
+        let mut hasher = Sha256::new();
+        hasher.update(&input.query);
+        if let Some(max) = input.max_results {
+            hasher.update(max.to_le_bytes());
+        }
+        let cache_key = format!("search:{}", hex::encode(hasher.finalize()));
+
+        // Check cache
+        if let Ok(Some(cached)) = self.cache.get_json::<SearchOutput>(&cache_key) {
+            return Ok(cached);
+        }
+
+        // Rate limiting
+        self.rate_limiter
+            .check_url(&self._config.base_url)
+            .await
+            .map_err(|e| ToolError::ExecutionFailed {
+                context: cogni_core::error::ErrorContext::new("SearchTool", "rate_limit"),
+                message: format!("Rate limit error: {e}"),
+                retryable: true,
+            })?;
+
+        let client = HttpClient::with_default_config().map_err(|e| ToolError::ExecutionFailed {
+            context: cogni_core::error::ErrorContext::new("SearchTool", "http_client_init"),
+            message: format!("Failed to create HttpClient: {e}"),
+            retryable: false,
+        })?;
+
+        let mut params = vec![
+            ("q", input.query.as_str()),
+            ("api_key", self._config.api_key.as_str()),
+        ];
+        let max_results_str;
+        if let Some(max) = input.max_results {
+            max_results_str = max.to_string();
+            params.push(("num", max_results_str.as_str()));
+        }
+        let query_string = serde_urlencoded::to_string(&params).unwrap();
+        let url = format!("{}?{}", self._config.base_url, query_string);
+
+        let resp: Value =
+            client
+                .get_json(&url, None)
+                .await
+                .map_err(|e| ToolError::ExecutionFailed {
+                    context: cogni_core::error::ErrorContext::new("SearchTool", "http_get_json"),
+                    message: format!("HTTP error: {e}"),
+                    retryable: true,
+                })?;
+
+        // Parse SerpAPI response (Google-style)
+        let mut results = Vec::new();
+        if let Some(arr) = resp.get("organic_results").and_then(|v| v.as_array()) {
+            for item in arr {
+                let title = item
+                    .get("title")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let url = item
+                    .get("link")
+                    .or_else(|| item.get("url"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let snippet = item
+                    .get("snippet")
+                    .or_else(|| item.get("description"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                if !title.is_empty() && !url.is_empty() {
+                    results.push(SearchResult {
+                        title,
+                        url,
+                        snippet,
+                    });
+                }
+            }
+        }
+        let output = SearchOutput { results };
+        // Store in cache
+        let _ = self.cache.set_json(&cache_key, &output);
+        Ok(output)
     }
 
     fn spec(&self) -> ToolSpec {

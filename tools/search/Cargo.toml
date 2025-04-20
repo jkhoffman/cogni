@@ -21,6 +21,10 @@ tantivy = "0.24"
 rust-stemmers = "1.2"
 tracing = "0.1"
 url = "2.4"
+cogni-tools-common = { version = "0.1.0", path = "../common" }
+serde_urlencoded = "0.7.1"
+sha2 = "0.10.8"
+hex = "0.4.3"
 
 [dev-dependencies]
 tokio-test = "0.4"
