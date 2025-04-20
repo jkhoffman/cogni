@@ -1,7 +1,7 @@
 //! Chain execution for the Cogni framework.
 
 use crate::{
-    error::{LlmError, ToolError},
+    error::{LlmError, ToolConfigError, ToolError},
     traits::{
         llm::{GenerateOptions, LanguageModel},
         prompt::PromptTemplate,
@@ -52,7 +52,7 @@ impl Tool for NoopLanguageModel {
     type Output = String;
     type Config = ();
 
-    fn try_new(_config: Self::Config) -> Result<Self, Box<ToolError>> {
+    fn try_new(_config: Self::Config) -> Result<Self, ToolConfigError> {
         Ok(Self)
     }
 
@@ -880,7 +880,7 @@ impl Display for StepType {
 }
 
 impl ToolConfig for () {
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), ToolConfigError> {
         Ok(())
     }
 }
@@ -914,7 +914,7 @@ mod tests {
         type Output = String;
         type Config = ();
 
-        fn try_new(_config: Self::Config) -> Result<Self, Box<ToolError>> {
+        fn try_new(_config: Self::Config) -> Result<Self, ToolConfigError> {
             Ok(Self {
                 name: "mock".to_string(),
                 invocations: Arc::new(Mutex::new(Vec::new())),

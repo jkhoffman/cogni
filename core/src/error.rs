@@ -6,7 +6,6 @@
 //! - Retry policies for transient failures
 //! - Error reporting interfaces
 
-use chrono::{DateTime, Utc};
 use std::{
     collections::HashMap,
     fmt::{self, Display},

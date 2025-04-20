@@ -3,12 +3,10 @@
 //! This module provides builder traits that enable fluent construction
 //! of various components in the Cogni framework.
 
-#[cfg(feature = "tool")]
-use crate::traits::tool::ToolConfig;
-use std::fmt::Debug;
-use std::marker::PhantomData;
-
 /// A trait for building components in a fluent manner.
+///
+/// This trait provides a common interface for builders of different types
+/// of components in the Cogni framework.
 pub trait Builder {
     /// The type that this builder constructs
     type Output;
@@ -19,10 +17,14 @@ pub trait Builder {
 
 #[cfg(feature = "tool")]
 mod tool_builder {
-    use super::*;
-    use crate::traits::tool::{Tool, ToolCapability};
+    use std::fmt::Debug;
+    use std::marker::PhantomData;
 
-    /// Builder for tool creation
+    use crate::traits::tool::{Tool, ToolCapability, ToolConfig};
+
+    /// A builder for constructing tools with a fluent API.
+    ///
+    /// This builder allows you to create and configure a tool with a fluent API.
     #[derive(Debug)]
     pub struct ToolBuilder<T, I, O, C>
     where
@@ -87,7 +89,7 @@ mod tool_builder {
 
         fn build(self) -> Result<Self::Output, String> {
             // Validate the configuration
-            self.config.validate()?;
+            self.config.validate().map_err(|e| e.to_string())?;
 
             // Create and initialize the tool
             let mut tool =
