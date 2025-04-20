@@ -8,7 +8,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use cogni_core::{
-    error::ToolError,
+    error::{ToolConfigError, ToolError},
     traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
 };
 use log::warn;
@@ -67,21 +67,34 @@ impl Default for SearchConfig {
 }
 
 impl ToolConfig for SearchConfig {
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), ToolConfigError> {
         if self.api_key.is_empty() {
-            return Err("api_key cannot be empty".into());
+            return Err(ToolConfigError::MissingField {
+                field_name: "api_key".into(),
+            });
         }
         if self.base_url.is_empty() {
-            return Err("base_url cannot be empty".into());
+            return Err(ToolConfigError::MissingField {
+                field_name: "base_url".into(),
+            });
         }
         if !self.base_url.starts_with("http") {
-            return Err("base_url must be a valid HTTP(S) URL".into());
+            return Err(ToolConfigError::InvalidValue {
+                field_name: "base_url".into(),
+                message: "base_url must be a valid HTTP(S) URL".into(),
+            });
         }
         if self.rate_limit <= 0.0 {
-            return Err("rate_limit must be greater than 0".into());
+            return Err(ToolConfigError::InvalidValue {
+                field_name: "rate_limit".into(),
+                message: "rate_limit must be greater than 0".into(),
+            });
         }
         if self.cache_duration == 0 {
-            return Err("cache_duration must be greater than 0".into());
+            return Err(ToolConfigError::InvalidValue {
+                field_name: "cache_duration".into(),
+                message: "cache_duration must be greater than 0".into(),
+            });
         }
         Ok(())
     }
@@ -105,11 +118,12 @@ impl SearchTool {
 
 #[async_trait]
 impl Tool for SearchTool {
-    type Input = SearchInput;
-    type Output = SearchOutput;
+    type Input = String;
+    type Output = String;
     type Config = SearchConfig;
 
-    fn try_new(config: Self::Config) -> Result<Self, ToolError> {
+    fn try_new(config: Self::Config) -> Result<Self, ToolConfigError> {
+        config.validate()?;
         Ok(Self::new(config))
     }
 

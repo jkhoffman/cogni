@@ -8,7 +8,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use cogni_core::{
-    error::ToolError,
+    error::{ToolConfigError, ToolError},
     traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
 };
 use log::warn;
@@ -71,21 +71,29 @@ impl Default for CodeConfig {
 }
 
 impl ToolConfig for CodeConfig {
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), ToolConfigError> {
         if self.timeout == 0 {
-            return Err("timeout must be greater than 0".into());
+            return Err(ToolConfigError::InvalidValue {
+                field_name: "timeout".into(),
+                message: "timeout must be greater than 0".into(),
+            });
         }
         if self.memory_limit == 0 {
-            return Err("memory_limit must be greater than 0".into());
+            return Err(ToolConfigError::InvalidValue {
+                field_name: "memory_limit".into(),
+                message: "memory_limit must be greater than 0".into(),
+            });
         }
         if self.wasi_sdk_path.is_empty() {
-            return Err("wasi_sdk_path cannot be empty".into());
+            return Err(ToolConfigError::MissingField {
+                field_name: "wasi_sdk_path".into(),
+            });
         }
         if !std::path::Path::new(&self.wasi_sdk_path).exists() {
-            return Err(format!(
-                "wasi_sdk_path {} does not exist",
-                self.wasi_sdk_path
-            ));
+            return Err(ToolConfigError::InvalidValue {
+                field_name: "wasi_sdk_path".into(),
+                message: format!("wasi_sdk_path {} does not exist", self.wasi_sdk_path).into(),
+            });
         }
         Ok(())
     }
@@ -109,11 +117,12 @@ impl CodeTool {
 
 #[async_trait]
 impl Tool for CodeTool {
-    type Input = CodeInput;
-    type Output = CodeOutput;
+    type Input = String;
+    type Output = String;
     type Config = CodeConfig;
 
-    fn try_new(config: Self::Config) -> Result<Self, ToolError> {
+    fn try_new(config: Self::Config) -> Result<Self, ToolConfigError> {
+        config.validate()?;
         Ok(Self::new(config))
     }
 
