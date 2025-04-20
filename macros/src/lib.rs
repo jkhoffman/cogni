@@ -101,7 +101,7 @@ pub fn prompt(input: TokenStream) -> TokenStream {
         let ident = parse_str::<Ident>(name).unwrap();
         quote! {
             if self.#ident.is_empty() {
-                return Err(cogni_core::prompt::MissingPlaceholderError {
+                return Err(cogni_core::traits::prompt::MissingPlaceholderError {
                     name: stringify!(#ident).to_string()
                 });
             }
@@ -115,14 +115,14 @@ pub fn prompt(input: TokenStream) -> TokenStream {
                 #(#fields,)*
             }
 
-            impl cogni_core::prompt::PromptArgs for TemplateArgs {
-                fn validate(&self) -> Result<(), cogni_core::prompt::MissingPlaceholderError> {
+            impl cogni_core::traits::prompt::PromptArgs for TemplateArgs {
+                fn validate(&self) -> Result<(), cogni_core::traits::prompt::MissingPlaceholderError> {
                     #(#validation)*
                     Ok(())
                 }
             }
 
-            cogni_core::prompt::PromptTemplate::new(#template_str)
+            cogni_core::PromptTemplate::new(#template_str)
         }
     };
 

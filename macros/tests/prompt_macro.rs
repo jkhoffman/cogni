@@ -1,4 +1,7 @@
+use cogni_core::PromptTemplate;
+use cogni_core::traits::prompt::PromptArgs;
 use cogni_macros::prompt;
+use std::collections::HashMap;
 use trybuild::TestCases;
 
 #[test]

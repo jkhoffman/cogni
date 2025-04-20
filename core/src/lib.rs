@@ -6,14 +6,16 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod chain;
 pub mod error;
-pub mod llm;
-pub mod memory;
-pub mod prompt;
-pub mod tool;
+pub mod traits;
 
+// Re-export commonly used types
+pub use chain::{Chain, ChainConfig, ChainError, ChainMetrics, ChainStep};
 pub use error::Error;
-pub use llm::LanguageModel;
-pub use memory::MemoryStore;
-pub use prompt::{MissingPlaceholderError, PromptArgs, PromptTemplate};
-pub use tool::Tool;
+pub use traits::{
+    llm::{GenerateOptions, LanguageModel},
+    memory::MemoryStore,
+    prompt::{PromptArgs, PromptTemplate},
+    tool::Tool,
+};

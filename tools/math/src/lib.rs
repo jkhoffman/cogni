@@ -5,11 +5,11 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+use anyhow::Result;
 use async_trait::async_trait;
-use cogni_core::{
-    error::ToolError,
-    tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
-};
+use cogni_core::error::ToolError;
+use cogni_core::traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 

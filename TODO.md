@@ -62,7 +62,7 @@
 - [ ] Chain Executor Hardening
   - [x] Add resource cleanup for parallel chains
   - [x] Implement timeout handling
-  - [ ] Add telemetry/tracing support
+  - [x] Add telemetry/tracing support
   - [x] Enhance error propagation
 
 - [ ] Architectural Improvements

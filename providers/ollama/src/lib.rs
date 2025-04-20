@@ -6,10 +6,8 @@
 #![warn(missing_docs)]
 
 use async_trait::async_trait;
-use cogni_core::{
-    error::LlmError,
-    llm::{GenerateOptions, LanguageModel},
-};
+use cogni_core::error::LlmError;
+use cogni_core::traits::llm::{GenerateOptions, LanguageModel};
 use futures::Stream;
 use pin_project::pin_project;
 use reqwest::Client;
