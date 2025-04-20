@@ -7,9 +7,8 @@ pub mod traits;
 
 pub use chain::{Chain, ChainConfig, ChainError, ChainMetrics, ChainStep, StepType};
 pub use error::{LlmError, ToolError};
-pub use prompt::{PromptError, PromptTemplate};
+pub use prompt::{PromptArgs, PromptError, PromptTemplate};
 pub use traits::{
     llm::{GenerateOptions, LanguageModel},
-    prompt::PromptArgs,
     tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
 };

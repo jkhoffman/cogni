@@ -7,10 +7,13 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use cogni_core::error::ToolError;
-use cogni_core::traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec};
-use log::{debug, error, info, warn};
+use cogni_core::{
+    error::ToolError,
+    traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
+};
+use log::warn;
 use serde::{Deserialize, Serialize};
+use std::num::NonZeroUsize;
 use tracing::instrument;
 
 /// Configuration for the math tool.
@@ -150,7 +153,7 @@ pub enum Number {
 
 /// The math tool.
 pub struct MathTool {
-    config: MathConfig,
+    _config: MathConfig,
 }
 
 impl Default for MathTool {
@@ -162,7 +165,7 @@ impl Default for MathTool {
 impl MathTool {
     /// Create a new math tool with the given configuration.
     pub fn new(config: MathConfig) -> Self {
-        Self { config }
+        Self { _config: config }
     }
 }
 

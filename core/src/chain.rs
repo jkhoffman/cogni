@@ -658,7 +658,7 @@ where
                 > + Send
                 + Sync,
         >,
-        prompt: Arc<PromptTemplate>,
+        _prompt: Arc<PromptTemplate>,
         input: I,
         timeout_duration: Option<Duration>,
         cancel_rx: &mut broadcast::Receiver<()>,
@@ -901,14 +901,11 @@ where
     }
 }
 
-#[cfg(test)]
 mod tests {
     use super::*;
     use crate::error::ToolError;
-    use crate::traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec};
+    use crate::traits::tool::{Tool, ToolCapability, ToolSpec};
     use async_trait::async_trait;
-    use futures::{stream, StreamExt};
-    use std::fmt::{self, Debug};
 
     #[derive(Clone, Debug)]
     struct MockTool {
@@ -957,10 +954,12 @@ mod tests {
         }
     }
 
+    #[allow(dead_code)]
     fn create_test_chain() -> Chain<String, String> {
         Chain::new()
     }
 
+    #[allow(dead_code)]
     async fn test_resource_cleanup() -> anyhow::Result<()> {
         let mut chain: Chain<String, String> = create_test_chain();
         let _handle = chain.track_resource("test", "res1".to_string()).await;

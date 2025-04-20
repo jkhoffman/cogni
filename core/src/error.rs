@@ -14,7 +14,6 @@ use std::{
 };
 use thiserror::Error;
 use time::OffsetDateTime;
-use tokio::task::JoinError;
 
 /// Error context containing additional information about an error.
 #[derive(Debug, Clone)]

@@ -3,9 +3,9 @@
 //! This module provides builder traits that enable fluent construction
 //! of various components in the Cogni framework.
 
-use crate::error::ToolError;
 #[cfg(feature = "tool")]
-use crate::traits::tool::{Tool, ToolCapability, ToolConfig};
+use crate::traits::tool::ToolConfig;
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
 /// A trait for building components in a fluent manner.
@@ -20,44 +20,43 @@ pub trait Builder {
 #[cfg(feature = "tool")]
 mod tool_builder {
     use super::*;
-    use crate::traits::tool::{Tool, ToolCapability, ToolConfig};
+    use crate::traits::tool::{Tool, ToolCapability};
 
-    /// A builder for constructing tools.
-    ///
-    /// This builder provides a fluent interface for configuring and
-    /// constructing tools with proper validation and initialization.
+    /// Builder for tool creation
     #[derive(Debug)]
     pub struct ToolBuilder<T, I, O, C>
     where
-        T: Tool<Input = I, Output = O, Config = C>,
-        C: ToolConfig,
+        T: Sized,
+        I: Debug,
+        O: Debug,
+        C: Debug,
     {
-        name: String,
-        description: String,
+        phantom: PhantomData<(T, I, O, C)>,
+        _name: String,
         config: C,
         capabilities: Vec<ToolCapability>,
-        _phantom: PhantomData<(T, I, O)>,
     }
 
     impl<T, I, O, C> ToolBuilder<T, I, O, C>
     where
         T: Tool<Input = I, Output = O, Config = C>,
         C: ToolConfig,
+        I: Debug,
+        O: Debug,
     {
         /// Create a new tool builder
         pub fn new(name: impl Into<String>, config: C) -> Self {
             Self {
-                name: name.into(),
-                description: String::new(),
+                _name: name.into(),
                 config,
+                phantom: PhantomData,
                 capabilities: Vec::new(),
-                _phantom: PhantomData,
             }
         }
 
         /// Set the tool's description
         pub fn description(mut self, description: impl Into<String>) -> Self {
-            self.description = description.into();
+            self._name = description.into();
             self
         }
 
@@ -81,6 +80,8 @@ mod tool_builder {
     where
         T: Tool<Input = I, Output = O, Config = C>,
         C: ToolConfig,
+        I: Debug,
+        O: Debug,
     {
         type Output = T;
 

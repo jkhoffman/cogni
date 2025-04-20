@@ -7,12 +7,14 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use cogni_core::error::ToolError;
-use cogni_core::traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec};
-use log::{debug, error, info, warn};
-use reqwest::Client;
+use cogni_core::{
+    error::ToolError,
+    traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
+};
+use log::warn;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+use url::Url;
 
 /// Input for the search tool.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,7 +90,7 @@ impl ToolConfig for SearchConfig {
 
 /// The search tool.
 pub struct SearchTool {
-    config: SearchConfig,
+    _config: SearchConfig,
     client: Option<reqwest::Client>,
 }
 
@@ -96,7 +98,7 @@ impl SearchTool {
     /// Create a new search tool with the given configuration.
     pub fn new(config: SearchConfig) -> Self {
         Self {
-            config,
+            _config: config,
             client: None,
         }
     }

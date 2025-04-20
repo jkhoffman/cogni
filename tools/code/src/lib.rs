@@ -7,9 +7,11 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use cogni_core::error::ToolError;
-use cogni_core::traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec};
-use log::{debug, error, info, warn};
+use cogni_core::{
+    error::ToolError,
+    traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
+};
+use log::warn;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use wasmtime::Engine;
@@ -91,7 +93,7 @@ impl ToolConfig for CodeConfig {
 
 /// The code execution tool.
 pub struct CodeTool {
-    config: CodeConfig,
+    _config: CodeConfig,
     engine: Option<Engine>,
 }
 
@@ -99,7 +101,7 @@ impl CodeTool {
     /// Create a new code execution tool with the given configuration.
     pub fn new(config: CodeConfig) -> Self {
         Self {
-            config,
+            _config: config,
             engine: None,
         }
     }
