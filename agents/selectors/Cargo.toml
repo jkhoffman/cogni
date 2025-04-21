@@ -1,0 +1,43 @@
+[package]
+name = "cogni-agents-selectors"
+version = "0.1.0"
+edition = "2021"
+description = "Tool selector implementations for the Cogni framework"
+authors = ["Cogni Team"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/cogni/cogni"
+readme = "README.md"
+keywords = ["ai", "agent", "tool", "selector"]
+categories = ["ai", "asynchronous"]
+
+[dependencies]
+# Core dependencies
+cogni-core = { path = "../../core", version = "0.1.0" }
+cogni-tools-registry = { path = "../../tools/registry", version = "0.1.0" }
+
+# Async support
+async-trait = "0.1"
+tokio = { version = "1.28", features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+    "sync",
+] }
+futures = "0.3"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Utilities
+regex = "1.8"
+tracing = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1.28", features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+    "sync",
+    "test-util",
+] }

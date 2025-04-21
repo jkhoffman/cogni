@@ -127,10 +127,10 @@
   - [x] Add builder methods (e.g., `add_agent`)
   - [x] Create execution handlers
 
-- [ ] Tool Selection Framework
+- [x] Tool Selection Framework
   - [x] Create `ToolSelector` trait
   - [x] Implement basic selectors (name-based, capability-based)
-  - [ ] Integrate with ToolRegistry for discovery
+  - [x] Integrate with ToolRegistry for discovery
 
 - [ ] Memory Integration Improvements
   - [x] Create patterns for context storage/retrieval

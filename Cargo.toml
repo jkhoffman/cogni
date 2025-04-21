@@ -9,7 +9,7 @@ authors = ["Cogni Team"]
 
 [workspace]
 resolver = "2"
-members = ["core", "macros", "tools/*", "memory/*", "providers/*"]
+members = ["core", "macros", "tools/*", "memory/*", "providers/*", "agents/*"]
 
 [workspace.package]
 version = "0.1.0"
