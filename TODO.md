@@ -102,8 +102,8 @@
   - [x] Transport connect/list-tools
   - [x] Routing adapter (local tools)
   - [x] call_tool round-trip
-  - [ ] Concurrency / rate-limit / retries
-  - [ ] Tests + example
+  - [x] Concurrency / rate-limit / retries
+  - [x] Tests + example
   - [ ] Add to workspace & CI
   - [ ] Documentation (TDD, public API, example)
 
@@ -294,8 +294,8 @@
 - [x] Transport connect/list-tools
 - [x] Routing adapter (local tools)
 - [x] call_tool round-trip
-- [ ] Concurrency / rate-limit / retries
-- [ ] Tests + example
+- [x] Concurrency / rate-limit / retries
+- [x] Tests + example
 - [ ] Add to workspace & CI
 - [ ] Documentation (TDD, public API, example)
 
