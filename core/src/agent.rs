@@ -74,12 +74,12 @@ impl SimpleAgent {
     }
 
     /// Execute the agent with the given input.
-    pub fn execute(&self, input: &str) -> Result<String, crate::error::AgentError> {
+    pub fn execute(&self, input: &str) -> Result<String, Box<crate::error::AgentError>> {
         // Check if we need to invoke any tools
         for (tool_name, tool) in &self.tools {
             if input.contains(tool_name) {
                 let result = futures::executor::block_on(tool.invoke(input.to_string()));
-                return result.map_err(crate::error::AgentError::Tool);
+                return result.map_err(|e| Box::new(crate::error::AgentError::Tool(e)));
             }
         }
 
