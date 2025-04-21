@@ -104,8 +104,8 @@
   - [x] call_tool round-trip
   - [x] Concurrency / rate-limit / retries
   - [x] Tests + example
-  - [ ] Add to workspace & CI
-  - [ ] Documentation (TDD, public API, example)
+  - [x] Add to workspace & CI
+  - [x] Documentation (TDD, public API, example)
 
 - [ ] Common Tool Utilities
   - [ ] Create shared HTTP client implementation
@@ -296,8 +296,8 @@
 - [x] call_tool round-trip
 - [x] Concurrency / rate-limit / retries
 - [x] Tests + example
-- [ ] Add to workspace & CI
-- [ ] Documentation (TDD, public API, example)
+- [x] Add to workspace & CI
+- [x] Documentation (TDD, public API, example)
 
 ### Plan
 1. Public API & Crate Layout
