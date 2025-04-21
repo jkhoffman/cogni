@@ -62,6 +62,31 @@ pub struct MemoryEntry {
     pub timestamp: OffsetDateTime,
 }
 
+/// Query parameters for retrieving conversation history.
+#[derive(Debug, Clone)]
+pub struct MemoryQuery {
+    /// The session ID to query.
+    pub session: SessionId,
+
+    /// Pagination offset (start index).
+    pub offset: Option<usize>,
+
+    /// Pagination limit (max number of results).
+    pub limit: Option<usize>,
+
+    /// Start timestamp for range filtering (inclusive).
+    pub start_time: Option<OffsetDateTime>,
+
+    /// End timestamp for range filtering (inclusive).
+    pub end_time: Option<OffsetDateTime>,
+
+    /// Optional filter by role.
+    pub role: Option<Role>,
+
+    /// Optional filter by substring in content.
+    pub content_substring: Option<String>,
+}
+
 /// A trait representing a store for conversation memory.
 ///
 /// This trait defines the core interface for storing and retrieving
@@ -72,7 +97,8 @@ pub struct MemoryEntry {
 /// # Examples
 ///
 /// ```rust,no_run
-/// use cogni_core::traits::memory::{MemoryStore, SessionId, MemoryEntry, Role};
+/// use cogni_core::traits::memory::{MemoryStore, SessionId, MemoryEntry, Role, MemoryQuery};
+/// use cogni_core::error::MemoryError;
 /// use async_trait::async_trait;
 /// use time::OffsetDateTime;
 ///
@@ -91,6 +117,14 @@ pub struct MemoryEntry {
 ///     async fn save(&self, session: &SessionId, entry: MemoryEntry) -> Result<(), cogni_core::error::MemoryError> {
 ///         Ok(())
 ///     }
+///
+///     async fn query_history(&self, query: MemoryQuery) -> Result<Vec<MemoryEntry>, MemoryError> {
+///         Ok(vec![MemoryEntry {
+///             role: Role::User,
+///             content: "Hello".into(),
+///             timestamp: OffsetDateTime::now_utc(),
+///         }])
+///     }
 /// }
 /// ```
 #[async_trait]
@@ -107,4 +141,15 @@ pub trait MemoryStore: Send + Sync {
     /// This method adds a new entry to the conversation history for the
     /// specified session.
     async fn save(&self, session: &SessionId, entry: MemoryEntry) -> Result<(), MemoryError>;
+
+    /// Query conversation history with flexible filters and pagination.
+    ///
+    /// Returns entries matching the query parameters, ordered by timestamp ascending.
+    /// - Pagination: Use `offset` and `limit` for page-based access.
+    /// - Range: Use `start_time` and/or `end_time` for timestamp filtering.
+    /// - Filtering: Use `role` and/or `content_substring` for selective retrieval.
+    ///
+    /// All backends must implement efficient querying for these parameters.
+    /// If a parameter is `None`, it is not used as a filter.
+    async fn query_history(&self, query: MemoryQuery) -> Result<Vec<MemoryEntry>, MemoryError>;
 }

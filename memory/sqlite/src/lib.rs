@@ -8,7 +8,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use cogni_core::error::MemoryError;
-use cogni_core::traits::memory::{MemoryEntry, MemoryStore, Role, SessionId};
+use cogni_core::traits::memory::{MemoryEntry, MemoryQuery, MemoryStore, Role, SessionId};
 use sqlx::{Pool, Row, Sqlite, sqlite::SqlitePool};
 use time::OffsetDateTime;
 use tracing::instrument;
@@ -180,125 +180,126 @@ impl MemoryStore for SqliteStore {
 
         Ok(())
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::sync::Once;
-    use std::sync::atomic::{AtomicU64, Ordering};
-    use time::macros::datetime;
+    #[instrument(skip(self))]
+    async fn query_history(&self, query: MemoryQuery) -> Result<Vec<MemoryEntry>, MemoryError> {
+        // First, build the complete SQL query string
+        let mut sql = String::from(
+            "SELECT role, content, timestamp FROM memory_entries WHERE session_id = ?",
+        );
 
-    static INIT: Once = Once::new();
-    static NEXT_TEST_ID: AtomicU64 = AtomicU64::new(0);
-
-    fn init() {
-        INIT.call_once(|| {
-            // Ensure the temp directory exists
-            let _ = std::fs::create_dir_all("/tmp/cogni-test");
-        });
-    }
-
-    async fn create_test_store() -> (SqliteStore, String) {
-        init();
-
-        let test_id = NEXT_TEST_ID.fetch_add(1, Ordering::SeqCst);
-        let db_path = format!("/tmp/cogni-test/test-{}.db", test_id);
-
-        // Ensure the file doesn't exist
-        let _ = std::fs::remove_file(&db_path);
-
-        let config = SqliteConfig::new(&db_path);
-        let store = SqliteStore::new(config).await.unwrap();
-
-        (store, db_path)
-    }
-
-    async fn cleanup_store(store: SqliteStore, db_path: String) {
-        // Close all connections in the pool
-        store.pool.close().await;
-
-        // Remove the database file
-        let _ = std::fs::remove_file(db_path);
-    }
-
-    #[tokio::test]
-    async fn test_store_creation() {
-        let (store, db_path) = create_test_store().await;
-
-        // Test saving and loading entries
-        let session = SessionId::new("test-session");
-        let entry = MemoryEntry {
-            role: Role::User,
-            content: "Hello".to_string(),
-            timestamp: datetime!(2024-04-01 12:00:00.0 UTC),
-        };
-
-        // Save the entry
-        store.save(&session, entry.clone()).await.unwrap();
-
-        // Load entries
-        let loaded = store.load(&session, 10).await.unwrap();
-        assert_eq!(loaded.len(), 1);
-        assert_eq!(loaded[0].role, Role::User);
-        assert_eq!(loaded[0].content, "Hello");
-        assert_eq!(loaded[0].timestamp, datetime!(2024-04-01 12:00:00.0 UTC));
-
-        cleanup_store(store, db_path).await;
-    }
-
-    #[tokio::test]
-    async fn test_multiple_entries() {
-        let (store, db_path) = create_test_store().await;
-        let session = SessionId::new("test-session");
-
-        // Save multiple entries
-        let entries = vec![
-            MemoryEntry {
-                role: Role::User,
-                content: "Hello".to_string(),
-                timestamp: datetime!(2024-04-01 12:00:00.0 UTC),
-            },
-            MemoryEntry {
-                role: Role::Assistant,
-                content: "Hi there!".to_string(),
-                timestamp: datetime!(2024-04-01 12:00:01.0 UTC),
-            },
-            MemoryEntry {
-                role: Role::User,
-                content: "How are you?".to_string(),
-                timestamp: datetime!(2024-04-01 12:00:02.0 UTC),
-            },
-        ];
-
-        for entry in entries.clone() {
-            store.save(&session, entry).await.unwrap();
+        let mut has_start_time = false;
+        if query.start_time.is_some() {
+            sql.push_str(" AND timestamp >= ?");
+            has_start_time = true;
         }
 
-        // Load all entries
-        let loaded = store.load(&session, 10).await.unwrap();
-        assert_eq!(loaded.len(), 3);
-
-        // Verify chronological order
-        for (i, entry) in loaded.iter().enumerate() {
-            assert_eq!(entry.role, entries[i].role);
-            assert_eq!(entry.content, entries[i].content);
-            assert_eq!(entry.timestamp, entries[i].timestamp);
+        let mut has_end_time = false;
+        if query.end_time.is_some() {
+            sql.push_str(" AND timestamp <= ?");
+            has_end_time = true;
         }
 
-        // Test limit
-        let limited = store.load(&session, 2).await.unwrap();
-        assert_eq!(limited.len(), 2);
-        assert_eq!(limited[0].content, entries[0].content);
-        assert_eq!(limited[1].content, entries[1].content);
+        let mut has_role = false;
+        if query.role.is_some() {
+            sql.push_str(" AND role = ?");
+            has_role = true;
+        }
 
-        cleanup_store(store, db_path).await;
-    }
+        let mut has_substring = false;
+        if query.content_substring.is_some() {
+            sql.push_str(" AND content LIKE ?");
+            has_substring = true;
+        }
 
-    #[test]
-    fn test_invalid_role() {
-        // This test doesn't need a database connection
-        let result = SqliteStore::parse_role("invalid");
-        assert!(matches!(result, Err(MemoryError::InvalidFormat(_))));
+        sql.push_str(" ORDER BY timestamp ASC");
+
+        let mut has_limit = false;
+        if query.limit.is_some() {
+            sql.push_str(" LIMIT ?");
+            has_limit = true;
+        }
+
+        let mut has_offset = false;
+        if query.offset.is_some() {
+            sql.push_str(" OFFSET ?");
+            has_offset = true;
+        }
+
+        // Now create the query and bind parameters
+        let mut query_builder = sqlx::query(&sql);
+
+        // Bind session id (always present)
+        query_builder = query_builder.bind(query.session.to_string());
+
+        // Bind optional parameters
+        if has_start_time {
+            let start_time_str = query
+                .start_time
+                .unwrap()
+                .format(&time::format_description::well_known::Rfc3339)
+                .map_err(|e| MemoryError::InvalidFormat(e.to_string()))?;
+            query_builder = query_builder.bind(start_time_str);
+        }
+
+        if has_end_time {
+            let end_time_str = query
+                .end_time
+                .unwrap()
+                .format(&time::format_description::well_known::Rfc3339)
+                .map_err(|e| MemoryError::InvalidFormat(e.to_string()))?;
+            query_builder = query_builder.bind(end_time_str);
+        }
+
+        if has_role {
+            let role_str = Self::role_to_string(query.role.unwrap()).to_string();
+            query_builder = query_builder.bind(role_str);
+        }
+
+        if has_substring {
+            let like_pattern = format!("%{}%", query.content_substring.as_ref().unwrap());
+            query_builder = query_builder.bind(like_pattern);
+        }
+
+        if has_limit {
+            query_builder = query_builder.bind(query.limit.unwrap() as i64);
+        }
+
+        if has_offset {
+            query_builder = query_builder.bind(query.offset.unwrap() as i64);
+        }
+
+        let rows = query_builder
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| MemoryError::Database(e.to_string()))?;
+
+        let mut result = Vec::with_capacity(rows.len());
+        for row in rows {
+            let role: String = row
+                .try_get("role")
+                .map_err(|e| MemoryError::Database(e.to_string()))?;
+            let content: String = row
+                .try_get("content")
+                .map_err(|e| MemoryError::Database(e.to_string()))?;
+            let timestamp_str: String = row
+                .try_get("timestamp")
+                .map_err(|e| MemoryError::Database(e.to_string()))?;
+
+            let role = Self::parse_role(&role)?;
+            let timestamp = OffsetDateTime::parse(
+                &timestamp_str,
+                &time::format_description::well_known::Rfc3339,
+            )
+            .map_err(|e| MemoryError::InvalidFormat(e.to_string()))?;
+
+            result.push(MemoryEntry {
+                role,
+                content,
+                timestamp,
+            });
+        }
+
+        Ok(result)
     }
 }

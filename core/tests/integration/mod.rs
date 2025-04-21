@@ -11,12 +11,17 @@ use tokio::sync::Mutex;
 use cogni_core::{
     error::{Error, LlmError, ToolError},
     traits::{
-        Builder,
         llm::{GenerateOptions, LanguageModel},
         memory::{MemoryEntry, MemoryStore, SessionId},
         tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
+        Builder,
     },
 };
+
+mod agent_harness;
+
+pub use agent_harness::agent_integration_test;
+pub use agent_harness::{AgentTestConfig, AgentTestHarness};
 
 /// Test harness configuration
 #[derive(Debug, Clone)]

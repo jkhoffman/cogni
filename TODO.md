@@ -132,20 +132,20 @@
   - [x] Implement basic selectors (name-based, capability-based)
   - [x] Integrate with ToolRegistry for discovery
 
-- [ ] Memory Integration Improvements
+- [x] Memory Integration Improvements
   - [x] Create patterns for context storage/retrieval
-  - [ ] Add methods for efficient history access
-  - [ ] Ensure consistency across memory backends
+  - [x] Add methods for efficient history access
+  - [x] Ensure consistency across memory backends
 
-- [ ] Testing Infrastructure
+- [x] Testing Infrastructure
   - [x] Create mock Agent implementations
-  - [ ] Extend test harnesses for Agent operations
-  - [ ] Add Agent-specific test utilities
+  - [x] Extend test harnesses for Agent operations
+  - [x] Add Agent-specific test utilities
 
-- [ ] Documentation Updates
+- [x] Documentation Updates
   - [x] Update TDD.md with Agent design decisions
-  - [ ] Document integration patterns
-  - [ ] Create examples for common agent patterns
+  - [x] Document integration patterns
+  - [x] Create examples for common agent patterns
 
 ## Milestone 4 (Target: Jul 18, 2025) - Agent Foundation
 - [ ] Agent Implementation

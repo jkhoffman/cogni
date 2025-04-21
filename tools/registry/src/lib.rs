@@ -772,7 +772,6 @@ impl ToolRegistry {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    
 
     // A simple implementation of ToolConfig for the tests
     #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -902,7 +901,7 @@ mod tests {
             .expect("Failed to register tool");
 
         // Get the tool
-        let tool_lock = registry
+        let _tool_lock = registry
             .get_tool("test-tool", Some("1.0.0"))
             .expect("Failed to get tool");
 

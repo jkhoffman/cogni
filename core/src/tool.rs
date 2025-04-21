@@ -94,7 +94,7 @@
 //! ```
 
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Debug;
 
 use crate::error::ToolError;
@@ -249,4 +249,67 @@ pub trait Tool: Send + Sync {
     /// - The schema for its input and output
     /// - Example uses of the tool
     fn spec(&self) -> ToolSpec;
+}
+
+/// Implementation of ToolConfig for () to make it usable as a default config
+impl ToolConfig for () {
+    fn validate(&self) -> Result<(), String> {
+        Ok(())
+    }
+}
+
+/// A simple tool implementation for demonstration purposes.
+pub struct SimpleTool {
+    name: String,
+    handler: Box<dyn Fn(String) -> Result<String, crate::error::ToolError> + Send + Sync>,
+}
+
+impl SimpleTool {
+    /// Create a new simple tool.
+    pub fn new(
+        name: &str,
+        handler: impl Fn(String) -> Result<String, crate::error::ToolError> + Send + Sync + 'static,
+    ) -> Self {
+        Self {
+            name: name.to_string(),
+            handler: Box::new(handler),
+        }
+    }
+}
+
+#[async_trait]
+impl Tool for SimpleTool {
+    type Input = String;
+    type Output = String;
+    type Config = ();
+
+    async fn initialize(&mut self) -> Result<(), crate::error::ToolError> {
+        Ok(())
+    }
+
+    async fn shutdown(&mut self) -> Result<(), crate::error::ToolError> {
+        Ok(())
+    }
+
+    fn capabilities(&self) -> Vec<ToolCapability> {
+        vec![ToolCapability::Stateless, ToolCapability::ThreadSafe]
+    }
+
+    async fn invoke(&self, input: Self::Input) -> Result<Self::Output, crate::error::ToolError> {
+        (self.handler)(input)
+    }
+
+    fn spec(&self) -> ToolSpec {
+        ToolSpec {
+            name: self.name.clone(),
+            description: "A simple tool for demonstration purposes".into(),
+            input_schema: serde_json::json!({
+                "type": "string"
+            }),
+            output_schema: serde_json::json!({
+                "type": "string"
+            }),
+            examples: vec![],
+        }
+    }
 }

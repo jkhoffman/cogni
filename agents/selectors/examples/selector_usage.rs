@@ -5,8 +5,9 @@ use cogni_agents_selectors::{
 };
 use cogni_core::error::ToolConfigError;
 use cogni_core::error::ToolError;
-use cogni_core::traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec};
-use cogni_tools_registry::ToolRegistry;
+use cogni_core::traits::agent::ToolSelector;
+use cogni_core::traits::tool::{Tool, ToolCapability, ToolSpec};
+use cogni_tools_registry::{EmptyConfig, ToolRegistry};
 use serde_json::json;
 use std::sync::Arc;
 
@@ -18,7 +19,7 @@ struct SearchTool;
 impl Tool for SearchTool {
     type Input = serde_json::Value;
     type Output = serde_json::Value;
-    type Config = ();
+    type Config = EmptyConfig;
 
     fn try_new(_config: Self::Config) -> Result<Self, ToolConfigError> {
         Ok(Self)
@@ -67,7 +68,7 @@ struct MathTool;
 impl Tool for MathTool {
     type Input = serde_json::Value;
     type Output = serde_json::Value;
-    type Config = ();
+    type Config = EmptyConfig;
 
     fn try_new(_config: Self::Config) -> Result<Self, ToolConfigError> {
         Ok(Self)
@@ -146,7 +147,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         max_tools: Some(3),
     };
     let capability_selector =
-        CapabilityBasedSelector::new(capability_config, Arc::clone(&registry));
+        CapabilityBasedSelector::new(capability_config.clone(), Arc::clone(&registry));
 
     // Create a selector registry
     let selector_registry = ToolSelectorRegistry::new(Arc::clone(&registry));

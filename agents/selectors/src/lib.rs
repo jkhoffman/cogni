@@ -9,7 +9,7 @@
 use async_trait::async_trait;
 use cogni_core::error::AgentError;
 use cogni_core::traits::agent::ToolSelector;
-use cogni_core::traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec};
+use cogni_core::traits::tool::ToolCapability;
 use cogni_tools_registry::{RegistryError, ToolRegistry};
 use regex::Regex;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -507,10 +507,7 @@ impl ToolSelectorRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cogni_core::traits::tool::{Tool, ToolConfig, ToolSpec};
-    use cogni_tools_registry::ToolMetadata;
-    use cogni_tools_registry::ToolRegistry;
-    use std::sync::Arc;
+    use cogni_core::traits::tool::{Tool, ToolSpec};
 
     // Mock tool implementation for testing
     struct MockTool;

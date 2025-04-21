@@ -365,7 +365,7 @@ mod tests {
         let tool = MathTool::new(MathConfig::default());
 
         // Test valid expression
-        let result = tool.invoke("2 + 2".to_string()).await?;
+        let _result = tool.invoke("2 + 2".to_string()).await?;
         // ... existing code ...
         Ok(())
     }

@@ -993,6 +993,35 @@ where
     }
 }
 
+/// A simple chain implementation for demonstration purposes.
+#[derive(Debug, Clone)]
+pub struct SimpleChain {
+    steps: Vec<String>,
+}
+
+impl SimpleChain {
+    /// Create a new simple chain.
+    pub fn new() -> Self {
+        Self { steps: Vec::new() }
+    }
+
+    /// Add a step to the chain.
+    pub fn add_step(&mut self, step: &str) {
+        self.steps.push(step.to_string());
+    }
+
+    /// Get the steps in the chain.
+    pub fn get_steps(&self) -> &[String] {
+        &self.steps
+    }
+}
+
+impl Default for SimpleChain {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 mod tests {
     use super::*;
     use crate::error::ToolError;

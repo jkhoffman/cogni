@@ -422,6 +422,7 @@ impl LanguageModel for AnthropicClient {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use futures::TryStreamExt;
     use tracing_subscriber::fmt;
     use wiremock::{
         Mock, MockServer, ResponseTemplate,
