@@ -99,3 +99,12 @@ tokio-test.workspace = true
 pretty_assertions.workspace = true
 test-log.workspace = true
 tracing-subscriber.workspace = true
+tokio = { workspace = true, features = ["full"] }
+anyhow = "1"
+futures = "0.3"
+cogni-provider-openai = { path = "providers/openai" }
+cogni-core = { path = "core" }
+cogni-macros = { path = "macros" }
+cogni-tool-mcp = { path = "tools/mcp" }
+cogni-tool-search = { path = "tools/search" }
+cogni-tools-common = { path = "tools/common" }
