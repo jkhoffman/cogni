@@ -34,6 +34,12 @@ pub struct SimpleAgent {
     tools: std::collections::HashMap<String, crate::tool::SimpleTool>,
 }
 
+impl Default for SimpleAgent {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SimpleAgent {
     /// Create a new simple agent.
     pub fn new() -> Self {
@@ -73,7 +79,7 @@ impl SimpleAgent {
         for (tool_name, tool) in &self.tools {
             if input.contains(tool_name) {
                 let result = futures::executor::block_on(tool.invoke(input.to_string()));
-                return result.map_err(|e| crate::error::AgentError::Tool(e));
+                return result.map_err(crate::error::AgentError::Tool);
             }
         }
 

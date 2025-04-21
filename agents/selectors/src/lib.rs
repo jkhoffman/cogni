@@ -483,10 +483,7 @@ impl ToolSelectorRegistry {
 
         // Use a tokio runtime to execute the async method
         let rt = tokio::runtime::Runtime::new().unwrap();
-        match rt.block_on(selector.select_tools("", &serde_json::Value::Null)) {
-            Ok(tools) => tools,
-            Err(_) => Vec::new(),
-        }
+        rt.block_on(selector.select_tools("", &serde_json::Value::Null)).unwrap_or_default()
     }
 
     /// Create a capability-based selector with the registry.

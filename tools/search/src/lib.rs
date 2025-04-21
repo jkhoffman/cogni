@@ -12,7 +12,6 @@ use cogni_core::{
     traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
 };
 use cogni_tools_common::{CacheConfig, RateLimiterConfig, ToolCache, ToolRateLimiter};
-use hex;
 use log::warn;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};

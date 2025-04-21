@@ -65,6 +65,12 @@ pub struct ErrorEnvelope {
 
 pub struct MCPProtocolHandler;
 
+impl Default for MCPProtocolHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MCPProtocolHandler {
     pub fn new() -> Self {
         MCPProtocolHandler

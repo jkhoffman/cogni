@@ -19,6 +19,12 @@ pub struct MCPToolRouter {
     >,
 }
 
+impl Default for MCPToolRouter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MCPToolRouter {
     pub fn new() -> Self {
         Self {

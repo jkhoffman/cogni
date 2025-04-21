@@ -157,7 +157,7 @@ impl SimpleAgent {
     /// Print registered tools
     fn print_tools(&self) {
         println!("Registered tools:");
-        for (name, _) in &self.tools {
+        for name in self.tools.keys() {
             println!("{}", name);
         }
     }
