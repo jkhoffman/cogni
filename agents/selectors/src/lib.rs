@@ -9,10 +9,10 @@
 use async_trait::async_trait;
 use cogni_core::error::AgentError;
 use cogni_core::traits::agent::ToolSelector;
-use cogni_core::traits::tool::ToolCapability;
+use cogni_core::traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec};
 use cogni_tools_registry::{RegistryError, ToolRegistry};
 use regex::Regex;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashSet;
 use std::sync::Arc;
 use tracing::{debug, instrument, warn};
@@ -63,7 +63,7 @@ impl NameBasedSelector {
 
 #[async_trait]
 impl ToolSelector for NameBasedSelector {
-    #[instrument(skip(self, context))]
+    #[instrument(skip(self, _context))]
     async fn select_tools(
         &self,
         _input: &str,
@@ -163,17 +163,150 @@ impl ToolSelector for PatternBasedSelector {
     }
 }
 
+// Helper functions for serializing/deserializing ToolCapability
+fn serialize_capability<S>(capability: &ToolCapability, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let cap_str = match capability {
+        ToolCapability::Stateless => "Stateless",
+        ToolCapability::ThreadSafe => "ThreadSafe",
+        ToolCapability::NetworkAccess => "NetworkAccess",
+        ToolCapability::FileSystem => "FileSystem",
+        ToolCapability::CpuIntensive => "CpuIntensive",
+        ToolCapability::MemoryIntensive => "MemoryIntensive",
+        ToolCapability::Cryptographic => "Cryptographic",
+        ToolCapability::GpuAccess => "GpuAccess",
+    };
+    serializer.serialize_str(cap_str)
+}
+
+fn deserialize_capability<'de, D>(deserializer: D) -> Result<ToolCapability, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    match s.as_str() {
+        "Stateless" => Ok(ToolCapability::Stateless),
+        "ThreadSafe" => Ok(ToolCapability::ThreadSafe),
+        "NetworkAccess" => Ok(ToolCapability::NetworkAccess),
+        "FileSystem" => Ok(ToolCapability::FileSystem),
+        "CpuIntensive" => Ok(ToolCapability::CpuIntensive),
+        "MemoryIntensive" => Ok(ToolCapability::MemoryIntensive),
+        "Cryptographic" => Ok(ToolCapability::Cryptographic),
+        "GpuAccess" => Ok(ToolCapability::GpuAccess),
+        _ => Err(serde::de::Error::custom(format!(
+            "Unknown tool capability: {}",
+            s
+        ))),
+    }
+}
+
+/// Serialization/Deserialization wrapper for ToolCapability
+#[derive(Debug, Clone)]
+pub struct SerializableCapability(pub ToolCapability);
+
+impl Serialize for SerializableCapability {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serialize_capability(&self.0, serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for SerializableCapability {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(SerializableCapability(deserialize_capability(
+            deserializer,
+        )?))
+    }
+}
+
 /// Configuration for a capability-based selector.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CapabilitySelectorConfig {
     /// Required capabilities that tools must have
+    #[serde(
+        serialize_with = "serialize_capability_vec",
+        deserialize_with = "deserialize_capability_vec"
+    )]
     pub required_capabilities: Vec<ToolCapability>,
+
     /// Optional capabilities that are preferred but not required
+    #[serde(
+        serialize_with = "serialize_capability_vec",
+        deserialize_with = "deserialize_capability_vec"
+    )]
     pub preferred_capabilities: Vec<ToolCapability>,
+
     /// Capabilities that should not be present
+    #[serde(
+        serialize_with = "serialize_capability_vec",
+        deserialize_with = "deserialize_capability_vec"
+    )]
     pub excluded_capabilities: Vec<ToolCapability>,
+
     /// Maximum number of tools to select
     pub max_tools: Option<usize>,
+}
+
+// Helper functions for serializing/deserializing Vec<ToolCapability>
+fn serialize_capability_vec<S>(
+    capabilities: &[ToolCapability],
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let cap_strings: Vec<String> = capabilities
+        .iter()
+        .map(|cap| match cap {
+            ToolCapability::Stateless => "Stateless".to_string(),
+            ToolCapability::ThreadSafe => "ThreadSafe".to_string(),
+            ToolCapability::NetworkAccess => "NetworkAccess".to_string(),
+            ToolCapability::FileSystem => "FileSystem".to_string(),
+            ToolCapability::CpuIntensive => "CpuIntensive".to_string(),
+            ToolCapability::MemoryIntensive => "MemoryIntensive".to_string(),
+            ToolCapability::Cryptographic => "Cryptographic".to_string(),
+            ToolCapability::GpuAccess => "GpuAccess".to_string(),
+        })
+        .collect();
+
+    cap_strings.serialize(serializer)
+}
+
+fn deserialize_capability_vec<'de, D>(deserializer: D) -> Result<Vec<ToolCapability>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let string_vec: Vec<String> = Vec::deserialize(deserializer)?;
+    let mut capabilities = Vec::with_capacity(string_vec.len());
+
+    for s in string_vec {
+        let capability = match s.as_str() {
+            "Stateless" => ToolCapability::Stateless,
+            "ThreadSafe" => ToolCapability::ThreadSafe,
+            "NetworkAccess" => ToolCapability::NetworkAccess,
+            "FileSystem" => ToolCapability::FileSystem,
+            "CpuIntensive" => ToolCapability::CpuIntensive,
+            "MemoryIntensive" => ToolCapability::MemoryIntensive,
+            "Cryptographic" => ToolCapability::Cryptographic,
+            "GpuAccess" => ToolCapability::GpuAccess,
+            _ => {
+                return Err(serde::de::Error::custom(format!(
+                    "Unknown tool capability: {}",
+                    s
+                )))
+            }
+        };
+        capabilities.push(capability);
+    }
+
+    Ok(capabilities)
 }
 
 /// Selector that chooses tools based on their capabilities.
@@ -374,7 +507,7 @@ impl ToolSelectorRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cogni_core::traits::tool::{Tool, ToolConfig};
+    use cogni_core::traits::tool::{Tool, ToolConfig, ToolSpec};
     use cogni_tools_registry::ToolMetadata;
     use cogni_tools_registry::ToolRegistry;
     use std::sync::Arc;
@@ -409,6 +542,16 @@ mod tests {
             input: Self::Input,
         ) -> Result<Self::Output, cogni_core::error::ToolError> {
             Ok(input)
+        }
+
+        fn spec(&self) -> ToolSpec {
+            ToolSpec {
+                name: "mock-tool".to_string(),
+                description: "A mock tool for testing".to_string(),
+                input_schema: serde_json::json!({"type": "string"}),
+                output_schema: serde_json::json!({"type": "string"}),
+                examples: vec![],
+            }
         }
     }
 

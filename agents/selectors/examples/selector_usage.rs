@@ -5,7 +5,7 @@ use cogni_agents_selectors::{
 };
 use cogni_core::error::ToolConfigError;
 use cogni_core::error::ToolError;
-use cogni_core::traits::tool::{Tool, ToolCapability, ToolConfig};
+use cogni_core::traits::tool::{Tool, ToolCapability, ToolConfig, ToolSpec};
 use cogni_tools_registry::ToolRegistry;
 use serde_json::json;
 use std::sync::Arc;
@@ -47,6 +47,16 @@ impl Tool for SearchTool {
             "results": ["Sample result 1", "Sample result 2"]
         }))
     }
+
+    fn spec(&self) -> ToolSpec {
+        ToolSpec {
+            name: "search".to_string(),
+            description: "A search tool for the web".to_string(),
+            input_schema: json!({"type": "string"}),
+            output_schema: json!({"type": "object"}),
+            examples: vec![],
+        }
+    }
 }
 
 // Sample tool implementation
@@ -85,6 +95,16 @@ impl Tool for MathTool {
             "expression": input,
             "result": 42
         }))
+    }
+
+    fn spec(&self) -> ToolSpec {
+        ToolSpec {
+            name: "math".to_string(),
+            description: "A mathematical computation tool".to_string(),
+            input_schema: json!({"type": "string"}),
+            output_schema: json!({"type": "number"}),
+            examples: vec![],
+        }
     }
 }
 
@@ -158,6 +178,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .select_tools("some query", &json!({}))
         .await?;
     println!("Selected tools: {:?}", selected_tools);
+
+    // Serialize and Deserialize capability config
+    let serialized = serde_json::to_string_pretty(&capability_config)?;
+    println!("\nSerialized capability config:\n{}", serialized);
+
+    let deserialized: CapabilitySelectorConfig = serde_json::from_str(&serialized)?;
+    println!("\nDeserialized capability config:");
+    println!(
+        "- Required capabilities: {} items",
+        deserialized.required_capabilities.len()
+    );
+    println!(
+        "- Preferred capabilities: {} items",
+        deserialized.preferred_capabilities.len()
+    );
+    println!(
+        "- Excluded capabilities: {} items",
+        deserialized.excluded_capabilities.len()
+    );
 
     Ok(())
 }
