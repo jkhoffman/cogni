@@ -107,11 +107,11 @@
   - [x] Add to workspace & CI
   - [x] Documentation (TDD, public API, example)
 
-- [ ] Common Tool Utilities
-  - [ ] Create shared HTTP client implementation
-  - [ ] Add rate limiting utilities
-  - [ ] Implement caching mechanisms
-  - [ ] Create common validation helpers
+- [x] Common Tool Utilities
+  - [x] Create shared HTTP client implementation
+  - [x] Add rate limiting utilities
+  - [x] Implement caching mechanisms
+  - [x] Create common validation helpers
 
 ## Milestone 4 (Target: Jul 18, 2025) - Agent Foundation
 - [ ] Agent Implementation
