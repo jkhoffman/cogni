@@ -13,10 +13,12 @@
 //! - `tool`: Tool traits and types
 //! - `chain`: Chain execution traits and types
 //! - `builder`: Builder traits for constructing components
+//! - `agent`: Agent traits and types
 //!
 //! Each module is feature-gated to allow for minimal builds when only
 //! specific functionality is needed.
 
+pub mod agent;
 pub mod builder;
 pub mod chain;
 pub mod llm;
@@ -25,6 +27,7 @@ pub mod prompt;
 pub mod tool;
 
 // Re-export commonly used traits and types
+pub use agent::{Agent, AgentConfig, AgentInput, AgentOutput, ToolSelector};
 pub use llm::{GenerateOptions, LanguageModel};
 pub use memory::MemoryStore;
 pub use prompt::{PromptArgs, PromptTemplate};

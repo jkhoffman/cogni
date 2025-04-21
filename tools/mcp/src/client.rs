@@ -4,7 +4,7 @@
 
 use crate::error::McpError;
 use crate::protocol::ToolSpec;
-use cogni_tools_common::{RateLimitError, RateLimiterConfig, ToolRateLimiter};
+use cogni_tools_common::{RateLimiterConfig, ToolRateLimiter};
 use serde_json::json;
 use std::process::Stdio;
 use std::sync::Arc;
@@ -228,10 +228,10 @@ impl MCPClient {
 mod tests {
     use super::*;
     use cogni_tools_common::RateLimiterConfig;
-    use std::process::Stdio;
+    
     use std::sync::Arc;
     use std::time::Instant;
-    use tokio::process::Command;
+    
 
     #[tokio::test]
     async fn test_concurrency_limit() {

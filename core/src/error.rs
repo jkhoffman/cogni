@@ -166,6 +166,57 @@ pub enum LlmError {
     ApiError(String),
 }
 
+/// Errors that can occur during agent operations.
+#[derive(Error, Debug)]
+pub enum AgentError {
+    /// The agent request timed out
+    #[error("Agent request timed out after {0} seconds")]
+    Timeout(u64),
+
+    /// The agent initialization failed
+    #[error("Agent initialization failed: {0}")]
+    InitializationFailed(String),
+
+    /// The agent shutdown failed
+    #[error("Agent shutdown failed: {0}")]
+    ShutdownFailed(String),
+
+    /// The agent execution failed
+    #[error("Agent execution failed: {message}")]
+    ExecutionFailed {
+        /// Error context
+        context: ErrorContext,
+        /// Error message
+        message: String,
+        /// Whether the error is retryable
+        retryable: bool,
+    },
+
+    /// Tool selection failed
+    #[error("Tool selection failed: {0}")]
+    ToolSelectionFailed(String),
+
+    /// Planning failed
+    #[error("Planning failed: {0}")]
+    PlanningFailed(String),
+
+    /// An underlying LLM error occurred
+    #[error("LLM error: {0}")]
+    Llm(#[from] LlmError),
+
+    /// An underlying Tool error occurred
+    #[error("Tool error: {0}")]
+    Tool(#[from] ToolError),
+
+    /// An underlying Memory error occurred
+    #[error("Memory error: {0}")]
+    Memory(#[from] MemoryError),
+
+    /// A chain error occurred
+    #[error("Chain error: {0}")]
+    Chain(#[from] ChainError),
+}
+
 /// Errors that can occur during tool operations.
 #[derive(Error, Debug)]
 pub enum ToolError {

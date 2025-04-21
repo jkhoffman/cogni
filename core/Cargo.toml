@@ -37,11 +37,14 @@ handlebars.workspace = true
 regex.workspace = true
 
 # Time
-chrono.workspace = true
+chrono = { workspace = true, features = ["serde"] }
 time = { workspace = true, features = ["formatting", "parsing"] }
 
 # Logging & Diagnostics
 tracing.workspace = true
+
+# Utilities
+uuid = { version = "1.4", features = ["v4"] }
 
 [dev-dependencies]
 # Testing frameworks

@@ -3,6 +3,7 @@
 use crate::{
     error::{LlmError, ToolConfigError, ToolError},
     traits::{
+        agent::AgentArc,
         llm::{GenerateOptions, LanguageModel},
         prompt::PromptTemplate,
         tool::{Tool, ToolCapability, ToolConfig, ToolSpec},
@@ -28,6 +29,7 @@ use tokio::{
     time::timeout,
 };
 use tracing::{debug, error, info, info_span, warn, Instrument};
+use uuid;
 
 /// Type alias for a language model with specific input and output types
 pub type LanguageModelArc<I, O> = Arc<
@@ -198,6 +200,9 @@ impl ChainMetrics {
             StepType::Tool => {
                 self.tool_steps += 1;
             }
+            StepType::Agent => {
+                self.parallel_chains += 1;
+            }
             StepType::Parallel => {
                 self.parallel_chains += 1;
             }
@@ -337,6 +342,10 @@ where
         tool: ToolArc<I, O>,
         timeout: Duration,
     },
+    Agent {
+        agent: AgentArc,
+        timeout: Duration,
+    },
     Parallel(Vec<Arc<Chain<I, O>>>),
 }
 
@@ -362,6 +371,9 @@ where
                 .field("tool", &tool.spec().name)
                 .field("timeout", timeout)
                 .finish(),
+            ChainStep::Agent { agent: _, timeout } => {
+                f.debug_struct("Agent").field("timeout", timeout).finish()
+            }
             ChainStep::Parallel(chains) => f.debug_tuple("Parallel").field(chains).finish(),
         }
     }
@@ -541,6 +553,19 @@ where
         self
     }
 
+    /// Add an agent step to the chain
+    pub async fn add_agent(mut self, agent: AgentArc, timeout: Option<Duration>) -> Self {
+        let _agent_handle = self
+            .track_resource("agent", format!("agent_{}", uuid::Uuid::new_v4()))
+            .await;
+
+        self.steps.push(ChainStep::Agent {
+            agent,
+            timeout: timeout.unwrap_or(self.config.default_step_timeout),
+        });
+        self
+    }
+
     /// Add parallel chains to execute
     pub async fn add_parallel(mut self, chains: Vec<Chain<I, O>>) -> Self
     where
@@ -612,6 +637,20 @@ where
                     debug!(timeout_ms = timeout.as_millis(), "Executing Tool step");
                     let result = self
                         .execute_tool_step(tool.clone(), step_input, Some(*timeout), &mut cancel_rx)
+                        .await?;
+                    current_input = I::from(result.clone());
+                    final_output = Some(result);
+                }
+                ChainStep::Agent { agent, timeout } => {
+                    *self.current_step.lock().unwrap() = Some(StepType::Agent);
+                    debug!(timeout_ms = timeout.as_millis(), "Executing Agent step");
+                    let result = self
+                        .execute_agent_step(
+                            agent.clone(),
+                            step_input,
+                            Some(*timeout),
+                            &mut cancel_rx,
+                        )
                         .await?;
                     current_input = I::from(result.clone());
                     final_output = Some(result);
@@ -742,6 +781,62 @@ where
         }
     }
 
+    async fn execute_agent_step(
+        &self,
+        agent: AgentArc,
+        input: I,
+        timeout_duration: Option<Duration>,
+        cancel_rx: &mut broadcast::Receiver<()>,
+    ) -> Result<O, ChainError> {
+        let start_time = SystemTime::now();
+        let effective_timeout = timeout_duration.unwrap_or(self.config.default_step_timeout);
+
+        // Convert input to serde_json::Value for the agent
+        let input_value = serde_json::to_value(&input)
+            .map_err(|e| ChainError::Other(anyhow::anyhow!("Failed to serialize input: {}", e)))?;
+
+        let execute_future = agent.execute(input_value);
+
+        tokio::select! {
+            result = timeout(effective_timeout, execute_future) => {
+                let agent_result = match result {
+                    Ok(Ok(output)) => Ok(output),
+                    Ok(Err(e)) => Err(ChainError::Other(anyhow::anyhow!("Agent error: {}", e))),
+                    Err(_) => Err(ChainError::Timeout { duration: effective_timeout, step_type: StepType::Agent }),
+                };
+
+                // If successful, deserialize the output to the expected type
+                let execution_result = match agent_result {
+                    Ok(output) => {
+                        serde_json::from_value::<O>(output)
+                            .map_err(|e| ChainError::Other(anyhow::anyhow!("Failed to deserialize agent output: {}", e)))
+                    },
+                    Err(e) => Err(e),
+                };
+
+                let duration = start_time.elapsed().ok();
+                let success = execution_result.is_ok();
+                let error_msg = execution_result.as_ref().err().map(|e| e.to_string());
+
+                self.record_telemetry(StepTelemetry {
+                    step_type: StepType::Agent,
+                    start_time,
+                    duration,
+                    success,
+                    error: error_msg,
+                    resource_usage: ResourceUsage::default(),
+                    tokens: None,
+                });
+
+                execution_result
+            },
+            _ = cancel_rx.recv() => {
+                warn!("Agent step cancelled");
+                Err(ChainError::Cancelled)
+            }
+        }
+    }
+
     async fn execute_parallel_step(
         &self,
         chains: Vec<Arc<Chain<I, O>>>,
@@ -865,6 +960,7 @@ where
 pub enum StepType {
     LLM,
     Tool,
+    Agent,
     Parallel,
 }
 
@@ -874,6 +970,7 @@ impl Display for StepType {
         match self {
             StepType::LLM => write!(f, "LLM Step"),
             StepType::Tool => write!(f, "Tool Step"),
+            StepType::Agent => write!(f, "Agent Step"),
             StepType::Parallel => write!(f, "Parallel Step"),
         }
     }

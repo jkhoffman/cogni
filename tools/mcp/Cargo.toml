@@ -18,3 +18,4 @@ cogni-tools-common = { path = "../common" }
 
 [dev-dependencies]
 tempfile = "3"
+anyhow = "1.0"

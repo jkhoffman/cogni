@@ -4,7 +4,6 @@
 
 use crate::error::McpError;
 use crate::protocol::{ContentBlock, ToolCall, ToolResult};
-use async_trait::async_trait;
 use cogni_core::traits::tool::Tool;
 use std::collections::HashMap;
 use std::sync::Arc;

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use cogni_tool_mcp::{MCPClient, MCPClientConfig};
+use cogni_tool_mcp::client::{MCPClient, MCPClientConfig};
 use cogni_tools_common::RateLimiterConfig;
 use serde_json::json;
 use std::time::Duration;
@@ -14,7 +14,7 @@ async fn main() -> Result<()> {
         max_concurrent_requests: 3,
         max_retries: 2,
         rate_limiter_config: RateLimiterConfig {
-            max_requests_per_minute: 10,
+            global_rps: 10.0,
             ..Default::default()
         },
     };
@@ -38,45 +38,32 @@ async fn main() -> Result<()> {
     });
 
     let result = client.call_tool("example", input, None).await?;
-    println!("Tool result: {}", result.output);
+    println!("Tool result: {:?}", result.output);
 
-    // Demonstrate concurrency
-    println!("\nDemonstrating concurrent calls...");
-    let mut handles = Vec::new();
+    // Sequential calls for demonstration
+    println!("\nDemonstrating sequential calls...");
 
-    for i in 1..=5 {
-        let mut client_clone = client.clone();
-        let input = json!({ "message": format!("Concurrent request {}", i) });
+    for i in 1..=3 {
+        println!("Starting request {}...", i);
+        let start = std::time::Instant::now();
+        let input = json!({ "message": format!("Sequential request {}", i) });
+        let result = client.call_tool("example", input, None).await;
+        let elapsed = start.elapsed();
 
-        let handle = tokio::spawn(async move {
-            println!("Starting request {}...", i);
-            let start = std::time::Instant::now();
-            let result = client_clone.call_tool("example", input, None).await;
-            let elapsed = start.elapsed();
-            (i, result, elapsed)
-        });
-
-        handles.push(handle);
-
-        // Small delay between spawning tasks
-        tokio::time::sleep(Duration::from_millis(100)).await;
-    }
-
-    for handle in handles {
-        let (i, result, elapsed) = handle.await?;
         match result {
             Ok(output) => println!(
-                "Request {} completed in {:?}: {}",
+                "Request {} completed in {:?}: {:?}",
                 i, elapsed, output.output
             ),
             Err(e) => println!("Request {} failed: {:?}", i, e),
         }
+
+        // Small delay between requests
+        tokio::time::sleep(Duration::from_millis(100)).await;
     }
 
-    // Clean shutdown
-    println!("\nShutting down client...");
-    client.shutdown().await?;
-    println!("Client shutdown complete");
+    // Process will automatically terminate when main exits
+    println!("\nExample complete");
 
     Ok(())
 }

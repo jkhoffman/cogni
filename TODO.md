@@ -113,6 +113,40 @@
   - [x] Implement caching mechanisms
   - [x] Create common validation helpers
 
+## Pre-Milestone 4 Refactoring (Target: Jul 05, 2025)
+- [x] Agent Interface Preparation
+  - [x] Define `Agent` trait in core/src/traits/agent.rs
+  - [x] Add lifecycle methods (initialize/shutdown)
+  - [x] Create `AgentConfig` trait
+  - [x] Define interfaces for tool selection and planning
+  - [x] Add `AgentError` to error.rs
+
+- [x] Chain-Agent Integration
+  - [x] Extend `ChainStep` to include Agent variant
+  - [x] Implement `execute_agent_step` method
+  - [x] Add builder methods (e.g., `add_agent`)
+  - [x] Create execution handlers
+
+- [ ] Tool Selection Framework
+  - [x] Create `ToolSelector` trait
+  - [x] Implement basic selectors (name-based, capability-based)
+  - [ ] Integrate with ToolRegistry for discovery
+
+- [ ] Memory Integration Improvements
+  - [x] Create patterns for context storage/retrieval
+  - [ ] Add methods for efficient history access
+  - [ ] Ensure consistency across memory backends
+
+- [ ] Testing Infrastructure
+  - [x] Create mock Agent implementations
+  - [ ] Extend test harnesses for Agent operations
+  - [ ] Add Agent-specific test utilities
+
+- [ ] Documentation Updates
+  - [x] Update TDD.md with Agent design decisions
+  - [ ] Document integration patterns
+  - [ ] Create examples for common agent patterns
+
 ## Milestone 4 (Target: Jul 18, 2025) - Agent Foundation
 - [ ] Agent Implementation
   - [ ] Define `Agent` trait

@@ -598,6 +598,7 @@ dependencies = [
  "tokio-test",
  "tracing",
  "tracing-subscriber",
+ "uuid",
  "wiremock",
 ]
 
@@ -754,6 +755,7 @@ dependencies = [
 name = "cogni-tool-mcp"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "async-trait",
  "cogni-core",
  "cogni-tools-common",
