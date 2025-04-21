@@ -705,8 +705,10 @@ mod tests {
             .await;
 
         // Create an HTTP client with fewer retries for faster tests
-        let mut config = HttpClientConfig::default();
-        config.max_retries = 1;
+        let mut config = HttpClientConfig {
+            max_retries: 1,
+            ..Default::default()
+        };
         let client = HttpClient::new(config).unwrap();
 
         // Test 404 error

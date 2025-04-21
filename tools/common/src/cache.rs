@@ -559,8 +559,10 @@ mod tests {
 
     #[test]
     fn test_metrics() {
-        let mut config = CacheConfig::default();
-        config.enable_metrics = true;
+        let mut config = CacheConfig {
+            enable_metrics: true,
+            ..Default::default()
+        };
         let cache = ToolCache::new(config);
 
         // Add some entries
@@ -591,9 +593,11 @@ mod tests {
     #[test]
     fn test_expiry() {
         // Create a cache with a short TTL
-        let mut config = CacheConfig::default();
-        config.ttl_secs = 1; // 1 second TTL
-        config.enable_metrics = true; // Ensure metrics are enabled
+        let mut config = CacheConfig {
+            ttl_secs: 1,
+            enable_metrics: true,
+            ..Default::default()
+        };
         let cache = ToolCache::new(config);
 
         // Use a timestamp in the key to ensure it's unique per run
@@ -635,9 +639,11 @@ mod tests {
     #[test]
     fn test_size_constraints() {
         // Create a cache with a small maximum size
-        let mut config = CacheConfig::default();
-        config.max_entries = 2;
-        config.enable_metrics = true; // Ensure metrics are enabled
+        let mut config = CacheConfig {
+            max_entries: 2,
+            enable_metrics: true,
+            ..Default::default()
+        };
         let cache = ToolCache::new(config);
 
         // Add entries up to the limit
@@ -677,9 +683,11 @@ mod tests {
     #[test]
     fn test_entry_size_limit() {
         // Create a cache with a small maximum entry size
-        let mut config = CacheConfig::default();
-        config.max_entry_size_bytes = 10;
-        config.enable_metrics = true; // Ensure metrics are enabled
+        let mut config = CacheConfig {
+            max_entry_size_bytes: 10,
+            enable_metrics: true,
+            ..Default::default()
+        };
         let cache = ToolCache::new(config);
 
         // Try to add an entry that's too large

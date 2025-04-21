@@ -621,11 +621,13 @@ mod tests {
     #[tokio::test]
     async fn test_global_rate_limiting() {
         // Create a config with a very restrictive rate limit for testing
-        let mut config = RateLimiterConfig::default();
-        config.global_rps = 0.5; // Reduce to 0.5 per second for more strict limiting
-        config.global_burst_size = 1; // Only allow 1 request at a time
-        config.global_enabled = true; // Ensure global rate limiting is enabled
-        config.domain_enabled = false; // Disable domain rate limiting to isolate test
+        let mut config = RateLimiterConfig {
+            global_rps: 0.5,
+            global_burst_size: 1,
+            global_enabled: true,
+            domain_enabled: false,
+            ..Default::default()
+        };
         let limiter = ToolRateLimiter::new(config);
 
         // Ensure the global limiter is created
@@ -681,7 +683,18 @@ mod tests {
     #[tokio::test]
     async fn test_domain_rate_limiting() {
         // Create a config with domain-specific rate limits
-        let mut config = RateLimiterConfig::default();
+        let mut config = RateLimiterConfig {
+            global_enabled: false,
+            domain_enabled: true,
+            default_domain_rps: 10.0,
+            default_domain_burst_size: 1,
+            domain_limits: {
+                let mut limits = HashMap::new();
+                limits.insert("example.com".to_string(), 1.0);
+                limits
+            },
+            ..Default::default()
+        };
         config.global_enabled = false; // Disable global limiting for this test
         config.domain_enabled = true; // Ensure domain rate limiting is enabled
         config.default_domain_rps = 10.0; // Default is high
@@ -749,9 +762,11 @@ mod tests {
     #[tokio::test]
     async fn test_domain_strategy() {
         // Test with FullDomain strategy
-        let mut config = RateLimiterConfig::default();
-        config.global_enabled = false;
-        config.domain_strategy = DomainStrategy::FullDomain;
+        let mut config = RateLimiterConfig {
+            global_enabled: false,
+            domain_strategy: DomainStrategy::FullDomain,
+            ..Default::default()
+        };
         let limiter = ToolRateLimiter::new(config);
 
         // These should be treated as different domains
@@ -765,8 +780,10 @@ mod tests {
             .is_ok());
 
         // Test with MainDomain strategy
-        let mut config = RateLimiterConfig::default();
-        config.global_enabled = false;
+        let mut config = RateLimiterConfig {
+            global_enabled: false,
+            ..Default::default()
+        };
         config.domain_strategy = DomainStrategy::MainDomain;
         config.default_domain_rps = 1.0;
         config.default_domain_burst_size = 1;

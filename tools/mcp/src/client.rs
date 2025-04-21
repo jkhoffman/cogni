@@ -228,10 +228,9 @@ impl MCPClient {
 mod tests {
     use super::*;
     use cogni_tools_common::RateLimiterConfig;
-    
+
     use std::sync::Arc;
     use std::time::Instant;
-    
 
     #[tokio::test]
     async fn test_concurrency_limit() {
@@ -304,9 +303,11 @@ mod tests {
     #[tokio::test]
     async fn test_rate_limit() {
         // Create a rate limiter with a very restrictive config for testing
-        let mut config = RateLimiterConfig::default();
-        config.global_rps = 2.0; // 2 requests per second
-        config.global_burst_size = 1;
+        let mut config = RateLimiterConfig {
+            global_rps: 2.0,
+            global_burst_size: 1,
+            ..Default::default()
+        };
 
         let rate_limiter = ToolRateLimiter::new(config);
 
