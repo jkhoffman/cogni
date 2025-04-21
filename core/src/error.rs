@@ -215,6 +215,14 @@ pub enum AgentError {
     /// A chain error occurred
     #[error("Chain error: {0}")]
     Chain(#[from] ChainError),
+
+    /// Configuration error
+    #[error("Configuration error: {0}")]
+    Config(&'static str),
+
+    /// Runtime error
+    #[error("Runtime error: {0}")]
+    Runtime(String),
 }
 
 /// Errors that can occur during tool operations.

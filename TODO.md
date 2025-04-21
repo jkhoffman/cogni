@@ -148,30 +148,30 @@
   - [x] Create examples for common agent patterns
 
 ## Milestone 4 (Target: Jul 18, 2025) - Agent Foundation
-- [ ] Agent Implementation
-  - [ ] Define `Agent` trait
-  - [ ] Implement basic agent structure
-  - [ ] Add tool selection logic
-  - [ ] Create memory integration
-  - [ ] Implement planning capabilities
+- [x] Agent Implementation
+  - [x] Define `Agent` trait
+  - [x] Implement basic agent structure
+  - [x] Add tool selection logic
+  - [x] Create memory integration
+  - [x] Implement planning capabilities
 
-- [ ] Agent Builder
-  - [ ] Create fluent builder API
-  - [ ] Add configuration validation
-  - [ ] Implement preset strategies
-  - [ ] Add extension mechanism
+- [x] Agent Builder
+  - [x] Create fluent builder API
+  - [x] Add configuration validation
+  - [x] Implement preset strategies
+  - [x] Add extension mechanism
 
-- [ ] Basic Agent Strategies
-  - [ ] Implement ReAct pattern
-  - [ ] Add basic chain-of-thought reasoning
-  - [ ] Create simple planning mechanism
-  - [ ] Implement context management
+- [x] Basic Agent Strategies
+  - [x] Implement ReAct pattern
+  - [x] Add basic chain-of-thought reasoning
+  - [x] Create simple planning mechanism
+  - [x] Implement context management
 
-- [ ] Agent-Tool Integration
-  - [ ] Create tool discovery mechanism
-  - [ ] Implement tool invocation framework
-  - [ ] Add tool result handling
-  - [ ] Create error recovery strategies
+- [x] Agent-Tool Integration
+  - [x] Create tool discovery mechanism
+  - [x] Implement tool invocation framework
+  - [x] Add tool result handling
+  - [x] Create error recovery strategies
 
 ## Milestone 5 (Target: Aug 08, 2025) - Additional Tools & Models
 - [ ] Code Interpreter Tool

@@ -20,122 +20,202 @@
 //! // Example will be provided as the implementation progresses
 //! ```
 
-// Re-export all agent-related traits and types from the traits module
-use crate::chain::SimpleChain;
-use crate::tool::Tool;
-pub use crate::traits::agent::*;
+pub mod builder;
+pub mod memory_bridge;
+pub mod strategy;
+pub mod tool_pipeline;
 
-/// A simple agent implementation for demonstration purposes.
-pub struct SimpleAgent {
-    #[allow(dead_code)]
-    chain: Option<SimpleChain>,
-    #[allow(dead_code)]
-    memory: Option<Box<dyn crate::traits::memory::MemoryStore>>,
-    tools: std::collections::HashMap<String, crate::tool::SimpleTool>,
+use crate::error::{AgentError, LlmError};
+use crate::traits::agent::{Agent, AgentInput, AgentOutput, ToolUse};
+use crate::traits::llm::{GenerateOptions, LanguageModel};
+use crate::traits::memory::{MemoryStore, Role};
+use crate::traits::tool::Tool;
+use async_trait::async_trait;
+use futures::Stream;
+use serde_json::Value;
+use std::pin::Pin;
+use std::sync::Arc;
+use time::OffsetDateTime;
+
+/// Type alias for the LLM token stream
+pub type LlmTokenStream = Pin<Box<dyn Stream<Item = Result<String, LlmError>> + Send>>;
+
+/// Basic agent implementation holding LM, tools, memory, and strategy.
+pub struct BasicAgent {
+    llm: Arc<
+        dyn LanguageModel<Prompt = String, Response = String, TokenStream = LlmTokenStream>
+            + Send
+            + Sync,
+    >,
+    tools: Vec<Arc<dyn Tool<Input = Value, Output = Value, Config = ()> + Send + Sync>>,
+    memory: Arc<dyn MemoryStore + Send + Sync>,
+    strategy: Arc<dyn strategy::Strategy + Send + Sync>,
 }
 
-impl Default for SimpleAgent {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl SimpleAgent {
-    /// Create a new simple agent.
-    pub fn new() -> Self {
+impl BasicAgent {
+    /// Create a new BasicAgent.
+    pub fn new(
+        llm: Arc<
+            dyn LanguageModel<Prompt = String, Response = String, TokenStream = LlmTokenStream>
+                + Send
+                + Sync,
+        >,
+        tools: Vec<Arc<dyn Tool<Input = Value, Output = Value, Config = ()> + Send + Sync>>,
+        memory: Arc<dyn MemoryStore + Send + Sync>,
+        strategy: Arc<dyn strategy::Strategy + Send + Sync>,
+    ) -> Self {
         Self {
-            chain: None,
-            memory: None,
-            tools: std::collections::HashMap::new(),
+            llm,
+            tools,
+            memory,
+            strategy,
         }
-    }
-
-    /// Create a new simple agent with a chain.
-    pub fn new_with_chain(chain: SimpleChain) -> Self {
-        Self {
-            chain: Some(chain),
-            memory: None,
-            tools: std::collections::HashMap::new(),
-        }
-    }
-
-    /// Create a new simple agent with memory.
-    pub fn new_with_memory(memory: Box<dyn crate::traits::memory::MemoryStore>) -> Self {
-        Self {
-            chain: None,
-            memory: Some(memory),
-            tools: std::collections::HashMap::new(),
-        }
-    }
-
-    /// Register a tool with the agent.
-    pub fn register_tool(&mut self, tool: crate::tool::SimpleTool) {
-        self.tools.insert(tool.spec().name.clone(), tool);
-    }
-
-    /// Execute the agent with the given input.
-    pub fn execute(&self, input: &str) -> Result<String, Box<crate::error::AgentError>> {
-        // Check if we need to invoke any tools
-        for (tool_name, tool) in &self.tools {
-            if input.contains(tool_name) {
-                let result = futures::executor::block_on(tool.invoke(input.to_string()));
-                return result.map_err(|e| Box::new(crate::error::AgentError::Tool(e)));
-            }
-        }
-
-        // Default response if no tools match
-        Ok(format!("SimpleAgent processed: {}", input))
     }
 }
 
-#[async_trait::async_trait]
-impl crate::traits::agent::Agent for SimpleAgent {
+#[async_trait]
+impl Agent for BasicAgent {
     type Config = ();
-    type Input = serde_json::Value;
-    type Output = serde_json::Value;
+    type Input = AgentInput;
+    type Output = AgentOutput;
 
     fn try_new(_config: Self::Config) -> Result<Self, crate::error::ToolConfigError> {
-        Ok(Self::new())
+        Err(crate::error::ToolConfigError::ValidationFailed(
+            "BasicAgent does not support try_new".to_string(),
+        ))
     }
 
-    async fn initialize(&mut self) -> Result<(), crate::error::AgentError> {
+    async fn initialize(&mut self) -> Result<(), AgentError> {
+        // Initialization logic here
         Ok(())
     }
 
-    async fn shutdown(&mut self) -> Result<(), crate::error::AgentError> {
+    async fn shutdown(&mut self) -> Result<(), AgentError> {
+        // Shutdown logic here
         Ok(())
     }
 
-    async fn execute(&self, input: Self::Input) -> Result<Self::Output, crate::error::AgentError> {
-        Ok(serde_json::json!({ "output": format!("SimpleAgent processed: {}", input) }))
+    async fn execute(&self, input: Self::Input) -> Result<Self::Output, AgentError> {
+        use crate::agent::memory_bridge::MemoryBridge;
+        use crate::agent::strategy::{Action, AgentState};
+        use serde_json::json;
+
+        // Create a session ID from the conversation ID or generate a new one
+        let session_id = crate::traits::memory::SessionId::new(
+            input
+                .conversation_id
+                .unwrap_or_else(|| uuid::Uuid::new_v4().to_string()),
+        );
+
+        let mut user_input = input.message.clone();
+        let mut step = 0;
+        let max_iterations = 3;
+        let mut tool_uses = Vec::new();
+
+        while step < max_iterations {
+            // Load context from memory
+            let _context = MemoryBridge::load(&*self.memory, &session_id, 10).await?;
+
+            // Create agent state
+            let state = AgentState {
+                user_input: user_input.clone(),
+                step,
+            };
+
+            // Plan next action
+            let action = self.strategy.plan(&state).await?;
+
+            match action {
+                Action::LlmCall(prompt) => {
+                    // Call LLM
+                    let response = self
+                        .llm
+                        .generate(prompt, GenerateOptions::default())
+                        .await
+                        .map_err(AgentError::Llm)?;
+
+                    // Save to memory
+                    let entry = crate::traits::memory::MemoryEntry {
+                        role: Role::Assistant,
+                        content: response.clone(),
+                        timestamp: OffsetDateTime::now_utc(),
+                    };
+                    MemoryBridge::save(&*self.memory, &session_id, entry).await?;
+
+                    user_input = response;
+                }
+                Action::ToolCall(tool_name, input_json) => {
+                    // For now, we'll just use a simple approach without the full ToolPipeline
+                    // since we don't have a proper ToolRegistry or ToolSelector yet
+                    let result = if let Some(tool) = self.tools.first() {
+                        tool.invoke(input_json.clone())
+                            .await
+                            .map_err(AgentError::Tool)?
+                    } else {
+                        return Err(AgentError::Runtime("No tools available".to_string()));
+                    };
+
+                    // Convert result to string
+                    let result_str = serde_json::to_string(&result)
+                        .map_err(|e| AgentError::Runtime(format!("Serialization error: {}", e)))?;
+
+                    // Save to memory
+                    let entry = crate::traits::memory::MemoryEntry {
+                        role: Role::System, // Using System role since there's no Tool role
+                        content: result_str.clone(),
+                        timestamp: OffsetDateTime::now_utc(),
+                    };
+                    MemoryBridge::save(&*self.memory, &session_id, entry).await?;
+
+                    // Record tool use
+                    let tool_use = ToolUse {
+                        tool_name: tool_name.clone(),
+                        input: input_json,
+                        output: result,
+                        timestamp: chrono::Utc::now(),
+                    };
+                    tool_uses.push(tool_use);
+
+                    user_input = result_str;
+                }
+                Action::Done(final_output) => {
+                    return Ok(AgentOutput {
+                        message: final_output,
+                        tool_uses,
+                        data: json!({}),
+                    });
+                }
+            }
+
+            step += 1;
+        }
+
+        Ok(AgentOutput {
+            message: user_input,
+            tool_uses,
+            data: json!({}),
+        })
     }
 
     async fn process(
         &self,
-        _input: crate::traits::agent::AgentInput,
-        _llm: std::sync::Arc<
-            dyn crate::traits::llm::LanguageModel<
+        _input: AgentInput,
+        _llm: Arc<
+            dyn LanguageModel<
                 Prompt = String,
                 Response = String,
-                TokenStream = std::pin::Pin<
-                    Box<dyn futures::Stream<Item = Result<String, crate::error::LlmError>> + Send>,
-                >,
+                TokenStream = Pin<Box<dyn Stream<Item = Result<String, LlmError>> + Send>>,
             >,
         >,
         _tools: &std::collections::HashMap<
             String,
-            std::sync::Arc<
-                dyn crate::traits::tool::Tool<
-                    Input = serde_json::Value,
-                    Output = serde_json::Value,
-                    Config = (),
-                >,
-            >,
+            Arc<dyn Tool<Input = Value, Output = Value, Config = ()>>,
         >,
-        _memory: std::sync::Arc<dyn crate::traits::memory::MemoryStore>,
-    ) -> Result<crate::traits::agent::AgentOutput, crate::error::AgentError> {
-        Ok(crate::traits::agent::AgentOutput {
-            message: "SimpleAgent executed".to_string(),
+        _memory: Arc<dyn MemoryStore>,
+    ) -> Result<AgentOutput, AgentError> {
+        // Implement process logic here
+        Ok(AgentOutput {
+            message: "BasicAgent processed input".to_string(),
             tool_uses: vec![],
             data: serde_json::json!({}),
         })
@@ -144,17 +224,16 @@ impl crate::traits::agent::Agent for SimpleAgent {
     async fn plan(
         &self,
         _input: &str,
-        _llm: std::sync::Arc<
-            dyn crate::traits::llm::LanguageModel<
+        _llm: Arc<
+            dyn LanguageModel<
                 Prompt = String,
                 Response = String,
-                TokenStream = std::pin::Pin<
-                    Box<dyn futures::Stream<Item = Result<String, crate::error::LlmError>> + Send>,
-                >,
+                TokenStream = Pin<Box<dyn Stream<Item = Result<String, LlmError>> + Send>>,
             >,
         >,
-        _memory: std::sync::Arc<dyn crate::traits::memory::MemoryStore>,
-    ) -> Result<serde_json::Value, crate::error::AgentError> {
-        Ok(serde_json::json!({ "plan": "Simple plan" }))
+        _memory: Arc<dyn MemoryStore>,
+    ) -> Result<serde_json::Value, AgentError> {
+        // Implement plan logic here
+        Ok(serde_json::json!({ "plan": "BasicAgent plan" }))
     }
 }

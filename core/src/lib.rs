@@ -9,7 +9,6 @@ pub mod prompt;
 pub mod tool;
 pub mod traits;
 
-pub use agent::SimpleAgent;
 pub use chain::{Chain, ChainConfig, ChainError, ChainMetrics, ChainStep, SimpleChain, StepType};
 pub use error::{AgentError, LlmError, MemoryError, ToolConfigError, ToolError};
 pub use memory::{InMemoryMemory, MemoryEntry, MemoryStore, Role, SessionId};

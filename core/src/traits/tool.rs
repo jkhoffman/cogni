@@ -307,3 +307,32 @@ pub trait Tool: Send + Sync {
     /// - Example uses of the tool
     fn spec(&self) -> ToolSpec;
 }
+
+/// A tool call represents a request to invoke a specific tool with input data.
+#[derive(Debug, Clone)]
+pub struct ToolCall {
+    /// The name of the tool to invoke
+    pub name: String,
+    /// The input data for the tool
+    pub input: serde_json::Value,
+}
+
+/// Type alias for a registry of tools, mapping tool names to tool instances.
+pub type ToolRegistry = std::collections::HashMap<
+    String,
+    std::sync::Arc<dyn Tool<Input = serde_json::Value, Output = serde_json::Value, Config = ()>>,
+>;
+
+/// Type alias for the result of a tool invocation.
+pub type ToolResult = serde_json::Value;
+
+/// A trait for selecting tools based on context.
+#[async_trait]
+pub trait ToolSelector: Send + Sync {
+    /// Select a tool based on the given context.
+    async fn select(
+        &self,
+        tools: &ToolRegistry,
+        context: &str,
+    ) -> Result<Option<String>, ToolError>;
+}
