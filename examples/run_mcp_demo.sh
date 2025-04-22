@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# Get the script directory
+# Get the script directory and go to project root
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR/.."
 
 # Check for Python and Rust
 if ! command -v python3 &> /dev/null; then
@@ -18,12 +18,12 @@ fi
 
 # Build the Rust client example
 echo "Building Rust client..."
-cd ../../../
 cargo build --example simple_client
 
 # Run the mock server in the background
 echo "Starting mock server..."
-python3 tools/mcp/examples/mock_server.py > /tmp/mcp_server.log 2>&1 &
+cd examples
+python3 mock_server.py > /tmp/mcp_server.log 2>&1 &
 SERVER_PID=$!
 
 # Function to cleanup when the script exits

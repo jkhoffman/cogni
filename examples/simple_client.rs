@@ -13,7 +13,7 @@ fn main() -> Result<()> {
     info!("Starting MCP mock server client example");
 
     // Start the mock server process
-    let mock_server_path = "tools/mcp/examples/mock_server.py";
+    let mock_server_path = "mock_server.py";
     let mut server = Command::new("python3")
         .arg(mock_server_path)
         .stdin(Stdio::piped())
