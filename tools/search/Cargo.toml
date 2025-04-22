@@ -12,7 +12,7 @@ cogni-core = { path = "../../core" }
 anyhow = "1.0"
 log = "0.4"
 async-trait = "0.1"
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = { workspace = true }
