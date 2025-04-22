@@ -22,7 +22,7 @@ tokio.workspace = true
 tracing.workspace = true
 dashmap = "5.5.3"
 semver = "1.0.20"
-jsonschema = "0.17.1"
+jsonschema = "0.30.0"
 chrono = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
