@@ -3529,15 +3529,16 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "0.25.4"
+version = "0.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0d7a6955c7511f60f3ba9e86c6d02b3c3f144f8c24b288d1f4e18074ab8bbec"
+checksum = "0bc1ea653e0b2e097db3ebb5b7f678be339620b8041f66b30a308c1d45d36a7f"
 dependencies = [
- "async-trait",
  "bytes 1.10.1",
+ "cfg-if 1.0.0",
  "combine",
  "futures-util",
  "itoa 1.0.15",
+ "num-bigint",
  "percent-encoding",
  "pin-project-lite 0.2.16",
  "ryu",
