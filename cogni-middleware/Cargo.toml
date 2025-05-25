@@ -1,0 +1,22 @@
+[package]
+name = "cogni-middleware"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/cogni-middleware"
+description = "Middleware system for the Cogni LLM library"
+
+[dependencies]
+cogni-core = { path = "../cogni-core" }
+async-trait = { workspace = true }
+futures = { workspace = true }
+futures-core = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = "0.10"
+indexmap = "2.0"

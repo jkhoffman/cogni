@@ -1,0 +1,48 @@
+[workspace]
+resolver = "2"
+members = [
+    "cogni-core",
+    "cogni-providers",
+    "cogni-middleware",
+    "cogni-tools",
+    "cogni-client",
+    "cogni",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/yourusername/cogni"
+homepage = "https://github.com/yourusername/cogni"
+documentation = "https://docs.rs/cogni"
+readme = "README.md"
+keywords = ["llm", "ai", "openai", "anthropic", "async"]
+categories = ["api-bindings", "asynchronous"]
+
+[workspace.dependencies]
+# Core dependencies
+tokio = { version = "1.40", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+async-trait = "0.1"
+futures = "0.3"
+futures-core = "0.3"
+
+# HTTP and networking
+reqwest = { version = "0.12", features = ["json", "stream"] }
+reqwest-eventsource = "0.6"
+url = "2.5"
+bytes = "1.8"
+
+# Utilities
+tracing = "0.1"
+uuid = { version = "1.10", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# Dev dependencies
+tokio-test = "0.4"
+proptest = "1.5"
+criterion = "0.5"

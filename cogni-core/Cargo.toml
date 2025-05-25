@@ -1,0 +1,17 @@
+[package]
+name = "cogni-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/cogni-core"
+description = "Core traits and types for the Cogni LLM library"
+
+[dependencies]
+# Minimal dependencies - only what's absolutely necessary for core abstractions
+async-trait = { workspace = true }
+futures-core = "0.3"
+serde = { workspace = true }
+serde_json = { workspace = true }

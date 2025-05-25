@@ -1,0 +1,79 @@
+[package]
+name = "cogni"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "A unified Rust library for LLM interactions"
+readme = "../README.md"
+
+[dependencies]
+cogni-core = { path = "../cogni-core" }
+cogni-providers = { path = "../cogni-providers", optional = true }
+cogni-middleware = { path = "../cogni-middleware", optional = true }
+cogni-tools = { path = "../cogni-tools", optional = true }
+cogni-client = { path = "../cogni-client", optional = true }
+
+[features]
+default = ["providers", "tools", "client"]
+providers = ["dep:cogni-providers"]
+middleware = ["dep:cogni-middleware"]
+tools = ["dep:cogni-tools"]
+client = ["dep:cogni-client", "providers"]
+full = ["providers", "middleware", "tools", "client"]
+
+[[test]]
+name = "core_types"
+path = "../tests/core_types.rs"
+
+[[test]]
+name = "tool_integration_test"
+path = "../tests/tool_integration_test.rs"
+required-features = ["tools", "providers"]
+
+[[test]]
+name = "tool_streaming_test"
+path = "../tests/tool_streaming_test.rs"
+required-features = ["tools", "providers"]
+
+[[example]]
+name = "basic_openai"
+path = "../examples/basic_openai.rs"
+
+[[example]]
+name = "streaming_openai"
+path = "../examples/streaming_openai.rs"
+
+[[example]]
+name = "multi_provider"
+path = "../examples/multi_provider.rs"
+
+[[example]]
+name = "multi_provider_tools"
+path = "../examples/multi_provider_tools.rs"
+
+[[example]]
+name = "provider_failover"
+path = "../examples/provider_failover.rs"
+
+[dev-dependencies]
+serde_json = { workspace = true }
+tokio = { workspace = true }
+futures = { workspace = true }
+chrono = { workspace = true }
+reqwest = { workspace = true }
+async-trait = { workspace = true }
+criterion = { version = "0.5", features = ["async_tokio"] }
+
+[[bench]]
+name = "provider_bench"
+path = "../benches/provider_bench.rs"
+harness = false
+
+[[bench]]
+name = "client_bench"
+path = "../benches/client_bench.rs"
+harness = false

@@ -1,0 +1,19 @@
+[package]
+name = "cogni-client"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/cogni-client"
+description = "High-level client API for the Cogni LLM library"
+
+[dependencies]
+cogni-core = { path = "../cogni-core" }
+cogni-providers = { path = "../cogni-providers" }
+cogni-middleware = { path = "../cogni-middleware" }
+async-trait = { workspace = true }
+futures = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
