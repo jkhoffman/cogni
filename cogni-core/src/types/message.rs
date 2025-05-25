@@ -80,17 +80,17 @@ impl Message {
             metadata: Metadata::default(),
         }
     }
-    
+
     /// Create a system message
     pub fn system(text: impl Into<String>) -> Self {
         Self::text(Role::System, text)
     }
-    
+
     /// Create a user message
     pub fn user(text: impl Into<String>) -> Self {
         Self::text(Role::User, text)
     }
-    
+
     /// Create an assistant message
     pub fn assistant(text: impl Into<String>) -> Self {
         Self::text(Role::Assistant, text)

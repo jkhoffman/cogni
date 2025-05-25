@@ -1,6 +1,6 @@
 //! Conversion between Cogni types and Ollama API types
 
-use cogni_core::{Content, Role, ToolCall, Request};
+use cogni_core::{Content, Request, Role, ToolCall};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -115,57 +115,67 @@ pub struct OllamaStreamMessage {
 
 // Conversion functions
 pub fn to_ollama_request(request: &Request) -> OllamaRequest {
-    let messages: Vec<OllamaMessage> = request.messages.iter().map(|msg| {
-        let role = match msg.role {
-            Role::System => "system",
-            Role::User => "user",
-            Role::Assistant => "assistant",
-            Role::Tool => "tool",
-            _ => "user", // Default unknown roles to user
-        }.to_string();
-        
-        let content = match &msg.content {
-            Content::Text(text) => text.clone(),
-            Content::Image(_) => "[Image content not yet supported]".to_string(),
-            Content::Audio(_) => "[Audio content not yet supported]".to_string(),
-            Content::Multiple(contents) => {
-                contents.iter()
+    let messages: Vec<OllamaMessage> = request
+        .messages
+        .iter()
+        .map(|msg| {
+            let role = match msg.role {
+                Role::System => "system",
+                Role::User => "user",
+                Role::Assistant => "assistant",
+                Role::Tool => "tool",
+                _ => "user", // Default unknown roles to user
+            }
+            .to_string();
+
+            let content = match &msg.content {
+                Content::Text(text) => text.clone(),
+                Content::Image(_) => "[Image content not yet supported]".to_string(),
+                Content::Audio(_) => "[Audio content not yet supported]".to_string(),
+                Content::Multiple(contents) => contents
+                    .iter()
                     .filter_map(|c| match c {
                         Content::Text(t) => Some(t.clone()),
                         _ => None,
                     })
                     .collect::<Vec<_>>()
-                    .join("\n")
+                    .join("\n"),
+            };
+
+            OllamaMessage {
+                role,
+                content,
+                tool_calls: None,
             }
-        };
-        
-        OllamaMessage {
-            role,
-            content,
-            tool_calls: None,
-        }
-    }).collect();
-    
+        })
+        .collect();
+
     let options = OllamaOptions {
         temperature: request.parameters.temperature,
         top_p: request.parameters.top_p,
         stop: request.parameters.stop.clone(),
         seed: request.parameters.seed,
     };
-    
+
     let tools = if request.tools.is_empty() {
         None
     } else {
-        Some(request.tools.iter().map(|tool| OllamaTool {
-            tool_type: "function".to_string(),
-            function: OllamaFunction {
-                name: tool.name.clone(),
-                description: tool.description.clone(),
-                parameters: tool.function.parameters.clone(),
-            },
-        }).collect())
+        Some(
+            request
+                .tools
+                .iter()
+                .map(|tool| OllamaTool {
+                    tool_type: "function".to_string(),
+                    function: OllamaFunction {
+                        name: tool.name.clone(),
+                        description: tool.description.clone(),
+                        parameters: tool.function.parameters.clone(),
+                    },
+                })
+                .collect(),
+        )
     };
-    
+
     OllamaRequest {
         model: request.model.to_string(),
         messages,
@@ -180,13 +190,19 @@ pub fn extract_text_content(message: &OllamaMessage) -> String {
 }
 
 pub fn extract_tool_calls(message: &OllamaMessage) -> Vec<ToolCall> {
-    message.tool_calls.as_ref().map(|calls| {
-        calls.iter().enumerate().map(|(idx, call)| {
-            ToolCall {
-                id: format!("call_{}", idx),
-                name: call.function.name.clone(),
-                arguments: call.function.arguments.to_string(),
-            }
-        }).collect()
-    }).unwrap_or_default()
+    message
+        .tool_calls
+        .as_ref()
+        .map(|calls| {
+            calls
+                .iter()
+                .enumerate()
+                .map(|(idx, call)| ToolCall {
+                    id: format!("call_{}", idx),
+                    name: call.function.name.clone(),
+                    arguments: call.function.arguments.to_string(),
+                })
+                .collect()
+        })
+        .unwrap_or_default()
 }

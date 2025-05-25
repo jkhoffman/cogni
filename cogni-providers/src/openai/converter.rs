@@ -16,7 +16,7 @@ impl RequestConverter for OpenAIConverter {
             "messages": self.convert_messages(&request.messages)?,
             "stream": false,
         });
-        
+
         // Add parameters
         if let Some(max_tokens) = request.parameters.max_tokens {
             body["max_tokens"] = json!(max_tokens);
@@ -42,12 +42,12 @@ impl RequestConverter for OpenAIConverter {
         if let Some(seed) = request.parameters.seed {
             body["seed"] = json!(seed);
         }
-        
+
         // Add tools if present
         if !request.tools.is_empty() {
             body["tools"] = json!(self.convert_tools(&request.tools));
         }
-        
+
         Ok(body)
     }
 }
@@ -59,7 +59,7 @@ impl OpenAIConverter {
             .map(|msg| self.convert_message(msg))
             .collect()
     }
-    
+
     fn convert_message(&self, message: &Message) -> Result<Value, Error> {
         let role = match message.role {
             Role::System => "system",
@@ -68,28 +68,26 @@ impl OpenAIConverter {
             Role::Tool => "tool",
             _ => "user", // Default unknown roles to user
         };
-        
+
         let mut msg = json!({
             "role": role,
         });
-        
+
         // Handle content
         match &message.content {
             Content::Text(text) => {
                 msg["content"] = json!(text);
             }
             Content::Multiple(contents) => {
-                let converted: Result<Vec<Value>, Error> = contents
-                    .iter()
-                    .map(|c| self.convert_content(c))
-                    .collect();
+                let converted: Result<Vec<Value>, Error> =
+                    contents.iter().map(|c| self.convert_content(c)).collect();
                 msg["content"] = json!(converted?);
             }
             other => {
                 msg["content"] = json!([self.convert_content(other)?]);
             }
         }
-        
+
         // Add metadata
         if let Some(name) = &message.metadata.name {
             msg["name"] = json!(name);
@@ -97,10 +95,10 @@ impl OpenAIConverter {
         if let Some(tool_call_id) = &message.metadata.tool_call_id {
             msg["tool_call_id"] = json!(tool_call_id);
         }
-        
+
         Ok(msg)
     }
-    
+
     fn convert_content(&self, content: &Content) -> Result<Value, Error> {
         match content {
             Content::Text(text) => Ok(json!({
@@ -123,29 +121,33 @@ impl OpenAIConverter {
                         },
                     }))
                 } else {
-                    Err(Error::Validation("Image must have either URL or data".to_string()))
+                    Err(Error::Validation(
+                        "Image must have either URL or data".to_string(),
+                    ))
                 }
             }
-            Content::Audio(_) => {
-                Err(Error::Validation("OpenAI does not support audio content in chat".to_string()))
-            }
-            Content::Multiple(_) => {
-                Err(Error::Validation("Nested multiple content not supported".to_string()))
-            }
+            Content::Audio(_) => Err(Error::Validation(
+                "OpenAI does not support audio content in chat".to_string(),
+            )),
+            Content::Multiple(_) => Err(Error::Validation(
+                "Nested multiple content not supported".to_string(),
+            )),
         }
     }
-    
+
     fn convert_tools(&self, tools: &[cogni_core::Tool]) -> Vec<Value> {
         tools
             .iter()
-            .map(|tool| json!({
-                "type": "function",
-                "function": {
-                    "name": tool.name,
-                    "description": tool.description,
-                    "parameters": tool.function.parameters.clone(),
-                },
-            }))
+            .map(|tool| {
+                json!({
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.function.parameters.clone(),
+                    },
+                })
+            })
             .collect()
     }
 }

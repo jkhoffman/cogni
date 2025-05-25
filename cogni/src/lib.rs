@@ -1,24 +1,24 @@
 //! Cogni - A unified Rust library for LLM interactions
-//! 
+//!
 //! This crate provides a clean, type-safe interface for interacting with various
 //! Large Language Model providers including OpenAI, Anthropic, and Ollama.
-//! 
+//!
 //! # Features
-//! 
+//!
 //! - **Unified API**: Single interface for multiple LLM providers
 //! - **Type Safety**: Leverage Rust's type system for compile-time guarantees
 //! - **Async First**: Built on Tokio for efficient async operations
 //! - **Streaming**: First-class support for streaming responses
 //! - **Tool Calling**: Support for function/tool calling across providers
 //! - **Extensible**: Easy to add new providers and middleware
-//! 
+//!
 //! # Quick Start
-//! 
+//!
 //! ```no_run
 //! # use cogni::prelude::*;
 //! # #[cfg(feature = "providers")]
 //! # use cogni::providers::{OpenAI, openai::OpenAIConfig};
-//! # 
+//! #
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), cogni::Error> {
 //! #     #[cfg(feature = "providers")]
@@ -78,15 +78,15 @@ pub mod client {
 
 /// Prelude module for convenient imports
 pub mod prelude {
-    
+
     pub use cogni_core::{
-        Error, Provider, Request, Response, StreamEvent, StreamAccumulator,
-        Message, Content, Role, Model, Parameters,
+        Content, Error, Message, Model, Parameters, Provider, Request, Response, Role,
+        StreamAccumulator, StreamEvent,
     };
-    
+
     #[cfg(feature = "providers")]
-    pub use cogni_providers::{openai::OpenAIConfig};
-    
+    pub use cogni_providers::openai::OpenAIConfig;
+
     #[cfg(feature = "client")]
     pub use cogni_client::{Client, RequestBuilder};
 }

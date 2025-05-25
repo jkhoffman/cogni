@@ -1,11 +1,13 @@
 //! Anthropic streaming implementation
 
-use std::pin::Pin;
-use std::task::{Context, Poll};
-use cogni_core::{StreamEvent, Error, ContentDelta, ToolCallDelta, MetadataDelta};
+use crate::anthropic::converter::{
+    AnthropicStreamEvent, ContentBlock, ContentDelta as AnthropicContentDelta,
+};
+use cogni_core::{ContentDelta, Error, MetadataDelta, StreamEvent, ToolCallDelta};
 use futures_core::Stream;
 use reqwest_eventsource::{Event, EventSource};
-use crate::anthropic::converter::{AnthropicStreamEvent, ContentBlock, ContentDelta as AnthropicContentDelta};
+use std::pin::Pin;
+use std::task::{Context, Poll};
 
 pub struct AnthropicStream {
     inner: EventSource,
@@ -29,19 +31,19 @@ impl AnthropicStream {
             model: None,
         }
     }
-    
+
     fn parse_event(&mut self, data: &str) -> Result<Option<StreamEvent>, Error> {
-        let event: AnthropicStreamEvent = serde_json::from_str(data)
-            .map_err(|e| Error::Serialization { 
+        let event: AnthropicStreamEvent =
+            serde_json::from_str(data).map_err(|e| Error::Serialization {
                 message: e.to_string(),
                 source: None,
             })?;
-            
+
         match event {
             AnthropicStreamEvent::MessageStart { message } => {
                 self.message_id = Some(message.id.clone());
                 self.model = Some(message.model.clone());
-                
+
                 // Send metadata event
                 Ok(Some(StreamEvent::Metadata(MetadataDelta {
                     model: Some(message.model),
@@ -49,14 +51,17 @@ impl AnthropicStream {
                     custom: Default::default(),
                 })))
             }
-            AnthropicStreamEvent::ContentBlockStart { index, content_block } => {
+            AnthropicStreamEvent::ContentBlockStart {
+                index,
+                content_block,
+            } => {
                 match content_block {
                     ContentBlock::ToolUse { id, name, .. } => {
                         self.current_tool_index = index;
                         self.current_tool_id = Some(id.clone());
                         self.current_tool_name = Some(name.clone());
                         self.current_tool_input.clear();
-                        
+
                         // Send initial tool call delta
                         Ok(Some(StreamEvent::ToolCall(ToolCallDelta {
                             index,
@@ -68,25 +73,21 @@ impl AnthropicStream {
                     _ => Ok(None),
                 }
             }
-            AnthropicStreamEvent::ContentBlockDelta { index, delta } => {
-                match delta {
-                    AnthropicContentDelta::TextDelta { text } => {
-                        Ok(Some(StreamEvent::Content(ContentDelta {
-                            text,
-                        })))
-                    }
-                    AnthropicContentDelta::InputJsonDelta { partial_json } => {
-                        self.current_tool_input.push_str(&partial_json);
-                        
-                        Ok(Some(StreamEvent::ToolCall(ToolCallDelta {
-                            index,
-                            id: None,
-                            name: None,
-                            arguments: Some(partial_json),
-                        })))
-                    }
+            AnthropicStreamEvent::ContentBlockDelta { index, delta } => match delta {
+                AnthropicContentDelta::TextDelta { text } => {
+                    Ok(Some(StreamEvent::Content(ContentDelta { text })))
                 }
-            }
+                AnthropicContentDelta::InputJsonDelta { partial_json } => {
+                    self.current_tool_input.push_str(&partial_json);
+
+                    Ok(Some(StreamEvent::ToolCall(ToolCallDelta {
+                        index,
+                        id: None,
+                        name: None,
+                        arguments: Some(partial_json),
+                    })))
+                }
+            },
             AnthropicStreamEvent::ContentBlockStop { index } => {
                 // Verify we're stopping the correct tool
                 if index == self.current_tool_index && self.current_tool_id.is_some() {
@@ -102,7 +103,7 @@ impl AnthropicStream {
                     let mut custom = std::collections::HashMap::new();
                     custom.insert("input_tokens".to_string(), usage.input_tokens.to_string());
                     custom.insert("output_tokens".to_string(), usage.output_tokens.to_string());
-                    
+
                     Ok(Some(StreamEvent::Metadata(MetadataDelta {
                         model: None,
                         id: None,
@@ -112,9 +113,7 @@ impl AnthropicStream {
                     Ok(None)
                 }
             }
-            AnthropicStreamEvent::MessageStop => {
-                Ok(Some(StreamEvent::Done))
-            }
+            AnthropicStreamEvent::MessageStop => Ok(Some(StreamEvent::Done)),
             AnthropicStreamEvent::Ping => Ok(None),
         }
     }
@@ -122,7 +121,7 @@ impl AnthropicStream {
 
 impl Stream for AnthropicStream {
     type Item = Result<StreamEvent, Error>;
-    
+
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         loop {
             match Pin::new(&mut self.inner).poll_next(cx) {
@@ -136,7 +135,7 @@ impl Stream for AnthropicStream {
                             source: None,
                         })));
                     }
-                    
+
                     match self.parse_event(&msg.data) {
                         Ok(Some(event)) => return Poll::Ready(Some(Ok(event))),
                         Ok(None) => continue,

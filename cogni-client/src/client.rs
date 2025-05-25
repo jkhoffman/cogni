@@ -2,7 +2,8 @@
 
 use crate::RequestBuilder;
 use cogni_core::{
-    Content, Error, Message, Metadata, Model, Parameters, Provider, Request, Response, Role, StreamEvent,
+    Content, Error, Message, Metadata, Model, Parameters, Provider, Request, Response, Role,
+    StreamEvent,
 };
 use futures::{Stream, StreamExt};
 use std::pin::Pin;
@@ -83,7 +84,7 @@ impl<P: Provider> Client<P> {
     pub async fn stream_chat(
         &self,
         messages: impl Into<MessageInput>,
-    ) -> Result<Pin<Box<dyn Stream<Item = Result<String, Error>> + Send + 'static>>, Error> 
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<String, Error>> + Send + 'static>>, Error>
     where
         P::Stream: 'static,
     {
@@ -146,10 +147,7 @@ impl<P: Provider> Client<P> {
     }
 
     /// Execute a pre-built request with streaming
-    pub async fn execute_stream(
-        &self,
-        request: Request,
-    ) -> Result<P::Stream, Error> {
+    pub async fn execute_stream(&self, request: Request) -> Result<P::Stream, Error> {
         self.provider.stream(request).await
     }
 }
@@ -317,12 +315,12 @@ mod tests {
     async fn test_streaming_chat() {
         let client = Client::new(MockProvider);
         let mut stream = client.stream_chat("Hello").await.unwrap();
-        
+
         let mut result = String::new();
         while let Some(chunk) = stream.next().await {
             result.push_str(&chunk.unwrap());
         }
-        
+
         assert_eq!(result, "Hello world");
     }
 
@@ -337,7 +335,7 @@ mod tests {
             .send()
             .await
             .unwrap();
-        
+
         assert_eq!(response.content, "Hello from mock provider");
     }
 }

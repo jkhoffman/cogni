@@ -6,28 +6,28 @@ use futures::future::join_all;
 use std::sync::Arc;
 
 /// Execute multiple requests in parallel across different providers.
-/// 
+///
 /// This function takes a vector of providers and a single request, then executes
 /// the request on all providers concurrently. Results are collected and returned
 /// in the same order as the input providers.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```no_run
 /// use cogni_client::parallel::parallel_requests;
 /// use cogni_providers::{OpenAI, Anthropic};
 /// use cogni_core::{Request, Message};
-/// 
+///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let providers = vec![
 ///     OpenAI::new("key1"),
 ///     Anthropic::new("key2"),
 /// ];
-/// 
+///
 /// let request = Request::builder()
 ///     .message(Message::user("Hello"))
 ///     .build();
-/// 
+///
 /// let results = parallel_requests(providers, request).await;
 /// # Ok(())
 /// # }
@@ -45,49 +45,48 @@ where
         .into_iter()
         .map(|provider| {
             let req = request.clone();
-            tokio::spawn(async move {
-                provider.request((*req).clone()).await
-            })
+            tokio::spawn(async move { provider.request((*req).clone()).await })
         })
         .collect();
 
     let results = join_all(handles).await;
     results
         .into_iter()
-        .map(|result| result.unwrap_or_else(|e| Err(Error::Provider {
-            provider: "unknown".to_string(),
-            message: e.to_string(),
-            retry_after: None,
-            source: None,
-        })))
+        .map(|result| {
+            result.unwrap_or_else(|e| {
+                Err(Error::Provider {
+                    provider: "unknown".to_string(),
+                    message: e.to_string(),
+                    retry_after: None,
+                    source: None,
+                })
+            })
+        })
         .collect()
 }
 
 /// Execute the same prompt across multiple providers in parallel.
-/// 
+///
 /// This is a convenience function that creates a simple chat request with the given
 /// message and executes it across all providers concurrently.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```no_run
 /// use cogni_client::parallel::parallel_chat;
 /// use cogni_providers::{OpenAI, Anthropic};
-/// 
+///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let providers = vec![
 ///     OpenAI::new("key1"),
 ///     Anthropic::new("key2"),
 /// ];
-/// 
+///
 /// let results = parallel_chat(providers, "What is the capital of France?").await;
 /// # Ok(())
 /// # }
 /// ```
-pub async fn parallel_chat<P>(
-    providers: Vec<P>,
-    message: &str,
-) -> Vec<Result<String, Error>>
+pub async fn parallel_chat<P>(providers: Vec<P>, message: &str) -> Vec<Result<String, Error>>
 where
     P: Provider + Send + Sync + 'static,
     P::Stream: Send + 'static,
@@ -104,37 +103,41 @@ where
     let results = join_all(handles).await;
     results
         .into_iter()
-        .map(|result| result.unwrap_or_else(|e| Err(Error::Provider {
-            provider: "unknown".to_string(),
-            message: e.to_string(),
-            retry_after: None,
-            source: None,
-        })))
+        .map(|result| {
+            result.unwrap_or_else(|e| {
+                Err(Error::Provider {
+                    provider: "unknown".to_string(),
+                    message: e.to_string(),
+                    retry_after: None,
+                    source: None,
+                })
+            })
+        })
         .collect()
 }
 
 /// A client that can execute requests across multiple providers.
-/// 
+///
 /// The `ParallelClient` allows you to work with multiple LLM providers simultaneously,
 /// using different execution strategies to determine how results are handled.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```no_run
 /// use cogni_client::parallel::{ParallelClient, ExecutionStrategy};
 /// use cogni_providers::{OpenAI, Anthropic, Ollama};
-/// 
+///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let providers = vec![
 ///     OpenAI::new("key1"),
 ///     Anthropic::new("key2"),
 ///     Ollama::default(),
 /// ];
-/// 
+///
 /// // Get the first successful response
 /// let client = ParallelClient::new(providers)
 ///     .with_strategy(ExecutionStrategy::FirstSuccess);
-/// 
+///
 /// let response = client.chat("Hello").await?;
 /// # Ok(())
 /// # }
@@ -145,7 +148,7 @@ pub struct ParallelClient<P> {
 }
 
 /// Strategy for parallel execution.
-/// 
+///
 /// Determines how the `ParallelClient` handles responses from multiple providers.
 #[derive(Debug, Clone, Copy)]
 pub enum ExecutionStrategy {
@@ -161,7 +164,7 @@ pub enum ExecutionStrategy {
 
 impl<P: Provider + Clone> ParallelClient<P> {
     /// Create a new parallel client with the given providers.
-    /// 
+    ///
     /// By default, uses the `FirstSuccess` execution strategy.
     pub fn new(providers: Vec<P>) -> Self {
         Self {
@@ -171,7 +174,7 @@ impl<P: Provider + Clone> ParallelClient<P> {
     }
 
     /// Set the execution strategy.
-    /// 
+    ///
     /// This determines how the client handles responses from multiple providers.
     pub fn with_strategy(mut self, strategy: ExecutionStrategy) -> Self {
         self.strategy = strategy;
@@ -201,15 +204,14 @@ impl<P: Provider + Clone> ParallelClient<P> {
         let providers = self.providers.clone();
         let results = parallel_requests(providers, request).await;
 
-        results
-            .into_iter()
-            .find(|r| r.is_ok())
-            .unwrap_or_else(|| Err(Error::Provider {
+        results.into_iter().find(|r| r.is_ok()).unwrap_or_else(|| {
+            Err(Error::Provider {
                 provider: "parallel".to_string(),
                 message: "All providers failed".to_string(),
                 retry_after: None,
                 source: None,
-            }))
+            })
+        })
     }
 
     /// Get all responses (returns the first one, but waits for all)
@@ -222,15 +224,14 @@ impl<P: Provider + Clone> ParallelClient<P> {
         let results = parallel_requests(providers, request).await;
 
         // Return the first successful response
-        results
-            .into_iter()
-            .find(|r| r.is_ok())
-            .unwrap_or_else(|| Err(Error::Provider {
+        results.into_iter().find(|r| r.is_ok()).unwrap_or_else(|| {
+            Err(Error::Provider {
                 provider: "parallel".to_string(),
                 message: "All providers failed".to_string(),
                 retry_after: None,
                 source: None,
-            }))
+            })
+        })
     }
 
     /// Get consensus response (most common response)
@@ -242,10 +243,8 @@ impl<P: Provider + Clone> ParallelClient<P> {
         let providers = self.providers.clone();
         let results = parallel_requests(providers, request).await;
 
-        let successful_responses: Vec<Response> = results
-            .into_iter()
-            .filter_map(|r| r.ok())
-            .collect();
+        let successful_responses: Vec<Response> =
+            results.into_iter().filter_map(|r| r.ok()).collect();
 
         if successful_responses.is_empty() {
             return Err(Error::Provider {
@@ -285,14 +284,12 @@ impl<P: Provider + Clone> ParallelClient<P> {
         drop(tx);
 
         // Return the first response received
-        rx.recv()
-            .await
-            .ok_or_else(|| Error::Provider {
-                provider: "parallel".to_string(),
-                message: "All providers failed".to_string(),
-                retry_after: None,
-                source: None,
-            })
+        rx.recv().await.ok_or_else(|| Error::Provider {
+            provider: "parallel".to_string(),
+            message: "All providers failed".to_string(),
+            retry_after: None,
+            source: None,
+        })
     }
 }
 
@@ -308,7 +305,7 @@ impl<P: Provider + Clone> ParallelClient<P> {
 ///     OpenAI::with_api_key("key1"),
 ///     OpenAI::with_api_key("key2"),
 /// ];
-/// 
+///
 /// let client = ParallelClient::new(providers)
 ///     .with_strategy(ExecutionStrategy::Race);
 /// # Ok(())
@@ -402,12 +399,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_parallel_client_first_success() {
-        let client = ParallelClient::new(vec![
-            MockProvider {
-                response: "Success".to_string(),
-                delay: None,
-            },
-        ])
+        let client = ParallelClient::new(vec![MockProvider {
+            response: "Success".to_string(),
+            delay: None,
+        }])
         .with_strategy(ExecutionStrategy::FirstSuccess);
 
         let request = Request {

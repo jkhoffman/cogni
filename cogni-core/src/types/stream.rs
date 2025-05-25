@@ -67,7 +67,7 @@ impl StreamAccumulator {
     pub fn new() -> Self {
         Self::default()
     }
-    
+
     /// Process a stream event
     pub fn process_event(&mut self, event: StreamEvent) -> crate::error::Result<()> {
         match event {
@@ -79,7 +79,7 @@ impl StreamAccumulator {
                 while self.tool_calls.len() <= delta.index {
                     self.tool_calls.push(PartialToolCall::default());
                 }
-                
+
                 let tool_call = &mut self.tool_calls[delta.index];
                 if let Some(id) = delta.id {
                     tool_call.id.push_str(&id);
@@ -98,12 +98,12 @@ impl StreamAccumulator {
         }
         Ok(())
     }
-    
+
     /// Get the accumulated content
     pub fn content(&self) -> &str {
         &self.content
     }
-    
+
     /// Convert accumulated tool calls to complete ones
     pub fn tool_calls(&self) -> Vec<ToolCall> {
         self.tool_calls

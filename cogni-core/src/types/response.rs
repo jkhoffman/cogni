@@ -64,7 +64,7 @@ impl Response {
             metadata: ResponseMetadata::default(),
         }
     }
-    
+
     /// Check if the response contains tool calls
     pub fn has_tool_calls(&self) -> bool {
         !self.tool_calls.is_empty()

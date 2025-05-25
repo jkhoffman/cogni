@@ -11,7 +11,7 @@ pub enum ToolError {
         /// Tool name that was not found
         name: String,
     },
-    
+
     /// Invalid arguments passed to tool
     InvalidArguments {
         /// Tool name
@@ -21,7 +21,7 @@ pub enum ToolError {
         /// Underlying error if available
         source: Option<Box<dyn StdError + Send + Sync>>,
     },
-    
+
     /// Tool execution failed
     ExecutionFailed {
         /// Tool name
@@ -31,7 +31,7 @@ pub enum ToolError {
         /// Underlying error if available
         source: Option<Box<dyn StdError + Send + Sync>>,
     },
-    
+
     /// JSON parsing/serialization error
     JsonError {
         /// Error message
@@ -39,7 +39,7 @@ pub enum ToolError {
         /// Underlying error
         source: serde_json::Error,
     },
-    
+
     /// Validation error
     ValidationFailed {
         /// Tool name
@@ -47,7 +47,7 @@ pub enum ToolError {
         /// Validation errors
         errors: Vec<String>,
     },
-    
+
     /// Network error (for remote tools)
     Network {
         /// Error message
@@ -55,7 +55,7 @@ pub enum ToolError {
         /// Underlying error if available
         source: Option<Box<dyn StdError + Send + Sync>>,
     },
-    
+
     /// Timeout
     Timeout {
         /// Tool name
@@ -115,7 +115,12 @@ impl fmt::Display for ToolError {
                 write!(f, "JSON error: {}", message)
             }
             ToolError::ValidationFailed { tool, errors } => {
-                write!(f, "Validation failed for tool '{}': {}", tool, errors.join(", "))
+                write!(
+                    f,
+                    "Validation failed for tool '{}': {}",
+                    tool,
+                    errors.join(", ")
+                )
             }
             ToolError::Network { message, .. } => {
                 write!(f, "Network error: {}", message)
@@ -130,11 +135,11 @@ impl fmt::Display for ToolError {
 impl StdError for ToolError {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match self {
-            ToolError::InvalidArguments { source, .. } |
-            ToolError::ExecutionFailed { source, .. } |
-            ToolError::Network { source, .. } => {
-                source.as_ref().map(|e| e.as_ref() as &(dyn StdError + 'static))
-            }
+            ToolError::InvalidArguments { source, .. }
+            | ToolError::ExecutionFailed { source, .. }
+            | ToolError::Network { source, .. } => source
+                .as_ref()
+                .map(|e| e.as_ref() as &(dyn StdError + 'static)),
             ToolError::JsonError { source, .. } => Some(source),
             _ => None,
         }

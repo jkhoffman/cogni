@@ -1,7 +1,7 @@
 //! Example demonstrating tool calling with multiple providers
 
-use cogni::{Provider, Request, Message, Tool, Function, Error};
-use cogni::providers::{OpenAI, Anthropic};
+use cogni::providers::{Anthropic, OpenAI};
+use cogni::{Error, Function, Message, Provider, Request, Tool};
 use serde_json::json;
 use std::env;
 
@@ -9,15 +9,13 @@ use std::env;
 async fn main() -> Result<(), Error> {
     // Initialize providers that support tool calling
     let openai = OpenAI::with_api_key(
-        env::var("OPENAI_API_KEY")
-            .expect("OPENAI_API_KEY environment variable not set")
+        env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY environment variable not set"),
     );
-    
+
     let anthropic = Anthropic::with_api_key(
-        env::var("ANTHROPIC_API_KEY")
-            .expect("ANTHROPIC_API_KEY environment variable not set")
+        env::var("ANTHROPIC_API_KEY").expect("ANTHROPIC_API_KEY environment variable not set"),
     );
-    
+
     // Define a simple weather tool
     let weather_tool = Tool {
         name: "get_weather".to_string(),
@@ -41,18 +39,18 @@ async fn main() -> Result<(), Error> {
             returns: Some("Weather information".to_string()),
         },
     };
-    
+
     // Create a request that might trigger tool use
     let request = Request::builder()
         .message(Message::user(
-            "What's the weather like in Tokyo and New York?"
+            "What's the weather like in Tokyo and New York?",
         ))
         .tool(weather_tool)
         .max_tokens(500)
         .build();
-    
+
     println!("Testing tool calling with multiple providers:\n");
-    
+
     // Test OpenAI
     println!("OpenAI with tools:");
     match openai.request(request.clone()).await {
@@ -68,9 +66,9 @@ async fn main() -> Result<(), Error> {
         }
         Err(e) => println!("Error: {}", e),
     }
-    
+
     println!();
-    
+
     // Test Anthropic
     println!("Anthropic with tools:");
     match anthropic.request(request.clone()).await {
@@ -86,13 +84,13 @@ async fn main() -> Result<(), Error> {
         }
         Err(e) => println!("Error: {}", e),
     }
-    
+
     // Demonstrate streaming with tool calls
     println!("\n\nStreaming with tool calls:");
-    
+
     let streaming_request = Request::builder()
         .message(Message::user(
-            "Check the weather in Paris, France using the weather tool."
+            "Check the weather in Paris, France using the weather tool.",
         ))
         .tool(Tool {
             name: "get_weather".to_string(),
@@ -112,38 +110,35 @@ async fn main() -> Result<(), Error> {
             },
         })
         .build();
-    
+
     // Stream from OpenAI
     println!("\nOpenAI (streaming with tools):");
     match stream_with_tools(&openai, streaming_request.clone()).await {
         Ok(_) => println!(),
         Err(e) => println!("Error: {}", e),
     }
-    
+
     // Stream from Anthropic
     println!("\nAnthropic (streaming with tools):");
     match stream_with_tools(&anthropic, streaming_request.clone()).await {
         Ok(_) => println!(),
         Err(e) => println!("Error: {}", e),
     }
-    
+
     Ok(())
 }
 
-async fn stream_with_tools<P: Provider>(
-    provider: &P,
-    request: Request,
-) -> Result<(), Error> {
+async fn stream_with_tools<P: Provider>(provider: &P, request: Request) -> Result<(), Error> {
+    use cogni::{StreamAccumulator, StreamEvent};
     use futures::StreamExt;
-    use cogni::{StreamEvent, StreamAccumulator};
-    
+
     let mut stream = provider.stream(request).await?;
     let mut accumulator = StreamAccumulator::new();
-    
+
     while let Some(event) = stream.next().await {
         let event = event?;
         accumulator.process_event(event.clone())?;
-        
+
         match event {
             StreamEvent::Content(delta) => print!("{}", delta.text),
             StreamEvent::ToolCall(delta) => {
@@ -165,7 +160,7 @@ async fn stream_with_tools<P: Provider>(
             }
             StreamEvent::Done => {
                 println!("\n[Stream complete]");
-                
+
                 // Show accumulated tool calls
                 let tool_calls = accumulator.tool_calls();
                 if !tool_calls.is_empty() {
@@ -178,6 +173,6 @@ async fn stream_with_tools<P: Provider>(
             }
         }
     }
-    
+
     Ok(())
 }

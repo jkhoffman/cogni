@@ -1,9 +1,9 @@
 //! Retry middleware for handling transient failures
 
-use crate::{Service, Layer, BoxFuture};
-use cogni_core::{Request, Response, Error};
+use crate::{BoxFuture, Layer, Service};
+use cogni_core::{Error, Request, Response};
 use std::time::Duration;
-use tracing::{warn, debug};
+use tracing::{debug, warn};
 
 /// Retry middleware layer
 #[derive(Debug, Clone)]
@@ -42,7 +42,7 @@ impl RetryLayer {
             config: RetryConfig::default(),
         }
     }
-    
+
     /// Create with custom configuration
     pub fn with_config(config: RetryConfig) -> Self {
         Self { config }
@@ -57,7 +57,7 @@ impl Default for RetryLayer {
 
 impl<S> Layer<S> for RetryLayer {
     type Service = RetryService<S>;
-    
+
     fn layer(&self, inner: S) -> Self::Service {
         RetryService {
             inner,
@@ -80,30 +80,27 @@ where
     type Response = Response;
     type Error = Error;
     type Future = BoxFuture<Result<Self::Response, Self::Error>>;
-    
+
     fn call(&mut self, request: Request) -> Self::Future {
         let inner = self.inner.clone();
         let config = self.config.clone();
-        
+
         Box::pin(async move {
             let mut attempt = 0;
             let mut _last_error = None;
-            
+
             loop {
                 let mut service = inner.clone();
                 match service.call(request.clone()).await {
                     Ok(response) => {
                         if attempt > 0 {
-                            debug!(
-                                attempt = attempt + 1,
-                                "Request succeeded after retries"
-                            );
+                            debug!(attempt = attempt + 1, "Request succeeded after retries");
                         }
                         return Ok(response);
                     }
                     Err(error) => {
                         attempt += 1;
-                        
+
                         if !Self::should_retry(&error) {
                             debug!(
                                 error = %error,
@@ -111,7 +108,7 @@ where
                             );
                             return Err(error);
                         }
-                        
+
                         if attempt >= config.max_attempts {
                             warn!(
                                 attempts = attempt,
@@ -120,7 +117,7 @@ where
                             );
                             return Err(error);
                         }
-                        
+
                         let backoff = Self::calculate_backoff(&config, attempt - 1);
                         warn!(
                             attempt = attempt,
@@ -128,7 +125,7 @@ where
                             error = %error,
                             "Request failed, retrying"
                         );
-                        
+
                         _last_error = Some(error);
                         tokio::time::sleep(backoff).await;
                     }
@@ -153,13 +150,13 @@ impl<S> RetryService<S> {
             _ => false, // Unknown error types are not retryable by default
         }
     }
-    
+
     /// Calculate backoff duration for a given attempt
     fn calculate_backoff(config: &RetryConfig, attempt: u32) -> Duration {
         let base = config.initial_backoff.as_millis() as f64;
         let backoff_ms = base * config.backoff_multiplier.powi(attempt as i32);
         let backoff = Duration::from_millis(backoff_ms as u64);
-        
+
         std::cmp::min(backoff, config.max_backoff)
     }
 }

@@ -70,7 +70,7 @@ impl ToolResult {
             success: true,
         }
     }
-    
+
     /// Create a failed tool result
     pub fn error(call_id: impl Into<String>, error: impl Into<String>) -> Self {
         Self {

@@ -1,11 +1,11 @@
 //! Rate limiting middleware to control request frequency
 
-use crate::{Service, Layer, BoxFuture};
-use cogni_core::{Request, Response, Error};
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use std::time::{Duration, Instant};
+use crate::{BoxFuture, Layer, Service};
+use cogni_core::{Error, Request, Response};
 use std::collections::VecDeque;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tokio::sync::RwLock;
 use tracing::debug;
 
 /// Rate limiting middleware layer
@@ -44,12 +44,12 @@ impl TokenBucket {
             request_times: VecDeque::new(),
         }
     }
-    
+
     /// Try to acquire a token
     pub async fn try_acquire(&mut self) -> bool {
         self.refill();
         self.clean_old_requests();
-        
+
         if self.tokens >= 1.0 {
             self.tokens -= 1.0;
             self.request_times.push_back(Instant::now());
@@ -58,39 +58,39 @@ impl TokenBucket {
             false
         }
     }
-    
+
     /// Wait until a token is available
     pub async fn acquire(&mut self) {
         loop {
             if self.try_acquire().await {
                 return;
             }
-            
+
             // Calculate wait time
             let tokens_needed = 1.0 - self.tokens;
             let wait_seconds = tokens_needed / self.refill_rate;
             let wait_duration = Duration::from_secs_f64(wait_seconds);
-            
+
             debug!(
                 wait_ms = wait_duration.as_millis(),
                 tokens = self.tokens,
                 "Rate limited, waiting for token"
             );
-            
+
             tokio::time::sleep(wait_duration).await;
         }
     }
-    
+
     /// Refill tokens based on elapsed time
     fn refill(&mut self) {
         let now = Instant::now();
         let elapsed = now.duration_since(self.last_refill);
         let tokens_to_add = elapsed.as_secs_f64() * self.refill_rate;
-        
+
         self.tokens = (self.tokens + tokens_to_add).min(self.capacity as f64);
         self.last_refill = now;
     }
-    
+
     /// Remove requests outside the tracking window
     fn clean_old_requests(&mut self) {
         let cutoff = Instant::now() - self.window;
@@ -102,7 +102,7 @@ impl TokenBucket {
             }
         }
     }
-    
+
     /// Get the number of requests in the current window
     pub fn requests_in_window(&self) -> usize {
         self.request_times.len()
@@ -117,16 +117,16 @@ impl RateLimitLayer {
             requests_per_second,
             Duration::from_secs(1),
         );
-        
+
         Self {
             limiter: Arc::new(RwLock::new(limiter)),
         }
     }
-    
+
     /// Create with custom token bucket configuration
     pub fn with_token_bucket(capacity: usize, refill_rate: f64, window: Duration) -> Self {
         let limiter = TokenBucket::new(capacity, refill_rate, window);
-        
+
         Self {
             limiter: Arc::new(RwLock::new(limiter)),
         }
@@ -135,7 +135,7 @@ impl RateLimitLayer {
 
 impl<S> Layer<S> for RateLimitLayer {
     type Service = RateLimitService<S>;
-    
+
     fn layer(&self, inner: S) -> Self::Service {
         RateLimitService {
             inner,
@@ -158,21 +158,21 @@ where
     type Response = Response;
     type Error = Error;
     type Future = BoxFuture<Result<Self::Response, Self::Error>>;
-    
+
     fn call(&mut self, request: Request) -> Self::Future {
         let limiter = self.limiter.clone();
         let fut = self.inner.call(request);
-        
+
         Box::pin(async move {
             // Acquire a token, waiting if necessary
             limiter.write().await.acquire().await;
-            
+
             let requests_in_window = limiter.read().await.requests_in_window();
             debug!(
                 requests_in_window = requests_in_window,
                 "Rate limit token acquired"
             );
-            
+
             // Execute the request
             fut.await
         })

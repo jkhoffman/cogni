@@ -26,7 +26,7 @@ impl OpenAIStream {
 
 impl Stream for OpenAIStream {
     type Item = Result<StreamEvent, Error>;
-    
+
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         match Pin::new(&mut self.inner).poll_next(cx) {
             Poll::Ready(Some(Ok(Event::Open))) => {
@@ -46,12 +46,10 @@ impl Stream for OpenAIStream {
                     Err(e) => Poll::Ready(Some(Err(e))),
                 }
             }
-            Poll::Ready(Some(Err(e))) => {
-                Poll::Ready(Some(Err(Error::Network {
-                    message: format!("EventSource error: {}", e),
-                    source: None,
-                })))
-            }
+            Poll::Ready(Some(Err(e))) => Poll::Ready(Some(Err(Error::Network {
+                message: format!("EventSource error: {}", e),
+                source: None,
+            }))),
             Poll::Ready(None) => Poll::Ready(None),
             Poll::Pending => Poll::Pending,
         }

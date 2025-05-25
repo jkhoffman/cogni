@@ -78,19 +78,19 @@ impl ParametersBuilder {
         self.params.max_tokens = Some(tokens);
         self
     }
-    
+
     /// Set temperature
     pub fn temperature(mut self, temp: f32) -> Self {
         self.params.temperature = Some(temp);
         self
     }
-    
+
     /// Set top-p
     pub fn top_p(mut self, p: f32) -> Self {
         self.params.top_p = Some(p);
         self
     }
-    
+
     /// Build the parameters
     pub fn build(self) -> Parameters {
         self.params
@@ -115,7 +115,7 @@ impl Request {
     pub fn builder() -> RequestBuilder {
         RequestBuilder::default()
     }
-    
+
     /// Create a simple request with just messages
     pub fn new(messages: Vec<Message>) -> Self {
         Self {
@@ -142,43 +142,43 @@ impl RequestBuilder {
         self.messages.push(message);
         self
     }
-    
+
     /// Add multiple messages
     pub fn messages(mut self, messages: impl IntoIterator<Item = Message>) -> Self {
         self.messages.extend(messages);
         self
     }
-    
+
     /// Set the model
     pub fn model(mut self, model: impl Into<Model>) -> Self {
         self.model = Some(model.into());
         self
     }
-    
+
     /// Set parameters
     pub fn parameters(mut self, params: Parameters) -> Self {
         self.parameters = params;
         self
     }
-    
+
     /// Set temperature
     pub fn temperature(mut self, temp: f32) -> Self {
         self.parameters.temperature = Some(temp);
         self
     }
-    
+
     /// Set max tokens
     pub fn max_tokens(mut self, tokens: u32) -> Self {
         self.parameters.max_tokens = Some(tokens);
         self
     }
-    
+
     /// Add a tool
     pub fn tool(mut self, tool: Tool) -> Self {
         self.tools.push(tool);
         self
     }
-    
+
     /// Build the request
     pub fn build(self) -> Request {
         Request {

@@ -12,13 +12,13 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Jeffery Hoffman <jkhoffman@gmail.com>"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/yourusername/cogni"
+repository = "https://github.com/jkhoffman/cogni"
 homepage = "https://github.com/yourusername/cogni"
 documentation = "https://docs.rs/cogni"
 readme = "README.md"
-keywords = ["llm", "ai", "openai", "anthropic", "async"]
+keywords = ["llm", "ai", "openai", "anthropic", "ollama", "async"]
 categories = ["api-bindings", "asynchronous"]
 
 [workspace.dependencies]

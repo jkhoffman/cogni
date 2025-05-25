@@ -5,21 +5,21 @@
 
 #![warn(missing_docs)]
 
-use cogni_core::{Provider, Request, Response, Error};
+use cogni_core::{Error, Provider, Request, Response};
 use futures_core::Stream;
 use std::future::Future;
 use std::pin::Pin;
 
-pub mod logging;
-pub mod retry;
-pub mod rate_limit;
 pub mod cache;
+pub mod logging;
+pub mod rate_limit;
+pub mod retry;
 
 // Re-export middleware implementations
-pub use logging::{LoggingLayer, LoggingService, LogLevel};
-pub use retry::{RetryLayer, RetryService, RetryConfig};
-pub use rate_limit::{RateLimitLayer, RateLimitService};
 pub use cache::{CacheLayer, CacheService};
+pub use logging::{LogLevel, LoggingLayer, LoggingService};
+pub use rate_limit::{RateLimitLayer, RateLimitService};
+pub use retry::{RetryConfig, RetryLayer, RetryService};
 
 /// Type alias for boxed futures
 pub type BoxFuture<T> = Pin<Box<dyn Future<Output = T> + Send>>;
@@ -37,7 +37,7 @@ pub trait Service<R> {
     type Error;
     /// The future returned by the service
     type Future: Future<Output = Result<Self::Response, Self::Error>> + Send;
-    
+
     /// Process a request
     fn call(&mut self, request: R) -> Self::Future;
 }
@@ -46,14 +46,16 @@ pub trait Service<R> {
 pub trait Layer<S> {
     /// The wrapped service
     type Service;
-    
+
     /// Wrap a service with this layer
     fn layer(&self, service: S) -> Self::Service;
 }
 
 /// A boxed service for type erasure
 pub struct BoxService<Req, Res, Err> {
-    inner: Box<dyn Service<Req, Response = Res, Error = Err, Future = BoxFuture<Result<Res, Err>>> + Send>,
+    inner: Box<
+        dyn Service<Req, Response = Res, Error = Err, Future = BoxFuture<Result<Res, Err>>> + Send,
+    >,
 }
 
 impl<Req, Res, Err> BoxService<Req, Res, Err> {
@@ -82,7 +84,7 @@ where
     type Response = S::Response;
     type Error = S::Error;
     type Future = BoxFuture<Result<Self::Response, Self::Error>>;
-    
+
     fn call(&mut self, request: Req) -> Self::Future {
         Box::pin(self.service.call(request))
     }
@@ -95,7 +97,7 @@ where
     type Response = Res;
     type Error = Err;
     type Future = BoxFuture<Result<Res, Err>>;
-    
+
     fn call(&mut self, request: Req) -> Self::Future {
         self.inner.call(request)
     }
@@ -121,12 +123,10 @@ where
     type Response = Response;
     type Error = Error;
     type Future = BoxFuture<Result<Response, Error>>;
-    
+
     fn call(&mut self, request: Request) -> Self::Future {
         let provider = self.provider.clone();
-        Box::pin(async move {
-            provider.request(request).await
-        })
+        Box::pin(async move { provider.request(request).await })
     }
 }
 
@@ -136,7 +136,7 @@ pub trait ProviderExt: Provider + Sized {
     fn into_service(self) -> ProviderService<Self> {
         ProviderService::new(self)
     }
-    
+
     /// Apply a layer to this provider
     fn layer<L>(self, layer: L) -> L::Service
     where
@@ -167,7 +167,7 @@ where
     Outer: Layer<Inner::Service>,
 {
     type Service = Outer::Service;
-    
+
     fn layer(&self, service: S) -> Self::Service {
         let inner = self.inner.layer(service);
         self.outer.layer(inner)
@@ -179,7 +179,7 @@ pub struct Identity;
 
 impl<S> Layer<S> for Identity {
     type Service = S;
-    
+
     fn layer(&self, service: S) -> Self::Service {
         service
     }
@@ -204,7 +204,7 @@ impl<L> ServiceBuilder<L> {
             layer: Stack::new(self.layer, layer),
         }
     }
-    
+
     /// Build the service with the given inner service
     pub fn service<S>(self, service: S) -> L::Service
     where

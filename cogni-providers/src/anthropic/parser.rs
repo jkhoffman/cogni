@@ -1,19 +1,19 @@
 //! Anthropic response parsing
 
-use cogni_core::{Response, Usage, ResponseMetadata, FinishReason, Error};
-use crate::anthropic::converter::{AnthropicResponse, extract_text_content, extract_tool_calls};
+use crate::anthropic::converter::{extract_text_content, extract_tool_calls, AnthropicResponse};
+use cogni_core::{Error, FinishReason, Response, ResponseMetadata, Usage};
 
 pub fn parse_response(response: AnthropicResponse) -> Result<Response, Error> {
     let content = extract_text_content(&response);
     let tool_calls = extract_tool_calls(&response);
-    
+
     let usage = response.usage.as_ref().map(parse_usage);
     let finish_reason = if !tool_calls.is_empty() {
         Some(FinishReason::ToolCalls)
     } else {
         Some(FinishReason::Stop)
     };
-    
+
     let metadata = ResponseMetadata {
         model: Some(response.model),
         id: Some(response.id),
@@ -21,7 +21,7 @@ pub fn parse_response(response: AnthropicResponse) -> Result<Response, Error> {
         finish_reason,
         ..Default::default()
     };
-    
+
     Ok(Response {
         content,
         tool_calls,

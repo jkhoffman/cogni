@@ -9,7 +9,7 @@ use std::pin::Pin;
 /// A provider that wraps a middleware service
 ///
 /// This allows using middleware-wrapped services with the high-level Client API
-/// 
+///
 /// Note: The middleware services must implement Clone to work with the Provider trait.
 /// This is a limitation of the current design where Provider methods take &self.
 pub struct MiddlewareProvider<S> {
@@ -40,7 +40,7 @@ where
         // For now, streaming through middleware is not supported
         // We convert the response to a single-event stream
         let response = self.request(request).await?;
-        
+
         // Convert response to stream events
         let events = vec![
             Ok(StreamEvent::Content(cogni_core::ContentDelta {
@@ -48,7 +48,7 @@ where
             })),
             Ok(StreamEvent::Done),
         ];
-        
+
         Ok(Box::pin(futures::stream::iter(events)))
     }
 }
@@ -92,11 +92,11 @@ mod tests {
     #[tokio::test]
     async fn test_middleware_provider_basic() {
         use cogni_middleware::ProviderService;
-        
+
         let provider = MockProvider;
         let service = ProviderService::new(provider);
         let middleware_provider = MiddlewareProvider::new(service);
-        
+
         let response = middleware_provider
             .request(Request {
                 messages: vec![cogni_core::Message::user("Test")],
@@ -106,7 +106,7 @@ mod tests {
             })
             .await
             .unwrap();
-            
+
         assert_eq!(response.content, "Mock response");
     }
 }

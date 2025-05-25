@@ -1,5 +1,5 @@
 //! Core traits and types for the Cogni LLM library
-//! 
+//!
 //! This crate provides the fundamental abstractions used throughout the Cogni ecosystem.
 //! It has zero external dependencies, relying only on the Rust standard library.
 

@@ -1,8 +1,8 @@
 //! HTTP client abstraction and utilities
 
 use crate::error;
-use cogni_core::Error;
 use bytes::Bytes;
+use cogni_core::Error;
 use futures::Stream;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
 use serde_json::Value;
@@ -16,7 +16,7 @@ pub type ResponseStream = Pin<Box<dyn Stream<Item = Result<Bytes, reqwest::Error
 pub trait HttpClient: Send + Sync {
     /// Send a POST request
     async fn post(&self, url: &str, headers: HeaderMap, body: Value) -> Result<Value, Error>;
-    
+
     /// Send a streaming POST request
     async fn post_stream(
         &self,
@@ -38,7 +38,7 @@ impl ReqwestClient {
             .timeout(std::time::Duration::from_secs(300))
             .build()
             .map_err(error::network_error)?;
-            
+
         Ok(Self { client })
     }
 }
@@ -54,7 +54,7 @@ impl HttpClient for ReqwestClient {
             .send()
             .await
             .map_err(error::network_error)?;
-            
+
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
@@ -63,13 +63,10 @@ impl HttpClient for ReqwestClient {
                 source: None,
             });
         }
-        
-        response
-            .json()
-            .await
-            .map_err(error::network_error)
+
+        response.json().await.map_err(error::network_error)
     }
-    
+
     async fn post_stream(
         &self,
         url: &str,
@@ -84,7 +81,7 @@ impl HttpClient for ReqwestClient {
             .send()
             .await
             .map_err(error::network_error)?;
-            
+
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
@@ -93,7 +90,7 @@ impl HttpClient for ReqwestClient {
                 source: None,
             });
         }
-        
+
         Ok(Box::pin(response.bytes_stream()))
     }
 }
@@ -101,21 +98,18 @@ impl HttpClient for ReqwestClient {
 /// Helper to create common headers
 pub fn create_headers(api_key: &str, additional: Option<HeaderMap>) -> Result<HeaderMap, Error> {
     let mut headers = HeaderMap::new();
-    
+
     headers.insert(
         AUTHORIZATION,
         HeaderValue::from_str(&format!("Bearer {}", api_key))
             .map_err(|e| Error::Configuration(format!("Invalid API key: {}", e)))?,
     );
-    
-    headers.insert(
-        CONTENT_TYPE,
-        HeaderValue::from_static("application/json"),
-    );
-    
+
+    headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+
     if let Some(additional) = additional {
         headers.extend(additional);
     }
-    
+
     Ok(headers)
 }

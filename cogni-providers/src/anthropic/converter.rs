@@ -1,6 +1,6 @@
 //! Conversion between Cogni types and Anthropic API types
 
-use cogni_core::{Content, Role, ToolCall, Request};
+use cogni_core::{Content, Request, Role, ToolCall};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -87,10 +87,7 @@ pub enum AnthropicStreamEvent {
         content_block: ContentBlock,
     },
     #[serde(rename = "content_block_delta")]
-    ContentBlockDelta {
-        index: usize,
-        delta: ContentDelta,
-    },
+    ContentBlockDelta { index: usize, delta: ContentDelta },
     #[serde(rename = "content_block_stop")]
     ContentBlockStop { index: usize },
     #[serde(rename = "message_delta")]
@@ -128,7 +125,7 @@ pub struct MessageDelta {
 pub fn to_anthropic_request(request: &Request) -> AnthropicRequest {
     let mut messages = Vec::new();
     let mut system_message = None;
-    
+
     for msg in &request.messages {
         match msg.role {
             Role::System => {
@@ -155,12 +152,10 @@ pub fn to_anthropic_request(request: &Request) -> AnthropicRequest {
                     if let Content::Text(text) = &msg.content {
                         messages.push(AnthropicMessage {
                             role: "user".to_string(),
-                            content: AnthropicContent::Blocks(vec![
-                                ContentBlock::ToolResult {
-                                    tool_use_id: tool_call_id.clone(),
-                                    content: text.clone(),
-                                }
-                            ]),
+                            content: AnthropicContent::Blocks(vec![ContentBlock::ToolResult {
+                                tool_use_id: tool_call_id.clone(),
+                                content: text.clone(),
+                            }]),
                         });
                     }
                 }
@@ -171,17 +166,23 @@ pub fn to_anthropic_request(request: &Request) -> AnthropicRequest {
             }
         }
     }
-    
+
     let tools = if request.tools.is_empty() {
         None
     } else {
-        Some(request.tools.iter().map(|tool| AnthropicTool {
-            name: tool.name.clone(),
-            description: tool.description.clone(),
-            input_schema: tool.function.parameters.clone(),
-        }).collect())
+        Some(
+            request
+                .tools
+                .iter()
+                .map(|tool| AnthropicTool {
+                    name: tool.name.clone(),
+                    description: tool.description.clone(),
+                    input_schema: tool.function.parameters.clone(),
+                })
+                .collect(),
+        )
     };
-    
+
     AnthropicRequest {
         model: request.model.to_string(),
         messages,
@@ -206,7 +207,8 @@ fn convert_content(content: &Content) -> AnthropicContent {
         }
         Content::Multiple(contents) => {
             // Convert multiple contents to text for now
-            let text = contents.iter()
+            let text = contents
+                .iter()
                 .filter_map(|c| match c {
                     Content::Text(t) => Some(t.clone()),
                     _ => None,
@@ -219,7 +221,9 @@ fn convert_content(content: &Content) -> AnthropicContent {
 }
 
 pub fn extract_text_content(response: &AnthropicResponse) -> String {
-    response.content.iter()
+    response
+        .content
+        .iter()
         .filter_map(|block| match block {
             ContentBlock::Text { text } => Some(text.clone()),
             _ => None,
@@ -229,15 +233,15 @@ pub fn extract_text_content(response: &AnthropicResponse) -> String {
 }
 
 pub fn extract_tool_calls(response: &AnthropicResponse) -> Vec<ToolCall> {
-    response.content.iter()
+    response
+        .content
+        .iter()
         .filter_map(|block| match block {
-            ContentBlock::ToolUse { id, name, input } => {
-                Some(ToolCall {
-                    id: id.clone(),
-                    name: name.clone(),
-                    arguments: input.to_string(),
-                })
-            }
+            ContentBlock::ToolUse { id, name, input } => Some(ToolCall {
+                id: id.clone(),
+                name: name.clone(),
+                arguments: input.to_string(),
+            }),
             _ => None,
         })
         .collect()

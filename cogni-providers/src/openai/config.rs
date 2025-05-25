@@ -20,19 +20,19 @@ impl OpenAIConfig {
             organization_id: None,
         }
     }
-    
+
     /// Set a custom base URL
     pub fn with_base_url(mut self, url: impl Into<String>) -> Self {
         self.base_url = url.into();
         self
     }
-    
+
     /// Set the organization ID
     pub fn with_organization(mut self, org: impl Into<String>) -> Self {
         self.organization_id = Some(org.into());
         self
     }
-    
+
     /// Get the URL for chat completions
     pub fn chat_url(&self) -> String {
         format!("{}/chat/completions", self.base_url)

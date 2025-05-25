@@ -18,7 +18,7 @@ fn test_request_builder() {
         .temperature(0.8)
         .max_tokens(100)
         .build();
-    
+
     assert_eq!(request.messages.len(), 2);
     assert_eq!(request.model.0, "gpt-4");
     assert_eq!(request.parameters.temperature, Some(0.8));
@@ -44,7 +44,7 @@ fn test_tool_creation() {
             returns: Some("Weather information".to_string()),
         },
     };
-    
+
     assert_eq!(tool.name, "get_weather");
     assert!(tool.function.parameters.is_object());
 }

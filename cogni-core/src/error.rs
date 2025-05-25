@@ -15,7 +15,7 @@ pub enum Error {
         /// Underlying error if available
         source: Option<Box<dyn StdError + Send + Sync>>,
     },
-    
+
     /// Provider-specific errors
     Provider {
         /// Provider name (e.g., "openai", "anthropic")
@@ -27,7 +27,7 @@ pub enum Error {
         /// Underlying error if available
         source: Option<Box<dyn StdError + Send + Sync>>,
     },
-    
+
     /// Serialization/deserialization errors
     Serialization {
         /// Error message
@@ -35,19 +35,19 @@ pub enum Error {
         /// Underlying error if available
         source: Option<Box<dyn StdError + Send + Sync>>,
     },
-    
+
     /// Validation errors
     Validation(String),
-    
+
     /// Tool execution errors
     ToolExecution(String),
-    
+
     /// Timeout errors
     Timeout,
-    
+
     /// Authentication errors
     Authentication(String),
-    
+
     /// Configuration errors
     Configuration(String),
 }
@@ -56,7 +56,9 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Network { message, .. } => write!(f, "Network error: {}", message),
-            Error::Provider { provider, message, .. } => {
+            Error::Provider {
+                provider, message, ..
+            } => {
                 write!(f, "Provider error ({}): {}", provider, message)
             }
             Error::Serialization { message, .. } => write!(f, "Serialization error: {}", message),
@@ -72,11 +74,11 @@ impl fmt::Display for Error {
 impl StdError for Error {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match self {
-            Error::Network { source, .. } |
-            Error::Provider { source, .. } |
-            Error::Serialization { source, .. } => {
-                source.as_ref().map(|e| e.as_ref() as &(dyn StdError + 'static))
-            }
+            Error::Network { source, .. }
+            | Error::Provider { source, .. }
+            | Error::Serialization { source, .. } => source
+                .as_ref()
+                .map(|e| e.as_ref() as &(dyn StdError + 'static)),
             _ => None,
         }
     }

@@ -153,7 +153,6 @@ impl RequestBuilder {
             tools: self.tools,
         })
     }
-
 }
 
 /// Errors that can occur when building a request
@@ -195,10 +194,7 @@ mod tests {
 
     #[test]
     fn test_builder_with_model() {
-        let request = RequestBuilder::new()
-            .user("Hello")
-            .model("gpt-4")
-            .build();
+        let request = RequestBuilder::new().user("Hello").model("gpt-4").build();
 
         assert_eq!(request.model.to_string(), "gpt-4");
     }

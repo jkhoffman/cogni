@@ -8,20 +8,20 @@
 #![warn(missing_docs)]
 #![deny(unsafe_code)]
 
+pub mod builtin;
+pub mod error;
 pub mod executor;
 pub mod registry;
-pub mod error;
 pub mod validation;
-pub mod builtin;
 
 #[cfg(feature = "mcp")]
 pub mod mcp;
 
 // Re-export core types from cogni-core
-pub use cogni_core::{Tool, ToolCall, ToolResult, ToolChoice, Function};
+pub use cogni_core::{Function, Tool, ToolCall, ToolChoice, ToolResult};
 
 // Re-export main types
-pub use executor::{ToolExecutor, AsyncToolFunction, SyncToolFunction};
-pub use registry::ToolRegistry;
 pub use error::{ToolError, ToolErrorKind};
+pub use executor::{AsyncToolFunction, SyncToolFunction, ToolExecutor};
+pub use registry::ToolRegistry;
 pub use validation::ToolValidator;

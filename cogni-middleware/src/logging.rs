@@ -1,12 +1,12 @@
 //! Logging middleware for request/response debugging
 
-use crate::{Service, Layer, BoxFuture};
-use cogni_core::{Request, Response, StreamEvent, Error};
-use tracing::{debug, info, trace};
+use crate::{BoxFuture, Layer, Service};
+use cogni_core::{Error, Request, Response, StreamEvent};
 use futures_core::Stream;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Instant;
+use tracing::{debug, info, trace};
 
 /// Logging middleware layer
 #[derive(Debug, Clone, Default)]
@@ -34,7 +34,7 @@ impl LoggingLayer {
     pub fn new() -> Self {
         Self::default()
     }
-    
+
     /// Create with specific log level
     pub fn with_level(level: LogLevel) -> Self {
         Self {
@@ -42,7 +42,7 @@ impl LoggingLayer {
             log_content: false,
         }
     }
-    
+
     /// Enable content logging
     pub fn with_content(mut self) -> Self {
         self.log_content = true;
@@ -52,7 +52,7 @@ impl LoggingLayer {
 
 impl<S> Layer<S> for LoggingLayer {
     type Service = LoggingService<S>;
-    
+
     fn layer(&self, inner: S) -> Self::Service {
         LoggingService {
             inner,
@@ -77,7 +77,7 @@ where
     type Response = Response;
     type Error = Error;
     type Future = BoxFuture<Result<Self::Response, Self::Error>>;
-    
+
     fn call(&mut self, request: Request) -> Self::Future {
         // Log the request
         match self.level {
@@ -99,7 +99,7 @@ where
                 "Processing LLM request"
             ),
         }
-        
+
         if self.log_content {
             for (i, msg) in request.messages.iter().enumerate() {
                 debug!(
@@ -113,7 +113,7 @@ where
                     },
                     "Request message"
                 );
-                
+
                 if self.level == LogLevel::Trace {
                     if let cogni_core::Content::Text(text) = &msg.content {
                         trace!(content = %text, "Message content");
@@ -121,17 +121,17 @@ where
                 }
             }
         }
-        
+
         // Call the inner service
         let start_time = Instant::now();
         let level = self.level;
         let log_content = self.log_content;
         let fut = self.inner.call(request);
-        
+
         Box::pin(async move {
             let response = fut.await?;
             let duration = start_time.elapsed();
-            
+
             // Log the response
             match level {
                 LogLevel::Trace => trace!(
@@ -157,10 +157,10 @@ where
                     "Received LLM response"
                 ),
             }
-            
+
             if log_content && level == LogLevel::Trace {
                 trace!(content = %response.content, "Response content");
-                
+
                 for (i, call) in response.tool_calls.iter().enumerate() {
                     trace!(
                         index = i,
@@ -170,12 +170,11 @@ where
                     );
                 }
             }
-            
+
             Ok(response)
         })
     }
 }
-
 
 /// A stream wrapper that logs events
 pub struct LoggingStream {
@@ -186,7 +185,7 @@ pub struct LoggingStream {
 
 impl Stream for LoggingStream {
     type Item = Result<StreamEvent, Error>;
-    
+
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         match self.inner.as_mut().poll_next(cx) {
             Poll::Ready(Some(Ok(event))) => {

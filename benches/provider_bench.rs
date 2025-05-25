@@ -1,10 +1,10 @@
 //! Performance benchmarks for provider implementations
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use cogni::{Provider, Request, Message, StreamAccumulator};
-use tokio::runtime::Runtime;
-use futures::StreamExt;
 use async_trait::async_trait;
+use cogni::{Message, Provider, Request, StreamAccumulator};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use futures::StreamExt;
+use tokio::runtime::Runtime;
 
 /// Create a test request
 fn create_test_request(prompt: &str) -> Request {
@@ -17,14 +17,15 @@ fn create_test_request(prompt: &str) -> Request {
 /// Benchmark simple request/response
 fn benchmark_request(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
-    
+
     // Mock provider for consistent benchmarking
     struct MockProvider;
-    
+
     #[async_trait]
     impl Provider for MockProvider {
-        type Stream = futures::stream::Iter<std::vec::IntoIter<Result<cogni::StreamEvent, cogni::Error>>>;
-        
+        type Stream =
+            futures::stream::Iter<std::vec::IntoIter<Result<cogni::StreamEvent, cogni::Error>>>;
+
         async fn request(&self, _request: Request) -> Result<cogni::Response, cogni::Error> {
             // Simulate some work
             tokio::time::sleep(tokio::time::Duration::from_micros(100)).await;
@@ -34,7 +35,7 @@ fn benchmark_request(c: &mut Criterion) {
                 metadata: cogni::ResponseMetadata::default(),
             })
         }
-        
+
         async fn stream(&self, _request: Request) -> Result<Self::Stream, cogni::Error> {
             let events = vec![
                 Ok(cogni::StreamEvent::Content(cogni::ContentDelta {
@@ -48,9 +49,9 @@ fn benchmark_request(c: &mut Criterion) {
             Ok(futures::stream::iter(events))
         }
     }
-    
+
     let provider = MockProvider;
-    
+
     c.bench_function("provider_request", |b| {
         b.iter(|| {
             rt.block_on(async {
@@ -64,13 +65,14 @@ fn benchmark_request(c: &mut Criterion) {
 /// Benchmark streaming response
 fn benchmark_streaming(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
-    
+
     struct MockProvider;
-    
+
     #[async_trait]
     impl Provider for MockProvider {
-        type Stream = futures::stream::Iter<std::vec::IntoIter<Result<cogni::StreamEvent, cogni::Error>>>;
-        
+        type Stream =
+            futures::stream::Iter<std::vec::IntoIter<Result<cogni::StreamEvent, cogni::Error>>>;
+
         async fn request(&self, _request: Request) -> Result<cogni::Response, cogni::Error> {
             Ok(cogni::Response {
                 content: "Mock response".to_string(),
@@ -78,33 +80,35 @@ fn benchmark_streaming(c: &mut Criterion) {
                 metadata: cogni::ResponseMetadata::default(),
             })
         }
-        
+
         async fn stream(&self, _request: Request) -> Result<Self::Stream, cogni::Error> {
-            let events = (0..100).map(|i| {
-                Ok(cogni::StreamEvent::Content(cogni::ContentDelta {
-                    text: format!("chunk{} ", i),
-                }))
-            }).chain(std::iter::once(Ok(cogni::StreamEvent::Done)))
-            .collect::<Vec<_>>();
+            let events = (0..100)
+                .map(|i| {
+                    Ok(cogni::StreamEvent::Content(cogni::ContentDelta {
+                        text: format!("chunk{} ", i),
+                    }))
+                })
+                .chain(std::iter::once(Ok(cogni::StreamEvent::Done)))
+                .collect::<Vec<_>>();
             Ok(futures::stream::iter(events))
         }
     }
-    
+
     let provider = MockProvider;
-    
+
     c.bench_function("stream_processing", |b| {
         b.iter(|| {
             rt.block_on(async {
                 let request = create_test_request("Hello");
                 let mut stream = provider.stream(black_box(request)).await.unwrap();
                 let mut accumulator = StreamAccumulator::new();
-                
+
                 while let Some(event) = stream.next().await {
                     if let Ok(event) = event {
                         accumulator.process_event(event).unwrap();
                     }
                 }
-                
+
                 // Get final results
                 let _ = accumulator.content();
                 let _ = accumulator.tool_calls();

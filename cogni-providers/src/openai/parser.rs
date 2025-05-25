@@ -4,8 +4,8 @@ use crate::error;
 use crate::traits::{ResponseParser, StreamEventParser};
 use async_trait::async_trait;
 use cogni_core::{
-    ContentDelta, Error, FinishReason, MetadataDelta, Response, ResponseMetadata, 
-    StreamEvent, ToolCall, ToolCallDelta, Usage,
+    ContentDelta, Error, FinishReason, MetadataDelta, Response, ResponseMetadata, StreamEvent,
+    ToolCall, ToolCallDelta, Usage,
 };
 use serde::Deserialize;
 use serde_json::Value;
@@ -16,12 +16,12 @@ pub struct OpenAIParser;
 #[async_trait]
 impl ResponseParser for OpenAIParser {
     async fn parse_response(&self, value: Value) -> Result<Response, Error> {
-        let response: OpenAIResponse = serde_json::from_value(value)
-            .map_err(error::serialization_error)?;
-            
+        let response: OpenAIResponse =
+            serde_json::from_value(value).map_err(error::serialization_error)?;
+
         if let Some(choice) = response.choices.first() {
             let content = choice.message.content.clone().unwrap_or_default();
-            
+
             let tool_calls = choice
                 .message
                 .tool_calls
@@ -37,7 +37,7 @@ impl ResponseParser for OpenAIParser {
                         .collect()
                 })
                 .unwrap_or_default();
-                
+
             let metadata = ResponseMetadata {
                 model: Some(response.model),
                 id: Some(response.id),
@@ -49,7 +49,7 @@ impl ResponseParser for OpenAIParser {
                 finish_reason: choice.finish_reason.as_deref().map(parse_finish_reason),
                 ..Default::default()
             };
-            
+
             Ok(Response {
                 content,
                 tool_calls,
@@ -69,14 +69,13 @@ impl ResponseParser for OpenAIParser {
 impl StreamEventParser for OpenAIParser {
     fn parse_event(&self, data: &str) -> Result<Option<StreamEvent>, Error> {
         if let Some(json_str) = data.strip_prefix("data: ") {
-            
             if json_str == "[DONE]" {
                 return Ok(Some(StreamEvent::Done));
             }
-            
-            let chunk: StreamChunk = serde_json::from_str(json_str)
-                .map_err(error::serialization_error)?;
-                
+
+            let chunk: StreamChunk =
+                serde_json::from_str(json_str).map_err(error::serialization_error)?;
+
             if let Some(choice) = chunk.choices.first() {
                 // Content delta
                 if let Some(content) = &choice.delta.content {
@@ -84,7 +83,7 @@ impl StreamEventParser for OpenAIParser {
                         text: content.clone(),
                     })));
                 }
-                
+
                 // Tool call deltas - OpenAI streams one at a time
                 if let Some(tool_calls) = &choice.delta.tool_calls {
                     if let Some(tc) = tool_calls.first() {
@@ -97,7 +96,7 @@ impl StreamEventParser for OpenAIParser {
                     }
                 }
             }
-            
+
             // Metadata
             if !chunk.id.is_empty() || !chunk.model.is_empty() {
                 return Ok(Some(StreamEvent::Metadata(MetadataDelta {
@@ -107,7 +106,7 @@ impl StreamEventParser for OpenAIParser {
                 })));
             }
         }
-        
+
         Ok(None)
     }
 }
