@@ -341,13 +341,7 @@ impl<P: Provider> ConnectedRequestBuilder<'_, P> {
         self
     }
 
-    /// Add a tool
-    pub fn tool(mut self, tool: impl Into<cogni_core::Tool>) -> Self {
-        self.builder = self.builder.tool(tool);
-        self
-    }
-
-    /// Add multiple tools
+    /// Add one or more tools
     pub fn tools(mut self, tools: impl IntoIterator<Item = cogni_core::Tool>) -> Self {
         self.builder = self.builder.tools(tools);
         self

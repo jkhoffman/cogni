@@ -45,7 +45,7 @@ async fn main() -> Result<(), Error> {
         .message(Message::user(
             "What's the weather like in Tokyo and New York?",
         ))
-        .tool(weather_tool)
+        .tools([weather_tool])
         .max_tokens(500)
         .build();
 
@@ -92,7 +92,7 @@ async fn main() -> Result<(), Error> {
         .message(Message::user(
             "Check the weather in Paris, France using the weather tool.",
         ))
-        .tool(Tool {
+        .tools([Tool {
             name: "get_weather".to_string(),
             description: "Get the current weather in a given location".to_string(),
             function: Function {
@@ -108,7 +108,7 @@ async fn main() -> Result<(), Error> {
                 }),
                 returns: Some("Weather data".to_string()),
             },
-        })
+        }])
         .build();
 
     // Stream from OpenAI

@@ -120,13 +120,7 @@ impl RequestBuilder {
         self
     }
 
-    /// Add a tool
-    pub fn tool(mut self, tool: impl Into<Tool>) -> Self {
-        self.tools.push(tool.into());
-        self
-    }
-
-    /// Add multiple tools
+    /// Add one or more tools
     pub fn tools(mut self, tools: impl IntoIterator<Item = Tool>) -> Self {
         self.tools.extend(tools);
         self

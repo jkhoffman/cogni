@@ -190,9 +190,9 @@ impl RequestBuilder {
         self
     }
 
-    /// Add a tool
-    pub fn tool(mut self, tool: Tool) -> Self {
-        self.tools.push(tool);
+    /// Add one or more tools
+    pub fn tools(mut self, tools: impl IntoIterator<Item = Tool>) -> Self {
+        self.tools.extend(tools);
         self
     }
 
@@ -393,7 +393,7 @@ mod tests {
 
         let request = Request::builder()
             .message(Message::user("Calculate 2+2"))
-            .tool(tool.clone())
+            .tools([tool.clone()])
             .build();
 
         assert_eq!(request.tools.len(), 1);

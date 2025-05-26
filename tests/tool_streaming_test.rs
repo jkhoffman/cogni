@@ -11,9 +11,7 @@ use std::env;
 
 /// Helper to add tools to a request builder
 fn add_tools(mut builder: RequestBuilder, tools: &[Tool]) -> RequestBuilder {
-    for tool in tools {
-        builder = builder.tool(tool.clone());
-    }
+    builder = builder.tools(tools.to_vec());
     builder
 }
 

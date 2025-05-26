@@ -160,7 +160,7 @@ async fn test_client_with_tools() {
         .request()
         .model("gpt-4o-mini")
         .user("What is 25 + 17? Use the calculator tool.")
-        .tool(calculator_tool)
+        .tools([calculator_tool])
         .send()
         .await
         .unwrap();
@@ -252,7 +252,7 @@ async fn demo_all_client_features() {
     let response = client
         .request()
         .user("What's the weather in Paris?")
-        .tool(weather_tool)
+        .tools([weather_tool])
         .send()
         .await
         .unwrap();

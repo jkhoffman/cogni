@@ -85,7 +85,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .request()
         .model("gpt-4o-mini")
         .user("How many words are in 'The quick brown fox jumps over the lazy dog'? Use the word count tool.")
-        .tool(word_count_tool)
+        .tools([word_count_tool])
         .send()
         .await?;
 
