@@ -44,7 +44,8 @@ impl ToolRegistry {
         Ok(())
     }
 
-    /// Get a tool by name
+    /// Get a tool by name (primarily for testing)
+    #[doc(hidden)]
     pub async fn get(&self, name: &str) -> Option<Arc<dyn ToolExecutor>> {
         let tools = self.tools.read().await;
         tools.get(name).cloned()
@@ -87,6 +88,7 @@ impl ToolRegistry {
     }
 
     /// Remove a tool from the registry
+    #[doc(hidden)]
     pub async fn remove(&self, name: &str) -> Option<Arc<dyn ToolExecutor>> {
         let mut tools = self.tools.write().await;
         tools.remove(name)
