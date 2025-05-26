@@ -7,6 +7,16 @@ pub struct ModelLimits {
     pub model_name: String,
 }
 
+impl Default for ModelLimits {
+    fn default() -> Self {
+        Self {
+            context_window: 4096,    // Conservative default
+            max_output_tokens: 1024, // Common default
+            model_name: String::from("unknown"),
+        }
+    }
+}
+
 impl ModelLimits {
     pub fn for_model(model: &str) -> Option<Self> {
         // Define known model limits

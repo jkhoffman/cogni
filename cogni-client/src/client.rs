@@ -322,10 +322,7 @@ impl<P: Provider> ConnectedRequestBuilder<'_, P> {
 
         // Apply context management if configured
         if let Some(manager) = &self.context_manager {
-            request.messages = manager
-                .fit_messages(request.messages)
-                .await
-                .map_err(|e| Error::Validation(format!("Context pruning failed: {}", e)))?;
+            request.messages = manager.fit_messages(request.messages).await?;
         }
 
         self.client.execute(request).await
@@ -337,10 +334,7 @@ impl<P: Provider> ConnectedRequestBuilder<'_, P> {
 
         // Apply context management if configured
         if let Some(manager) = &self.context_manager {
-            request.messages = manager
-                .fit_messages(request.messages)
-                .await
-                .map_err(|e| Error::Validation(format!("Context pruning failed: {}", e)))?;
+            request.messages = manager.fit_messages(request.messages).await?;
         }
 
         self.client.execute_stream(request).await

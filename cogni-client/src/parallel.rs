@@ -88,16 +88,20 @@ where
 /// # Ok(())
 /// # }
 /// ```
-pub async fn parallel_chat<P>(providers: Vec<P>, message: &str) -> Vec<Result<String, Error>>
+pub async fn parallel_chat<P>(
+    providers: Vec<P>,
+    message: impl Into<String>,
+) -> Vec<Result<String, Error>>
 where
     P: Provider + Send + Sync + 'static,
     P::Stream: Send + 'static,
 {
+    let msg = message.into();
     let handles: Vec<_> = providers
         .into_iter()
         .map(|provider| {
             let client = Client::new(provider);
-            let msg = message.to_string();
+            let msg = msg.clone();
             tokio::spawn(async move { client.chat(msg).await })
         })
         .collect();

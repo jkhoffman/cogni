@@ -33,9 +33,9 @@ impl Ollama {
     }
 
     /// Create a new Ollama provider with a custom base URL
-    pub fn with_base_url(base_url: String) -> Self {
+    pub fn with_base_url(base_url: impl Into<String>) -> Self {
         let config = OllamaConfig {
-            base_url,
+            base_url: base_url.into(),
             ..Default::default()
         };
         Self::new(config)

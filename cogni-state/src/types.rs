@@ -36,6 +36,32 @@ pub struct StateMetadata {
     pub custom: HashMap<String, String>,
 }
 
+impl StateMetadata {
+    /// Set the title
+    pub fn with_title(mut self, title: impl Into<String>) -> Self {
+        self.title = Some(title.into());
+        self
+    }
+
+    /// Add a tag
+    pub fn with_tag(mut self, tag: impl Into<String>) -> Self {
+        self.tags.push(tag.into());
+        self
+    }
+
+    /// Add multiple tags
+    pub fn with_tags(mut self, tags: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        self.tags.extend(tags.into_iter().map(|t| t.into()));
+        self
+    }
+
+    /// Add a custom key-value pair
+    pub fn with_custom(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.custom.insert(key.into(), value.into());
+        self
+    }
+}
+
 impl ConversationState {
     /// Create a new conversation state with a random ID
     pub fn new() -> Self {

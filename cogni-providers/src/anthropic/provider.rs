@@ -29,9 +29,9 @@ impl Anthropic {
     }
 
     /// Create a new Anthropic provider with just an API key
-    pub fn with_api_key(api_key: String) -> Self {
+    pub fn with_api_key(api_key: impl Into<String>) -> Self {
         let config = AnthropicConfig {
-            api_key,
+            api_key: api_key.into(),
             ..Default::default()
         };
         Self::new(config)

@@ -4,10 +4,14 @@ use cogni_core::Error as CoreError;
 use std::time::Duration;
 
 /// Convert provider errors to core errors
-pub fn to_core_error(provider: &str, message: String, retry_after: Option<Duration>) -> CoreError {
+pub fn to_core_error(
+    provider: impl Into<String>,
+    message: impl Into<String>,
+    retry_after: Option<Duration>,
+) -> CoreError {
     CoreError::Provider {
-        provider: provider.to_string(),
-        message,
+        provider: provider.into(),
+        message: message.into(),
         retry_after,
         source: None,
     }

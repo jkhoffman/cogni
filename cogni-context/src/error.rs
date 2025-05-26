@@ -20,3 +20,9 @@ pub enum ContextError {
     #[error("Tiktoken error: {0}")]
     TiktokenError(String),
 }
+
+impl From<ContextError> for cogni_core::Error {
+    fn from(err: ContextError) -> Self {
+        cogni_core::Error::Validation(err.to_string())
+    }
+}

@@ -32,7 +32,7 @@ impl OpenAI {
     }
 
     /// Create a new OpenAI provider with just an API key
-    pub fn with_api_key(api_key: String) -> Self {
+    pub fn with_api_key(api_key: impl Into<String>) -> Self {
         let config = OpenAIConfig::new(api_key);
         let client = Arc::new(ReqwestClient::new().expect("Failed to create HTTP client"));
         Self {

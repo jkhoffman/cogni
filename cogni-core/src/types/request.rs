@@ -91,6 +91,12 @@ impl ParametersBuilder {
         self
     }
 
+    /// Set stop sequences
+    pub fn stop(mut self, sequences: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        self.params.stop = Some(sequences.into_iter().map(Into::into).collect());
+        self
+    }
+
     /// Build the parameters
     pub fn build(self) -> Parameters {
         self.params

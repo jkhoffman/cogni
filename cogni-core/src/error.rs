@@ -90,3 +90,22 @@ impl StdError for Error {
 
 /// Result type alias for Cogni operations
 pub type Result<T> = std::result::Result<T, Error>;
+
+// Common From implementations for error conversions
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error::Network {
+            message: err.to_string(),
+            source: Some(Box::new(err)),
+        }
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(err: serde_json::Error) -> Self {
+        Error::Serialization {
+            message: err.to_string(),
+            source: Some(Box::new(err)),
+        }
+    }
+}
