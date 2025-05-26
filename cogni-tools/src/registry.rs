@@ -179,6 +179,17 @@ impl RegistryBuilder {
         self
     }
 
+    /// Add multiple tool executors
+    pub fn with_tools(
+        mut self,
+        executors: impl IntoIterator<Item = impl ToolExecutor + 'static>,
+    ) -> Self {
+        for executor in executors {
+            self.executors.push(Box::new(executor));
+        }
+        self
+    }
+
     /// Build the registry
     pub async fn build(self) -> Result<ToolRegistry> {
         let registry = ToolRegistry::new();
@@ -259,14 +270,10 @@ mod tests {
             .description("Third tool")
             .build_sync(|_| Ok(json!({ "result": "tool3" })));
 
-        // Create registry from executors
-        let registry = ToolRegistry::from_executors(vec![
-            Box::new(tool1) as Box<dyn ToolExecutor>,
-            Box::new(tool2) as Box<dyn ToolExecutor>,
-            Box::new(tool3) as Box<dyn ToolExecutor>,
-        ])
-        .await
-        .unwrap();
+        // Create registry from executors using the macro
+        let registry = ToolRegistry::from_executors(crate::tools_vec![tool1, tool2, tool3])
+            .await
+            .unwrap();
 
         // Verify all tools are registered
         assert_eq!(registry.len().await, 3);

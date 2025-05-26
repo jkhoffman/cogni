@@ -22,6 +22,43 @@ pub use cogni_core::{Function, Tool, ToolCall, ToolChoice, ToolResult};
 
 // Re-export main types
 pub use error::{ToolError, ToolErrorKind};
-pub use executor::{AsyncToolFunction, SyncToolFunction, ToolExecutor};
-pub use registry::ToolRegistry;
+pub use executor::{
+    AsyncToolFunction, FunctionExecutor, FunctionExecutorBuilder, SyncToolFunction, ToolExecutor,
+};
+pub use registry::{RegistryBuilder, ToolRegistry};
 pub use validation::ToolValidator;
+
+/// Macro for creating a vector of boxed tool executors
+///
+/// This macro simplifies the creation of a vector of `Box<dyn ToolExecutor>`
+/// from a list of tool executors, avoiding the need for explicit boxing and type annotations.
+///
+/// # Examples
+///
+/// ```
+/// # use cogni_tools::{tools_vec, FunctionExecutorBuilder, ToolRegistry};
+/// # use serde_json::json;
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let tool1 = FunctionExecutorBuilder::new("tool1")
+///     .description("First tool")
+///     .build_sync(|_| Ok(json!({ "result": "tool1" })));
+///
+/// let tool2 = FunctionExecutorBuilder::new("tool2")
+///     .description("Second tool")
+///     .build_sync(|_| Ok(json!({ "result": "tool2" })));
+///
+/// // Much cleaner than vec![Box::new(tool1) as Box<dyn ToolExecutor>, ...]
+/// let tools = tools_vec![tool1, tool2];
+/// let registry = ToolRegistry::from_executors(tools).await?;
+/// # Ok(())
+/// # }
+/// ```
+#[macro_export]
+macro_rules! tools_vec {
+    ($($tool:expr),* $(,)?) => {
+        vec![
+            $(Box::new($tool) as Box<dyn $crate::ToolExecutor>),*
+        ]
+    };
+}
