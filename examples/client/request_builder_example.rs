@@ -1,7 +1,7 @@
 //! Request builder example showing advanced client usage
 
 use cogni_client::Client;
-use cogni_core::{Parameters, Tool, ToolFunction};
+use cogni_core::{Function, Parameters, Tool};
 use cogni_providers::openai::OpenAI;
 use std::env;
 
@@ -42,12 +42,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 3: With custom parameters
     println!("=== Custom Parameters ===");
-    let mut params = Parameters::default();
-    params.temperature = Some(0.9);
-    params.max_tokens = Some(150);
-    params.top_p = Some(0.95);
-    params.frequency_penalty = Some(0.5);
-    params.presence_penalty = Some(0.5);
+    let params = Parameters {
+        temperature: Some(0.9),
+        max_tokens: Some(150),
+        top_p: Some(0.95),
+        frequency_penalty: Some(0.5),
+        presence_penalty: Some(0.5),
+        ..Default::default()
+    };
 
     let response = client
         .request()
@@ -62,9 +64,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 4: With tools
     println!("=== With Tools ===");
     let word_count_tool = Tool {
-        function: ToolFunction {
-            name: "count_words".to_string(),
-            description: "Count the number of words in a text".to_string(),
+        name: "count_words".to_string(),
+        description: "Count the number of words in a text".to_string(),
+        function: Function {
             parameters: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -75,6 +77,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 },
                 "required": ["text"]
             }),
+            returns: Some("integer".to_string()),
         },
     };
 

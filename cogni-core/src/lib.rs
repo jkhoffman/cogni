@@ -21,3 +21,7 @@ pub use types::{
     structured::{ResponseFormat, StructuredOutput},
     tool::{Function, Tool, ToolCall, ToolChoice, ToolResult},
 };
+
+// Re-export derive macro when feature is enabled
+#[cfg(feature = "derive")]
+pub use cogni_derive::StructuredOutput as DeriveStructuredOutput;

@@ -6,7 +6,7 @@
 //! - Error handling for structured output failures
 
 use cogni::prelude::*;
-use cogni::{providers::OpenAI, ResponseFormat, StructuredOutput};
+use cogni::{providers::OpenAI, StructuredOutput};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::error::Error;

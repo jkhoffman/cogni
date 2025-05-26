@@ -20,14 +20,23 @@ cogni-state = { path = "../cogni-state", optional = true }
 cogni-context = { path = "../cogni-context", optional = true }
 
 [features]
-default = ["providers", "tools", "client", "state", "context"]
+default = ["providers", "tools", "client", "state", "context", "derive"]
 providers = ["dep:cogni-providers"]
 middleware = ["dep:cogni-middleware"]
 tools = ["dep:cogni-tools"]
 client = ["dep:cogni-client", "providers"]
 state = ["dep:cogni-state"]
 context = ["dep:cogni-context"]
-full = ["providers", "middleware", "tools", "client", "state", "context"]
+derive = ["cogni-core/derive"]
+full = [
+  "providers",
+  "middleware",
+  "tools",
+  "client",
+  "state",
+  "context",
+  "derive",
+]
 
 [[test]]
 name = "core_types"
@@ -84,44 +93,14 @@ path = "../examples/structured_output_with_fallback.rs"
 required-features = ["providers", "client"]
 
 [[example]]
+name = "structured_output_derive"
+path = "../examples/structured_output_derive.rs"
+required-features = ["providers", "derive"]
+
+[[example]]
 name = "agentic_combined_example"
 path = "../examples/agentic_combined_example.rs"
 required-features = ["providers", "client", "middleware", "state", "context"]
-
-[[example]]
-name = "context_management_example"
-path = "../examples/context_management_example.rs"
-required-features = ["providers", "client", "context"]
-
-[[example]]
-name = "custom_tools_example"
-path = "../examples/custom_tools_example.rs"
-required-features = ["providers", "tools"]
-
-[[example]]
-name = "middleware_example"
-path = "../examples/middleware_example.rs"
-required-features = ["providers", "middleware"]
-
-[[example]]
-name = "middleware_simple"
-path = "../examples/middleware_simple.rs"
-required-features = ["providers", "middleware"]
-
-[[example]]
-name = "stateful_conversation"
-path = "../examples/stateful_conversation.rs"
-required-features = ["providers", "client", "state"]
-
-[[example]]
-name = "test_tools_locally"
-path = "../examples/test_tools_locally.rs"
-required-features = ["tools"]
-
-[[example]]
-name = "tool_execution_example"
-path = "../examples/tool_execution_example.rs"
-required-features = ["providers", "tools"]
 
 # Client examples
 [[example]]
@@ -143,37 +122,6 @@ required-features = ["providers", "client"]
 name = "multi_provider_client_example"
 path = "../examples/client/multi_provider_client_example.rs"
 required-features = ["providers", "client"]
-
-[[example]]
-name = "combined_features_example"
-path = "../examples/client/combined_features_example.rs"
-required-features = ["providers", "client", "middleware"]
-
-[[example]]
-name = "advanced_patterns_example"
-path = "../examples/client/advanced_patterns_example.rs"
-required-features = ["providers", "client", "middleware"]
-
-# Agent examples demonstrating real-world usage
-[[example]]
-name = "code_review_agent"
-path = "../examples/code_review_agent.rs"
-required-features = ["providers", "client", "state", "context"]
-
-[[example]]
-name = "customer_support_agent"
-path = "../examples/customer_support_agent.rs"
-required-features = ["providers", "client", "middleware", "state", "context"]
-
-[[example]]
-name = "research_assistant_agent"
-path = "../examples/research_assistant_agent.rs"
-required-features = ["providers", "client", "tools", "state", "context"]
-
-[[example]]
-name = "data_analysis_agent"
-path = "../examples/data_analysis_agent.rs"
-required-features = ["providers", "client", "middleware", "state", "context"]
 
 [dev-dependencies]
 serde = { workspace = true }

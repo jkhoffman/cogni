@@ -333,10 +333,23 @@ name = "cogni-core"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "cogni-derive",
  "futures-core",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
+]
+
+[[package]]
+name = "cogni-derive"
+version = "0.1.0"
+dependencies = [
+ "cogni-core",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn",
 ]
 
 [[package]]

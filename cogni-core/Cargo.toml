@@ -16,3 +16,8 @@ futures-core = "0.3"
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
+cogni-derive = { path = "../cogni-derive", optional = true }
+
+[features]
+default = []
+derive = ["dep:cogni-derive"]

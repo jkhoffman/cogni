@@ -47,6 +47,10 @@
 // Re-export core types
 pub use cogni_core::*;
 
+// Re-export derive macro when feature is enabled
+#[cfg(feature = "derive")]
+pub use cogni_core::DeriveStructuredOutput as StructuredOutput;
+
 // Re-export feature-gated modules
 #[cfg(feature = "providers")]
 #[cfg_attr(docsrs, doc(cfg(feature = "providers")))]

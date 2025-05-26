@@ -37,9 +37,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("=== Client with Custom Defaults ===");
         let provider = OpenAI::with_api_key(api_key);
 
-        let mut default_params = cogni_core::Parameters::default();
-        default_params.temperature = Some(0.3);
-        default_params.max_tokens = Some(100);
+        let default_params = cogni_core::Parameters {
+            temperature: Some(0.3),
+            max_tokens: Some(100),
+            ..Default::default()
+        };
 
         let client = Client::new(provider)
             .with_model("gpt-4o-mini")
