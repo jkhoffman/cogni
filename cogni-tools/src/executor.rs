@@ -60,6 +60,22 @@ impl FunctionExecutor {
     }
 }
 
+// Implement ToolExecutor for Box<dyn ToolExecutor> to allow using boxed executors
+#[async_trait]
+impl ToolExecutor for Box<dyn ToolExecutor> {
+    async fn execute(&self, call: &ToolCall) -> Result<ToolResult> {
+        self.as_ref().execute(call).await
+    }
+
+    fn tool(&self) -> &Tool {
+        self.as_ref().tool()
+    }
+
+    async fn validate(&self, args: &Value) -> Result<()> {
+        self.as_ref().validate(args).await
+    }
+}
+
 #[async_trait]
 impl ToolExecutor for FunctionExecutor {
     async fn execute(&self, call: &ToolCall) -> Result<ToolResult> {

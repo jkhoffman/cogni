@@ -207,16 +207,10 @@ pub fn math_tools() -> Vec<FunctionExecutor> {
 
 /// Create a registry with all built-in tools
 pub async fn create_builtin_registry() -> Result<crate::registry::ToolRegistry> {
-    let mut builder = RegistryBuilder::new()
-        .with_tool(calculator())
-        .with_tool(string_tools())
-        .with_tool(json_tools());
+    let mut tools = vec![calculator(), string_tools(), json_tools()];
+    tools.extend(math_tools());
 
-    for tool in math_tools() {
-        builder = builder.with_tool(tool);
-    }
-
-    builder.build().await
+    RegistryBuilder::new().with_tools(tools).build().await
 }
 
 #[cfg(test)]

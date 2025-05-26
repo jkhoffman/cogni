@@ -173,17 +173,12 @@ impl RegistryBuilder {
         }
     }
 
-    /// Add a tool executor
-    pub fn with_tool(mut self, executor: impl ToolExecutor + 'static) -> Self {
-        self.executors.push(Box::new(executor));
-        self
-    }
-
-    /// Add multiple tool executors
-    pub fn with_tools(
-        mut self,
-        executors: impl IntoIterator<Item = impl ToolExecutor + 'static>,
-    ) -> Self {
+    /// Add one or more tool executors
+    pub fn with_tools<I>(mut self, executors: I) -> Self
+    where
+        I: IntoIterator,
+        I::Item: ToolExecutor + 'static,
+    {
         for executor in executors {
             self.executors.push(Box::new(executor));
         }

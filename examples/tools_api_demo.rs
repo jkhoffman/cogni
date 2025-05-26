@@ -158,8 +158,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Method 4: Using the builder pattern (most ergonomic for inline creation)
     let registry3 = ToolRegistry::builder()
-        .with_tool(create_weather_tool())
-        .with_tool(create_calculator_tool())
+        .with_tools(tools_vec![create_weather_tool(), create_calculator_tool()])
         .build()
         .await?;
 
