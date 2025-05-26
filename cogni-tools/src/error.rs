@@ -165,7 +165,9 @@ mod tests {
 
     #[test]
     fn test_tool_error_display() {
-        let err = ToolError::NotFound { name: "calculator".to_string() };
+        let err = ToolError::NotFound {
+            name: "calculator".to_string(),
+        };
         assert_eq!(err.to_string(), "Tool not found: calculator");
 
         let err = ToolError::InvalidArguments {
@@ -173,14 +175,20 @@ mod tests {
             message: "Missing operands".to_string(),
             source: None,
         };
-        assert_eq!(err.to_string(), "Invalid arguments for tool 'math': Missing operands");
+        assert_eq!(
+            err.to_string(),
+            "Invalid arguments for tool 'math': Missing operands"
+        );
 
         let err = ToolError::ExecutionFailed {
             tool: "api".to_string(),
             message: "Connection refused".to_string(),
             source: None,
         };
-        assert_eq!(err.to_string(), "Tool execution failed for 'api': Connection refused");
+        assert_eq!(
+            err.to_string(),
+            "Tool execution failed for 'api': Connection refused"
+        );
 
         let err = ToolError::JsonError {
             message: "Invalid JSON".to_string(),
@@ -190,9 +198,15 @@ mod tests {
 
         let err = ToolError::ValidationFailed {
             tool: "schema".to_string(),
-            errors: vec!["Field 'name' is required".to_string(), "Invalid type".to_string()],
+            errors: vec![
+                "Field 'name' is required".to_string(),
+                "Invalid type".to_string(),
+            ],
         };
-        assert_eq!(err.to_string(), "Validation failed for tool 'schema': Field 'name' is required, Invalid type");
+        assert_eq!(
+            err.to_string(),
+            "Validation failed for tool 'schema': Field 'name' is required, Invalid type"
+        );
 
         let err = ToolError::Network {
             message: "DNS lookup failed".to_string(),
@@ -210,13 +224,56 @@ mod tests {
     #[test]
     fn test_tool_error_kind() {
         let test_cases = vec![
-            (ToolError::NotFound { name: "test".to_string() }, ToolErrorKind::NotFound),
-            (ToolError::InvalidArguments { tool: "test".to_string(), message: "test".to_string(), source: None }, ToolErrorKind::InvalidArguments),
-            (ToolError::ExecutionFailed { tool: "test".to_string(), message: "test".to_string(), source: None }, ToolErrorKind::ExecutionFailed),
-            (ToolError::JsonError { message: "test".to_string(), source: serde_json::from_str::<String>("invalid").unwrap_err() }, ToolErrorKind::JsonError),
-            (ToolError::ValidationFailed { tool: "test".to_string(), errors: vec![] }, ToolErrorKind::ValidationFailed),
-            (ToolError::Network { message: "test".to_string(), source: None }, ToolErrorKind::Network),
-            (ToolError::Timeout { tool: "test".to_string(), duration: std::time::Duration::from_secs(1) }, ToolErrorKind::Timeout),
+            (
+                ToolError::NotFound {
+                    name: "test".to_string(),
+                },
+                ToolErrorKind::NotFound,
+            ),
+            (
+                ToolError::InvalidArguments {
+                    tool: "test".to_string(),
+                    message: "test".to_string(),
+                    source: None,
+                },
+                ToolErrorKind::InvalidArguments,
+            ),
+            (
+                ToolError::ExecutionFailed {
+                    tool: "test".to_string(),
+                    message: "test".to_string(),
+                    source: None,
+                },
+                ToolErrorKind::ExecutionFailed,
+            ),
+            (
+                ToolError::JsonError {
+                    message: "test".to_string(),
+                    source: serde_json::from_str::<String>("invalid").unwrap_err(),
+                },
+                ToolErrorKind::JsonError,
+            ),
+            (
+                ToolError::ValidationFailed {
+                    tool: "test".to_string(),
+                    errors: vec![],
+                },
+                ToolErrorKind::ValidationFailed,
+            ),
+            (
+                ToolError::Network {
+                    message: "test".to_string(),
+                    source: None,
+                },
+                ToolErrorKind::Network,
+            ),
+            (
+                ToolError::Timeout {
+                    tool: "test".to_string(),
+                    duration: std::time::Duration::from_secs(1),
+                },
+                ToolErrorKind::Timeout,
+            ),
         ];
 
         for (error, expected_kind) in test_cases {
@@ -227,7 +284,9 @@ mod tests {
     #[test]
     fn test_tool_error_source() {
         // Error without source
-        let err = ToolError::NotFound { name: "test".to_string() };
+        let err = ToolError::NotFound {
+            name: "test".to_string(),
+        };
         assert!(err.source().is_none());
 
         // Error with io::Error source
@@ -265,10 +324,16 @@ mod tests {
         assert!(err.source().is_some());
 
         // Errors without source field
-        let err = ToolError::ValidationFailed { tool: "test".to_string(), errors: vec![] };
+        let err = ToolError::ValidationFailed {
+            tool: "test".to_string(),
+            errors: vec![],
+        };
         assert!(err.source().is_none());
 
-        let err = ToolError::Timeout { tool: "test".to_string(), duration: std::time::Duration::from_secs(1) };
+        let err = ToolError::Timeout {
+            tool: "test".to_string(),
+            duration: std::time::Duration::from_secs(1),
+        };
         assert!(err.source().is_none());
     }
 
@@ -293,7 +358,9 @@ mod tests {
         }
 
         fn error_fn() -> Result<String> {
-            Err(ToolError::NotFound { name: "missing".to_string() })
+            Err(ToolError::NotFound {
+                name: "missing".to_string(),
+            })
         }
 
         assert!(success_fn().is_ok());
@@ -302,7 +369,9 @@ mod tests {
 
     #[test]
     fn test_error_debug() {
-        let err = ToolError::NotFound { name: "test".to_string() };
+        let err = ToolError::NotFound {
+            name: "test".to_string(),
+        };
         let debug_str = format!("{:?}", err);
         assert!(debug_str.contains("NotFound"));
         assert!(debug_str.contains("test"));

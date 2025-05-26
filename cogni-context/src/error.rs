@@ -37,13 +37,19 @@ mod tests {
         assert_eq!(err.to_string(), "Model not supported: gpt-5");
 
         let err = ContextError::TokenCountingError("Failed to initialize".to_string());
-        assert_eq!(err.to_string(), "Token counting error: Failed to initialize");
+        assert_eq!(
+            err.to_string(),
+            "Token counting error: Failed to initialize"
+        );
 
         let err = ContextError::ContextExceeded {
             current: 5000,
             max: 4096,
         };
-        assert_eq!(err.to_string(), "Context exceeded: 5000 tokens > 4096 tokens");
+        assert_eq!(
+            err.to_string(),
+            "Context exceeded: 5000 tokens > 4096 tokens"
+        );
 
         let err = ContextError::PruningError("No messages to prune".to_string());
         assert_eq!(err.to_string(), "Pruning failed: No messages to prune");
@@ -59,7 +65,7 @@ mod tests {
     fn test_error_conversion_to_core_error() {
         let context_err = ContextError::UnsupportedModel("test-model".to_string());
         let core_err: cogni_core::Error = context_err.into();
-        
+
         match core_err {
             cogni_core::Error::Validation(msg) => {
                 assert_eq!(msg, "Model not supported: test-model");
@@ -73,7 +79,10 @@ mod tests {
         let errors = vec![
             ContextError::UnsupportedModel("model".to_string()),
             ContextError::TokenCountingError("error".to_string()),
-            ContextError::ContextExceeded { current: 100, max: 50 },
+            ContextError::ContextExceeded {
+                current: 100,
+                max: 50,
+            },
             ContextError::PruningError("error".to_string()),
             ContextError::InvalidConfiguration("error".to_string()),
             ContextError::TiktokenError("error".to_string()),

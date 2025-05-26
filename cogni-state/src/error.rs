@@ -104,7 +104,7 @@ mod tests {
     fn test_from_io_error() {
         let io_err = io::Error::new(io::ErrorKind::NotFound, "File not found");
         let state_err: StateError = io_err.into();
-        
+
         match state_err {
             StateError::Io(err) => {
                 assert_eq!(err.kind(), io::ErrorKind::NotFound);
@@ -117,7 +117,7 @@ mod tests {
     fn test_from_serde_json_error() {
         let json_err = serde_json::from_str::<String>("invalid").unwrap_err();
         let state_err: StateError = json_err.into();
-        
+
         assert!(matches!(state_err, StateError::Serialization(_)));
     }
 

@@ -120,7 +120,7 @@ mod tests {
 
         let value = SimpleValue("test".to_string());
         let result = set_stream_field(value, true);
-        
+
         // Should return the original value unchanged
         assert_eq!(result, SimpleValue("test".to_string()));
     }

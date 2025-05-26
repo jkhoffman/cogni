@@ -249,18 +249,18 @@ mod tests {
     #[tokio::test]
     async fn test_token_bucket_try_acquire() {
         let mut bucket = TokenBucket::new(3, 1.0, Duration::from_secs(1));
-        
+
         // Should be able to acquire 3 tokens immediately
         assert!(bucket.try_acquire().await);
         assert!(bucket.try_acquire().await);
         assert!(bucket.try_acquire().await);
-        
+
         // Should fail on the 4th attempt
         assert!(!bucket.try_acquire().await);
-        
+
         // Wait for refill
         sleep(Duration::from_millis(1100)).await;
-        
+
         // Should be able to acquire again
         assert!(bucket.try_acquire().await);
     }
@@ -268,15 +268,15 @@ mod tests {
     #[tokio::test]
     async fn test_token_bucket_acquire_with_wait() {
         let mut bucket = TokenBucket::new(1, 2.0, Duration::from_secs(1));
-        
+
         // Use up the token
         assert!(bucket.try_acquire().await);
-        
+
         // This should wait for approximately 0.5 seconds
         let start = TokioInstant::now();
         bucket.acquire().await;
         let elapsed = start.elapsed();
-        
+
         // Should have waited at least 400ms (allowing some tolerance)
         assert!(elapsed >= Duration::from_millis(400));
         assert!(elapsed < Duration::from_millis(700));
@@ -285,24 +285,24 @@ mod tests {
     #[test]
     fn test_token_bucket_refill() {
         let mut bucket = TokenBucket::new(10, 5.0, Duration::from_secs(1));
-        
+
         // Use some tokens
         bucket.tokens = 3.0;
-        
+
         // Simulate time passing
         bucket.last_refill = Instant::now() - Duration::from_secs(1);
         bucket.refill();
-        
+
         // Should have refilled 5 tokens
         assert!((bucket.tokens - 8.0).abs() < 0.1);
-        
+
         // Use all tokens
         bucket.tokens = 0.0;
-        
+
         // Simulate more time passing
         bucket.last_refill = Instant::now() - Duration::from_secs(3);
         bucket.refill();
-        
+
         // Should be capped at capacity
         assert_eq!(bucket.tokens, 10.0);
     }
@@ -310,16 +310,20 @@ mod tests {
     #[test]
     fn test_token_bucket_clean_old_requests() {
         let mut bucket = TokenBucket::new(10, 5.0, Duration::from_secs(2));
-        
+
         let now = Instant::now();
         // Add some old requests
         bucket.request_times.push_back(now - Duration::from_secs(3));
         bucket.request_times.push_back(now - Duration::from_secs(2));
-        bucket.request_times.push_back(now - Duration::from_millis(1500));
-        bucket.request_times.push_back(now - Duration::from_millis(500));
-        
+        bucket
+            .request_times
+            .push_back(now - Duration::from_millis(1500));
+        bucket
+            .request_times
+            .push_back(now - Duration::from_millis(500));
+
         bucket.clean_old_requests();
-        
+
         // Should only keep requests within the 2-second window
         assert_eq!(bucket.request_times.len(), 2);
         assert_eq!(bucket.requests_in_window(), 2);
@@ -329,7 +333,7 @@ mod tests {
     fn test_rate_limit_layer_creation() {
         let _layer = RateLimitLayer::new(10.0);
         // Just verify it creates without panicking
-        
+
         let _layer = RateLimitLayer::with_token_bucket(20, 15.0, Duration::from_secs(3));
         // Just verify it creates without panicking
     }
@@ -368,15 +372,15 @@ mod tests {
         let mut rate_limited = layer.layer(mock_service);
 
         let start = TokioInstant::now();
-        
+
         // Make 4 requests
         for _ in 0..4 {
             let request = create_test_request();
             rate_limited.call(request).await.unwrap();
         }
-        
+
         let elapsed = start.elapsed();
-        
+
         // Should have taken at least 1 second (2 immediate, then wait ~0.5s each for the next 2)
         assert!(elapsed >= Duration::from_millis(900));
     }
@@ -412,7 +416,7 @@ mod tests {
         }
 
         let elapsed = start.elapsed();
-        
+
         // With 5 req/s and 10 requests, should take at least 1 second
         assert!(elapsed >= Duration::from_secs(1));
         assert_eq!(mock_service.call_count.load(Ordering::SeqCst), 10);

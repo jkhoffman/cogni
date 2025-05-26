@@ -235,7 +235,7 @@ where
 
         // Clone the inner service for the async block
         let mut inner = self.inner.clone();
-        
+
         Box::pin(async move {
             // Try to get from cache
             if let Some(response) = cache_check.write().await.get(&key_check) {
@@ -259,7 +259,9 @@ pub use CacheLayer as CacheMiddleware;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cogni_core::{Audio, Content, Image, Message, Model, Request, Response, ResponseMetadata, Role};
+    use cogni_core::{
+        Audio, Content, Image, Message, Model, Request, Response, ResponseMetadata, Role,
+    };
     use std::future::Future;
     use std::pin::Pin;
     use std::sync::atomic::{AtomicUsize, Ordering};
@@ -321,10 +323,10 @@ mod tests {
     fn test_cache_key_with_parameters() {
         let mut request1 = create_test_request("Hello");
         request1.parameters.temperature = Some(0.7);
-        
+
         let mut request2 = create_test_request("Hello");
         request2.parameters.temperature = Some(0.8);
-        
+
         let mut request3 = create_test_request("Hello");
         request3.parameters.max_tokens = Some(100);
 
@@ -341,7 +343,7 @@ mod tests {
     #[test]
     fn test_cache_key_with_different_content_types() {
         let text_request = create_test_request("Hello");
-        
+
         let image_request = Request::builder()
             .model(Model("test-model".into()))
             .message(Message {
@@ -354,7 +356,7 @@ mod tests {
                 metadata: Default::default(),
             })
             .build();
-        
+
         let audio_request = Request::builder()
             .model(Model("test-model".into()))
             .message(Message {
@@ -410,7 +412,7 @@ mod tests {
         // Access key-0 to make it most recently used
         let key0 = CacheKey("key-0".into());
         assert!(cache.get(&key0).is_some());
-        
+
         // After get, order should be: key-1, key-2, key-0 (key-1 is oldest)
 
         // Add a new item, should evict key-1 (oldest)
@@ -432,7 +434,7 @@ mod tests {
         let response = create_test_response("cached response");
 
         cache.put(key.clone(), response);
-        
+
         // Should be in cache immediately
         assert!(cache.get(&key).is_some());
 
@@ -528,7 +530,7 @@ mod tests {
             type Future = Pin<Box<dyn Future<Output = Result<Response, Error>> + Send>>;
 
             fn call(&mut self, _request: Request) -> Self::Future {
-                Box::pin(async move { 
+                Box::pin(async move {
                     Err(Error::Provider {
                         provider: "test".into(),
                         message: "test error".into(),
@@ -578,9 +580,9 @@ mod tests {
         service1.call(request.clone()).await.unwrap();
         assert_eq!(shared_count.load(Ordering::SeqCst), 1);
 
-        // Should hit cache through service2 
+        // Should hit cache through service2
         let response = service2.call(request).await.unwrap();
-        // Verify the response is correct 
+        // Verify the response is correct
         assert_eq!(response.content, "test");
         // Count should still be 1 since cache was hit
         assert_eq!(shared_count.load(Ordering::SeqCst), 1);

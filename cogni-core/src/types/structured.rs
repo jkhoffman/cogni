@@ -102,7 +102,7 @@ mod tests {
         match &format {
             ResponseFormat::JsonSchema { schema: s, strict } => {
                 assert_eq!(s, &schema);
-                assert_eq!(*strict, true);
+                assert!(*strict);
             }
             _ => panic!("Expected JsonSchema variant"),
         }

@@ -241,7 +241,7 @@ pub enum BuildError {
 mod tests {
     use super::*;
     use crate::types::message::Message;
-    use crate::types::tool::{Tool, Function};
+    use crate::types::tool::{Function, Tool};
     use serde_json::json;
 
     #[test]
@@ -283,7 +283,10 @@ mod tests {
         assert_eq!(params.max_tokens, Some(100));
         assert_eq!(params.temperature, Some(0.7));
         assert_eq!(params.top_p, Some(0.9));
-        assert_eq!(params.stop, Some(vec!["\\n".to_string(), "STOP".to_string()]));
+        assert_eq!(
+            params.stop,
+            Some(vec!["\\n".to_string(), "STOP".to_string()])
+        );
         assert_eq!(params.n, None);
         assert_eq!(params.presence_penalty, None);
         assert_eq!(params.frequency_penalty, None);
@@ -355,9 +358,7 @@ mod tests {
             Message::user("Second"),
         ];
 
-        let request = Request::builder()
-            .messages(messages.clone())
-            .build();
+        let request = Request::builder().messages(messages.clone()).build();
 
         assert_eq!(request.messages.len(), 3);
     }
@@ -428,7 +429,7 @@ mod tests {
 
         assert!(result.is_err());
         match result {
-            Err(BuildError::NoMessages) => {},
+            Err(BuildError::NoMessages) => {}
             _ => panic!("Expected NoMessages error"),
         }
     }
@@ -436,16 +437,17 @@ mod tests {
     #[test]
     fn test_build_error_display() {
         let error = BuildError::NoMessages;
-        assert_eq!(error.to_string(), "Request must contain at least one message");
+        assert_eq!(
+            error.to_string(),
+            "Request must contain at least one message"
+        );
     }
 
     #[test]
     fn test_request_builder_default() {
         let builder = RequestBuilder::default();
-        let request = builder
-            .message(Message::user("test"))
-            .build();
-        
+        let request = builder.message(Message::user("test")).build();
+
         assert_eq!(request.model.0, "gpt-4");
     }
 

@@ -189,6 +189,7 @@ mod tests {
         Network,
         Timeout,
         Validation,
+        #[allow(dead_code)]
         Authentication,
         ProviderWithRetry,
         ProviderWithoutRetry,
@@ -491,20 +492,24 @@ mod tests {
         assert!(RetryService::<MockService>::should_retry(&Error::Timeout));
 
         // Provider errors with retry_after should retry
-        assert!(RetryService::<MockService>::should_retry(&Error::Provider {
-            provider: "test".into(),
-            message: "test".into(),
-            retry_after: Some(Duration::from_secs(1)),
-            source: None,
-        }));
+        assert!(RetryService::<MockService>::should_retry(
+            &Error::Provider {
+                provider: "test".into(),
+                message: "test".into(),
+                retry_after: Some(Duration::from_secs(1)),
+                source: None,
+            }
+        ));
 
         // Provider errors without retry_after should not retry
-        assert!(!RetryService::<MockService>::should_retry(&Error::Provider {
-            provider: "test".into(),
-            message: "test".into(),
-            retry_after: None,
-            source: None,
-        }));
+        assert!(!RetryService::<MockService>::should_retry(
+            &Error::Provider {
+                provider: "test".into(),
+                message: "test".into(),
+                retry_after: None,
+                source: None,
+            }
+        ));
 
         // Validation errors should not retry
         assert!(!RetryService::<MockService>::should_retry(

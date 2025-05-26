@@ -148,7 +148,10 @@ mod tests {
         assert_eq!(error.to_string(), "Serialization error: Invalid JSON");
 
         let error = Error::Validation("Missing required field".into());
-        assert_eq!(error.to_string(), "Validation error: Missing required field");
+        assert_eq!(
+            error.to_string(),
+            "Validation error: Missing required field"
+        );
 
         let error = Error::ToolExecution("Tool not found".into());
         assert_eq!(error.to_string(), "Tool execution error: Tool not found");
@@ -168,7 +171,10 @@ mod tests {
         let error = Error::ResponseError {
             message: "Failed to parse response".into(),
         };
-        assert_eq!(error.to_string(), "Response error: Failed to parse response");
+        assert_eq!(
+            error.to_string(),
+            "Response error: Failed to parse response"
+        );
     }
 
     #[test]
@@ -303,7 +309,7 @@ mod tests {
         let error: Error = io_error.into();
 
         let wrapper_error = Error::Storage(format!("Failed to save: {}", error));
-        
+
         // Check the wrapper error message includes the nested error
         assert!(wrapper_error.to_string().contains("Failed to save"));
     }

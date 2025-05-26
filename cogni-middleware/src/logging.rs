@@ -232,11 +232,13 @@ pub use LoggingLayer as LoggingMiddleware;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cogni_core::{Content, Message, Model, Request, Response, ResponseMetadata, Role, Usage, FinishReason};
+    use cogni_core::{
+        Content, FinishReason, Message, Model, Request, Response, ResponseMetadata, Role, Usage,
+    };
     use std::future::Future;
     use std::pin::Pin;
-    use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::Arc;
     use tracing_test::traced_test;
 
     /// Mock service for testing
@@ -324,7 +326,7 @@ mod tests {
         let response = logging_service.call(request).await.unwrap();
 
         assert_eq!(response.content, "I'm here to help!");
-        
+
         // Check that debug logs were emitted
         assert!(logs_contain("Processing LLM request"));
         assert!(logs_contain("Received LLM response"));
@@ -347,7 +349,7 @@ mod tests {
         let response = logging_service.call(request).await.unwrap();
 
         assert_eq!(response.content, "I'm here to help!");
-        
+
         // Info logs should not include tools count
         assert!(logs_contain("Processing LLM request"));
         assert!(logs_contain("messages=2"));
@@ -431,16 +433,14 @@ mod tests {
     #[traced_test]
     async fn test_logging_service_with_tools() {
         use cogni_core::{Tool, ToolCall};
-        
+
         let mut response = create_test_response();
-        response.tool_calls = vec![
-            ToolCall {
-                id: "tool-1".into(),
-                name: "calculator".into(),
-                arguments: r#"{"operation": "add", "a": 1, "b": 2}"#.into(),
-            },
-        ];
-        
+        response.tool_calls = vec![ToolCall {
+            id: "tool-1".into(),
+            name: "calculator".into(),
+            arguments: r#"{"operation": "add", "a": 1, "b": 2}"#.into(),
+        }];
+
         let mock_service = MockService {
             response,
             call_count: Arc::new(AtomicUsize::new(0)),
@@ -520,8 +520,8 @@ mod tests {
     #[tokio::test]
     #[traced_test]
     async fn test_logging_service_different_content_types() {
-        use cogni_core::{Image, Audio};
-        
+        use cogni_core::{Audio, Image};
+
         let mock_service = MockService {
             response: create_test_response(),
             call_count: Arc::new(AtomicUsize::new(0)),

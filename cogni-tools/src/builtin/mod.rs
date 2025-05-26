@@ -318,7 +318,10 @@ mod tests {
         let tool = calc.tool();
         assert_eq!(tool.name, "calculator");
         assert_eq!(tool.description, "Perform basic arithmetic operations");
-        assert_eq!(tool.function.returns.as_ref().unwrap(), "The result of the arithmetic operation");
+        assert_eq!(
+            tool.function.returns.as_ref().unwrap(),
+            "The result of the arithmetic operation"
+        );
     }
 
     #[test]
@@ -434,7 +437,10 @@ mod tests {
         let tool = string_tool.tool();
         assert_eq!(tool.name, "string_tools");
         assert_eq!(tool.description, "Perform string manipulation operations");
-        assert_eq!(tool.function.returns.as_ref().unwrap(), "The result of the string operation");
+        assert_eq!(
+            tool.function.returns.as_ref().unwrap(),
+            "The result of the string operation"
+        );
     }
 
     #[test]
@@ -561,8 +567,11 @@ mod tests {
         let tool = json_tool.tool();
         assert_eq!(tool.name, "json_tools");
         assert_eq!(tool.description, "Parse, query, and manipulate JSON data");
-        assert_eq!(tool.function.returns.as_ref().unwrap(), "The result of the JSON operation");
-        
+        assert_eq!(
+            tool.function.returns.as_ref().unwrap(),
+            "The result of the JSON operation"
+        );
+
         // Test that additional_properties is allowed
         let params = &tool.function.parameters;
         assert!(params["additionalProperties"].as_bool().unwrap_or(false));
@@ -572,8 +581,11 @@ mod tests {
     fn test_math_advanced_operations() {
         let tools = math_tools();
         assert!(tools.len() >= 2); // At least calculator and math_advanced
-        
-        let math_advanced = tools.iter().find(|t| t.tool().name == "math_advanced").unwrap();
+
+        let math_advanced = tools
+            .iter()
+            .find(|t| t.tool().name == "math_advanced")
+            .unwrap();
 
         // Test sqrt
         let result = tokio_test::block_on(async {
@@ -668,13 +680,13 @@ mod tests {
         let result = tokio_test::block_on(async {
             let args = json!({
                 "operation": "round",
-                "value": 3.14159,
+                "value": 3.456789,
                 "n": 2
             });
             (math_advanced.func)(args).await
         })
         .unwrap();
-        assert_eq!(result["result"], 3.14);
+        assert_eq!(result["result"], 3.46);
 
         // Test round without decimals
         let result = tokio_test::block_on(async {
@@ -734,28 +746,34 @@ mod tests {
     #[test]
     fn test_math_advanced_metadata() {
         let tools = math_tools();
-        let math_advanced = tools.iter().find(|t| t.tool().name == "math_advanced").unwrap();
+        let math_advanced = tools
+            .iter()
+            .find(|t| t.tool().name == "math_advanced")
+            .unwrap();
         let tool = math_advanced.tool();
-        
+
         assert_eq!(tool.name, "math_advanced");
         assert_eq!(tool.description, "Advanced mathematical operations");
-        assert_eq!(tool.function.returns.as_ref().unwrap(), "The result of the mathematical operation");
+        assert_eq!(
+            tool.function.returns.as_ref().unwrap(),
+            "The result of the mathematical operation"
+        );
     }
 
     #[tokio::test]
     async fn test_create_builtin_registry() {
         let registry = create_builtin_registry().await.unwrap();
-        
+
         // Check that all expected tools are registered
         assert!(registry.get("calculator").await.is_some());
         assert!(registry.get("string_tools").await.is_some());
         assert!(registry.get("json_tools").await.is_some());
         assert!(registry.get("math_advanced").await.is_some());
-        
+
         // Verify tool count
         let tools = registry.list_tools().await;
         assert!(tools.len() >= 4); // At least the 4 main tools
-        
+
         // Test that we can execute a tool from the registry
         let calc = registry.get("calculator").await.unwrap();
         let call = ToolCall {
@@ -765,7 +783,8 @@ mod tests {
                 "operation": "multiply",
                 "a": 6,
                 "b": 7
-            }).to_string(),
+            })
+            .to_string(),
         };
         let result = calc.execute(&call).await.unwrap();
         let result_json: Value = serde_json::from_str(&result.content).unwrap();
@@ -775,16 +794,16 @@ mod tests {
     #[test]
     fn test_math_tools_returns_multiple_tools() {
         let tools = math_tools();
-        
+
         // Should have at least calculator and math_advanced
         assert!(tools.len() >= 2);
-        
+
         // Check calculator is included
         assert!(tools.iter().any(|t| t.tool().name == "calculator"));
-        
+
         // Check math_advanced is included
         assert!(tools.iter().any(|t| t.tool().name == "math_advanced"));
-        
+
         // All tools should be properly configured
         for executor in &tools {
             let tool = executor.tool();
