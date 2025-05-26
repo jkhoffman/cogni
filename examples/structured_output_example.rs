@@ -2,6 +2,10 @@
 //!
 //! This example shows how to use the structured output feature to get
 //! well-defined JSON responses from LLMs.
+//!
+//! NOTE: Structured output with JSON schema requires specific model support:
+//! - OpenAI: gpt-4o, gpt-4o-mini, gpt-4-turbo (1106-preview and later)
+//! - For unsupported models, see structured_output_with_fallback example
 
 use cogni::prelude::*;
 use cogni::{
@@ -109,10 +113,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
         // Request weather information
         let weather: WeatherReport = client
-            .chat_structured(
+            .request()
+            .model("gpt-4o")
+            .system("You are a weather information assistant.")
+            .user(
                 "What's the current weather like in San Francisco? Please provide realistic data.",
             )
-            .await?;
+            .with_structured_output::<WeatherReport>()
+            .send()
+            .await?
+            .parse_structured()?;
 
         println!("Weather Report:");
         println!("  Location: {}", weather.location);
@@ -132,6 +142,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
         let response = client
             .request()
+            .model("gpt-4o")
             .system("You are a helpful assistant that always responds in JSON format.")
             .user("List three programming languages with their strengths")
             .json_mode()
@@ -159,6 +170,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
         let person: Person = client
             .request()
+            .model("gpt-4o")
             .system("Extract person information from the provided text.")
             .user(text)
             .with_structured_output::<Person>()

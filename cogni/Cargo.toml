@@ -79,9 +79,80 @@ path = "../examples/structured_output_example.rs"
 required-features = ["providers", "client"]
 
 [[example]]
+name = "structured_output_with_fallback"
+path = "../examples/structured_output_with_fallback.rs"
+required-features = ["providers", "client"]
+
+[[example]]
 name = "agentic_combined_example"
 path = "../examples/agentic_combined_example.rs"
 required-features = ["providers", "client", "middleware", "state", "context"]
+
+[[example]]
+name = "context_management_example"
+path = "../examples/context_management_example.rs"
+required-features = ["providers", "client", "context"]
+
+[[example]]
+name = "custom_tools_example"
+path = "../examples/custom_tools_example.rs"
+required-features = ["providers", "tools"]
+
+[[example]]
+name = "middleware_example"
+path = "../examples/middleware_example.rs"
+required-features = ["providers", "middleware"]
+
+[[example]]
+name = "middleware_simple"
+path = "../examples/middleware_simple.rs"
+required-features = ["providers", "middleware"]
+
+[[example]]
+name = "stateful_conversation"
+path = "../examples/stateful_conversation.rs"
+required-features = ["providers", "client", "state"]
+
+[[example]]
+name = "test_tools_locally"
+path = "../examples/test_tools_locally.rs"
+required-features = ["tools"]
+
+[[example]]
+name = "tool_execution_example"
+path = "../examples/tool_execution_example.rs"
+required-features = ["providers", "tools"]
+
+# Client examples
+[[example]]
+name = "simple_chat_example"
+path = "../examples/client/simple_chat_example.rs"
+required-features = ["providers", "client"]
+
+[[example]]
+name = "streaming_example"
+path = "../examples/client/streaming_example.rs"
+required-features = ["providers", "client"]
+
+[[example]]
+name = "request_builder_example"
+path = "../examples/client/request_builder_example.rs"
+required-features = ["providers", "client"]
+
+[[example]]
+name = "multi_provider_client_example"
+path = "../examples/client/multi_provider_client_example.rs"
+required-features = ["providers", "client"]
+
+[[example]]
+name = "combined_features_example"
+path = "../examples/client/combined_features_example.rs"
+required-features = ["providers", "client", "middleware"]
+
+[[example]]
+name = "advanced_patterns_example"
+path = "../examples/client/advanced_patterns_example.rs"
+required-features = ["providers", "client", "middleware"]
 
 [dev-dependencies]
 serde = { workspace = true }

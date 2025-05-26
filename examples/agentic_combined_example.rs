@@ -180,6 +180,7 @@ async fn main() -> Result<(), Error> {
         "Based on our entire conversation about Q4 sales performance, provide a comprehensive \
          data analysis with key insights, metrics, and strategic recommendations.",
         context_manager,
+        "gpt-4o", // Use a model that supports structured output
     )
     .await?;
 
@@ -250,6 +251,7 @@ async fn chat_structured_with_context<P: Provider, T: StructuredOutput>(
     provider: &P,
     message: &str,
     context_manager: ContextManager,
+    model: &str,
 ) -> Result<T, Error> {
     // Add the new message to conversation
     let user_message = Message::user(message);
@@ -267,6 +269,7 @@ async fn chat_structured_with_context<P: Provider, T: StructuredOutput>(
     // Build and send request with structured output
     let request = Request::builder()
         .messages(pruned_messages)
+        .model(model)
         .response_format(ResponseFormat::JsonSchema {
             schema: T::schema(),
             strict: true,

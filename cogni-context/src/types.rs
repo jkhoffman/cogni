@@ -32,7 +32,11 @@ impl ModelLimits {
                 max_output_tokens: 4096,
                 model_name: model.to_string(),
             },
-            "gpt-4-turbo" | "gpt-4-1106-preview" | "gpt-4-0125-preview" => Self {
+            "gpt-4-turbo"
+            | "gpt-4-1106-preview"
+            | "gpt-4-0125-preview"
+            | "gpt-4-turbo-preview"
+            | "gpt-4-turbo-2024-04-09" => Self {
                 context_window: 128000,
                 max_output_tokens: 4096,
                 model_name: model.to_string(),
@@ -40,6 +44,11 @@ impl ModelLimits {
             "gpt-4o" | "gpt-4o-2024-05-13" => Self {
                 context_window: 128000,
                 max_output_tokens: 4096,
+                model_name: model.to_string(),
+            },
+            "gpt-4o-mini" | "gpt-4o-mini-2024-07-18" => Self {
+                context_window: 128000,
+                max_output_tokens: 16384,
                 model_name: model.to_string(),
             },
             "gpt-3.5-turbo" | "gpt-3.5-turbo-0613" => Self {
