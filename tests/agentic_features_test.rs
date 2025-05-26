@@ -124,7 +124,7 @@ impl Provider for MockProvider {
 }
 
 #[tokio::test]
-async fn test_stateful_conversation_persistence() {
+async fn test_stateful_conversation_persistence() -> Result<(), Box<dyn std::error::Error>> {
     // Create a temporary directory for state storage
     let temp_dir = TempDir::new().unwrap();
     let store = Arc::new(FileStore::new(temp_dir.path()).unwrap());
@@ -179,10 +179,12 @@ async fn test_stateful_conversation_persistence() {
 
     // Verify provider received all messages in context
     assert_eq!(provider.call_count(), 3);
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_context_manager_with_conversation() {
+async fn test_context_manager_with_conversation() -> Result<(), Box<dyn std::error::Error>> {
     let store = Arc::new(MemoryStore::new());
     let provider = MockProvider::new();
 
@@ -248,10 +250,12 @@ async fn test_context_manager_with_conversation() {
         .as_text()
         .unwrap()
         .contains("Assistant response 10"));
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_structured_output_with_state() {
+async fn test_structured_output_with_state() -> Result<(), Box<dyn std::error::Error>> {
     let store = Arc::new(MemoryStore::new());
     let provider = MockProvider::new();
 
@@ -291,10 +295,12 @@ async fn test_structured_output_with_state() {
     assert_eq!(analysis.summary, "Test analysis summary");
     assert_eq!(analysis.key_points.len(), 2);
     assert!((analysis.confidence_score - 0.85).abs() < 0.001);
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_all_features_combined() {
+async fn test_all_features_combined() -> Result<(), Box<dyn std::error::Error>> {
     // This test combines all three features in a realistic scenario
     let temp_dir = TempDir::new().unwrap();
     let store = Arc::new(FileStore::new(temp_dir.path()).unwrap());
@@ -382,10 +388,12 @@ async fn test_all_features_combined() {
         Some("H1 Sales Analysis".to_string())
     );
     assert!(saved_convs[0].metadata.tags.contains(&"sales".to_string()));
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_context_pruning_strategies() {
+async fn test_context_pruning_strategies() -> Result<(), Box<dyn std::error::Error>> {
     let store = Arc::new(MemoryStore::new());
     let provider = MockProvider::new();
 
@@ -448,20 +456,22 @@ async fn test_context_pruning_strategies() {
             .count()
             >= 2
     );
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_real_provider_integration() {
+async fn test_real_provider_integration() -> Result<(), Box<dyn std::error::Error>> {
     // Skip if no API key
     let Ok(api_key) = std::env::var("OPENAI_API_KEY") else {
         eprintln!("Skipping real provider test - OPENAI_API_KEY not set");
-        return;
+        return Ok(());
     };
 
     let temp_dir = TempDir::new().unwrap();
     let store = Arc::new(FileStore::new(temp_dir.path()).unwrap());
 
-    let provider = cogni::providers::openai::OpenAI::with_api_key(api_key);
+    let provider = cogni::providers::openai::OpenAI::with_api_key(api_key)?;
     let context_manager = ContextManager::new(Arc::new(
         cogni::context::TiktokenCounter::for_model("gpt-3.5-turbo").unwrap(),
     ))
@@ -502,6 +512,8 @@ async fn test_real_provider_integration() {
         saved_convs[0].metadata.title,
         Some("Integration Test".to_string())
     );
+
+    Ok(())
 }
 
 // Mock token counter for testing

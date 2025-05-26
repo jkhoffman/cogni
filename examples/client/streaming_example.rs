@@ -12,7 +12,7 @@ use std::env;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize provider
     let api_key = env::var("ANTHROPIC_API_KEY").expect("ANTHROPIC_API_KEY must be set");
-    let provider = Anthropic::with_api_key(api_key);
+    let provider = Anthropic::with_api_key(api_key)?;
 
     // Create client with a specific model
     let client = Client::new(provider).with_model("claude-3-haiku-20240307");

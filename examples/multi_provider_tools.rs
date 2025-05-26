@@ -10,11 +10,11 @@ async fn main() -> Result<(), Error> {
     // Initialize providers that support tool calling
     let openai = OpenAI::with_api_key(
         env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY environment variable not set"),
-    );
+    )?;
 
     let anthropic = Anthropic::with_api_key(
         env::var("ANTHROPIC_API_KEY").expect("ANTHROPIC_API_KEY environment variable not set"),
-    );
+    )?;
 
     // Define a simple weather tool
     let weather_tool = Tool {
@@ -163,7 +163,7 @@ async fn main() -> Result<(), Error> {
     }
 
     // Test with Ollama
-    let ollama = Ollama::local();
+    let ollama = Ollama::local()?;
 
     println!("\n\nOllama with tools:");
     let ollama_request = Request::builder()

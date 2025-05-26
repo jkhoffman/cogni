@@ -68,19 +68,29 @@ impl Ollama {
     }
 
     /// Create a new Ollama provider with default local configuration
-    pub fn local() -> Self {
-        let client = Arc::new(ReqwestClient::new().expect("Failed to create HTTP client"));
-        Self::new(OllamaConfig::default(), client)
+    pub fn local() -> Result<Self, Error> {
+        let client = Arc::new(ReqwestClient::new().map_err(|e| Error::Provider {
+            provider: "Ollama".to_string(),
+            message: format!("Failed to create HTTP client: {}", e),
+            retry_after: None,
+            source: Some(Box::new(e)),
+        })?);
+        Ok(Self::new(OllamaConfig::default(), client))
     }
 
     /// Create a new Ollama provider with a custom base URL
-    pub fn with_base_url(base_url: impl Into<String>) -> Self {
+    pub fn with_base_url(base_url: impl Into<String>) -> Result<Self, Error> {
         let config = OllamaConfig {
             base_url: base_url.into(),
             ..Default::default()
         };
-        let client = Arc::new(ReqwestClient::new().expect("Failed to create HTTP client"));
-        Self::new(config, client)
+        let client = Arc::new(ReqwestClient::new().map_err(|e| Error::Provider {
+            provider: "Ollama".to_string(),
+            message: format!("Failed to create HTTP client: {}", e),
+            retry_after: None,
+            source: Some(Box::new(e)),
+        })?);
+        Ok(Self::new(config, client))
     }
 
     /// Create headers for Ollama requests (minimal headers needed)

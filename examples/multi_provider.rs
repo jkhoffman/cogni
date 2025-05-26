@@ -9,13 +9,13 @@ async fn main() -> Result<(), Error> {
     // Initialize providers
     let openai = OpenAI::with_api_key(
         env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY environment variable not set"),
-    );
+    )?;
 
     let anthropic = Anthropic::with_api_key(
         env::var("ANTHROPIC_API_KEY").expect("ANTHROPIC_API_KEY environment variable not set"),
-    );
+    )?;
 
-    let ollama = Ollama::local(); // Assumes Ollama is running locally
+    let ollama = Ollama::local()?; // Assumes Ollama is running locally
 
     // Create a simple request
     let request = Request::builder()

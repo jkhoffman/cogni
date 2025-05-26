@@ -102,7 +102,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = env::var("OPENAI_API_KEY")?;
 
     // Create provider
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
 
     // Method 1: Create registry using from_executors with the tools_vec! macro
     let registry =

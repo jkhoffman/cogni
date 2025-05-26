@@ -43,7 +43,7 @@ async fn main() -> Result<(), cogni::Error> {
 
     // Example usage with OpenAI (requires API key)
     if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
-        let provider = OpenAI::with_api_key(api_key);
+        let provider = OpenAI::with_api_key(api_key)?;
 
         // Build request with structured output
         let request = Request::builder()
@@ -81,7 +81,7 @@ async fn main() -> Result<(), cogni::Error> {
 
         println!("\n\n=== Testing with Anthropic ===");
 
-        let provider = Anthropic::with_api_key(api_key);
+        let provider = Anthropic::with_api_key(api_key)?;
 
         // Build request with structured output
         let request = Request::builder()
@@ -114,7 +114,7 @@ async fn main() -> Result<(), cogni::Error> {
     // Test with Ollama
     println!("\n\n=== Testing with Ollama ===");
 
-    let provider = Ollama::local();
+    let provider = Ollama::local()?;
 
     // Build request with structured output
     let request = Request::builder()

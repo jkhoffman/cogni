@@ -8,7 +8,7 @@ use std::env;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize provider
     let api_key = env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY must be set");
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
 
     // Create client with default model
     let client = Client::new(provider).with_model("gpt-4o-mini");

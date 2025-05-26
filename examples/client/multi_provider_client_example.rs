@@ -9,7 +9,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 1: Using with OpenAI
     if let Ok(api_key) = env::var("OPENAI_API_KEY") {
         println!("=== OpenAI Client ===");
-        let provider = OpenAI::with_api_key(api_key);
+        let provider = OpenAI::with_api_key(api_key)?;
         let client = Client::new(provider).with_model("gpt-4o-mini");
 
         let response = client
@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 2: Using with Anthropic
     if let Ok(api_key) = env::var("ANTHROPIC_API_KEY") {
         println!("=== Anthropic Client ===");
-        let provider = Anthropic::with_api_key(api_key);
+        let provider = Anthropic::with_api_key(api_key)?;
         let client = Client::new(provider).with_model("claude-3-haiku-20240307");
 
         let response = client
@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 3: Using with custom default parameters
     if let Ok(api_key) = env::var("OPENAI_API_KEY") {
         println!("=== Client with Custom Defaults ===");
-        let provider = OpenAI::with_api_key(api_key);
+        let provider = OpenAI::with_api_key(api_key)?;
 
         let default_params = cogni_core::Parameters {
             temperature: Some(0.3),
@@ -60,7 +60,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 4: Provider-agnostic function
     if let Ok(api_key) = env::var("OPENAI_API_KEY") {
         println!("\n=== Provider-Agnostic Function ===");
-        let provider = OpenAI::with_api_key(api_key);
+        let provider = OpenAI::with_api_key(api_key)?;
         let result = analyze_sentiment(provider, "I love programming in Rust!").await?;
         println!("Sentiment: {}", result);
     }

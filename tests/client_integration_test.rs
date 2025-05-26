@@ -12,16 +12,16 @@ fn has_api_keys() -> bool {
 }
 
 #[tokio::test]
-async fn test_client_simple_chat_openai() {
+async fn test_client_simple_chat_openai() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping OpenAI client test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let client = Client::new(provider).with_model("gpt-4o-mini");
 
     let response = client.chat("Say 'Hello from Cogni client!'").await.unwrap();
@@ -29,16 +29,16 @@ async fn test_client_simple_chat_openai() {
 }
 
 #[tokio::test]
-async fn test_client_simple_chat_anthropic() {
+async fn test_client_simple_chat_anthropic() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("ANTHROPIC_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping Anthropic client test - ANTHROPIC_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = Anthropic::with_api_key(api_key);
+    let provider = Anthropic::with_api_key(api_key)?;
     let client = Client::new(provider).with_model("claude-3-haiku-20240307");
 
     let response = client.chat("Say 'Hello from Cogni client!'").await.unwrap();
@@ -46,16 +46,16 @@ async fn test_client_simple_chat_anthropic() {
 }
 
 #[tokio::test]
-async fn test_client_streaming_openai() {
+async fn test_client_streaming_openai() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping OpenAI streaming test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let client = Client::new(provider).with_model("gpt-4o-mini");
 
     let mut stream = client
@@ -77,16 +77,16 @@ async fn test_client_streaming_openai() {
 }
 
 #[tokio::test]
-async fn test_client_request_builder() {
+async fn test_client_request_builder() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping request builder test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let client = Client::new(provider);
 
     let response = client
@@ -106,16 +106,16 @@ async fn test_client_request_builder() {
 }
 
 #[tokio::test]
-async fn test_client_with_multiple_messages() {
+async fn test_client_with_multiple_messages() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping multiple messages test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let client = Client::new(provider).with_model("gpt-4o-mini");
 
     let messages = vec![
@@ -130,16 +130,16 @@ async fn test_client_with_multiple_messages() {
 }
 
 #[tokio::test]
-async fn test_client_with_tools() {
+async fn test_client_with_tools() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping tools test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let client = Client::new(provider);
 
     // Create a simple calculator tool
@@ -171,7 +171,7 @@ async fn test_client_with_tools() {
 }
 
 #[tokio::test]
-async fn test_standalone_request_builder() {
+async fn test_standalone_request_builder() -> Result<(), Box<dyn std::error::Error>> {
     let request = RequestBuilder::new()
         .system("You are a helpful assistant")
         .user("Hello")
@@ -189,9 +189,9 @@ async fn test_standalone_request_builder() {
 }
 
 #[tokio::test]
-async fn test_client_error_handling() {
+async fn test_client_error_handling() -> Result<(), Box<dyn std::error::Error>> {
     // Test with invalid API key
-    let provider = OpenAI::with_api_key("invalid-key");
+    let provider = OpenAI::with_api_key("invalid-key")?;
     let client = Client::new(provider);
 
     let result = client.chat("Hello").await;
@@ -201,13 +201,13 @@ async fn test_client_error_handling() {
 /// Example showing all client features
 #[tokio::test]
 #[ignore] // This is more of a demo than a test
-async fn demo_all_client_features() {
+async fn demo_all_client_features() -> Result<(), Box<dyn std::error::Error>> {
     if !has_api_keys() {
-        return;
+        return Ok(());
     }
 
     let api_key = env::var("OPENAI_API_KEY").unwrap();
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let client = Client::new(provider).with_model("gpt-4o-mini");
 
     // Simple chat

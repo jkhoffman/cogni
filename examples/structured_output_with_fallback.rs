@@ -105,7 +105,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 async fn try_structured_output(api_key: &str, model: &str) -> Result<Task, Box<dyn Error>> {
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let client = Client::new(provider);
 
     let task: Task = client
@@ -122,7 +122,7 @@ async fn try_structured_output(api_key: &str, model: &str) -> Result<Task, Box<d
 }
 
 async fn try_json_mode(api_key: &str, model: &str) -> Result<Task, Box<dyn Error>> {
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let client = Client::new(provider);
 
     let response = client
@@ -145,7 +145,7 @@ async fn try_json_mode(api_key: &str, model: &str) -> Result<Task, Box<dyn Error
 }
 
 async fn try_manual_parsing(api_key: &str, model: &str) -> Result<Task, Box<dyn Error>> {
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let client = Client::new(provider);
 
     let response = client

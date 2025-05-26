@@ -10,7 +10,7 @@ async fn main() -> Result<(), cogni::Error> {
         std::env::var("OPENAI_API_KEY").expect("Please set OPENAI_API_KEY environment variable");
 
     // Create provider
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
 
     // Create a simple request
     let request = Request::builder()

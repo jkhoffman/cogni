@@ -28,16 +28,16 @@ impl StructuredOutput for TestStructure {
 }
 
 #[tokio::test]
-async fn test_structured_output_with_openai() {
+async fn test_structured_output_with_openai() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match std::env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping OpenAI structured output test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let client = Client::new(provider);
 
     // Test with structured output
@@ -56,19 +56,21 @@ async fn test_structured_output_with_openai() {
     assert_eq!(result.name, "test");
     assert_eq!(result.value, 42);
     assert!(result.active);
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_json_mode_with_openai() {
+async fn test_json_mode_with_openai() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match std::env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping OpenAI JSON mode test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let client = Client::new(provider);
 
     // Test with JSON mode
@@ -84,10 +86,12 @@ async fn test_json_mode_with_openai() {
 
     let json_value = response.parse_json().expect("Should parse as JSON");
     assert_eq!(json_value["status"], "ok");
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_response_format_in_request() {
+async fn test_response_format_in_request() -> Result<(), Box<dyn std::error::Error>> {
     // Test that response_format is properly set in request
     let request = RequestBuilder::new()
         .user("test")
@@ -119,10 +123,12 @@ async fn test_response_format_in_request() {
         }
         _ => panic!("Expected JsonSchema response format"),
     }
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_parse_structured_response() {
+async fn test_parse_structured_response() -> Result<(), Box<dyn std::error::Error>> {
     // Test parsing a valid JSON response
     let response = Response {
         content: r#"{"name": "test", "value": 123, "active": false}"#.to_string(),
@@ -147,10 +153,12 @@ async fn test_parse_structured_response() {
 
     let result: Result<TestStructure, _> = response.parse_structured();
     assert!(result.is_err());
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_parse_json_response() {
+async fn test_parse_json_response() -> Result<(), Box<dyn std::error::Error>> {
     // Test parsing valid JSON
     let response = Response {
         content: r#"{"key": "value", "number": 42}"#.to_string(),
@@ -170,4 +178,6 @@ async fn test_parse_json_response() {
     };
 
     assert!(response.parse_json().is_err());
+
+    Ok(())
 }

@@ -109,7 +109,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
         println!("=== OpenAI Structured Output Example ===\n");
 
-        let provider = OpenAI::with_api_key(api_key);
+        let provider = OpenAI::with_api_key(api_key)?;
         let client = Client::new(provider);
 
         // Request weather information
@@ -138,7 +138,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
         println!("=== JSON Mode Example ===\n");
 
-        let provider = OpenAI::with_api_key(api_key);
+        let provider = OpenAI::with_api_key(api_key)?;
         let client = Client::new(provider);
 
         let response = client
@@ -162,7 +162,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
         println!("=== Data Extraction Example ===\n");
 
-        let provider = OpenAI::with_api_key(api_key);
+        let provider = OpenAI::with_api_key(api_key)?;
         let client = Client::new(provider);
 
         let text = "John Doe is a 35-year-old software engineer who specializes in \
@@ -191,7 +191,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     if let Ok(api_key) = std::env::var("ANTHROPIC_API_KEY") {
         println!("=== Anthropic Structured Output Example ===\n");
 
-        let provider = Anthropic::with_api_key(api_key);
+        let provider = Anthropic::with_api_key(api_key)?;
         let client = Client::new(provider);
 
         // Anthropic uses tool calling for structured output
@@ -217,7 +217,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Example 5: Using structured output with Ollama
     println!("=== Ollama Structured Output Example ===\n");
 
-    let provider = Ollama::local(); // Uses http://localhost:11434 by default
+    let provider = Ollama::local()?; // Uses http://localhost:11434 by default
     let client = Client::new(provider);
 
     // Test if Ollama is running

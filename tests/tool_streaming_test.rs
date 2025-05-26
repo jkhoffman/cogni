@@ -76,16 +76,16 @@ async fn create_streaming_registry() -> ToolRegistry {
 }
 
 #[tokio::test]
-async fn test_openai_streaming_with_tools() {
+async fn test_openai_streaming_with_tools() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping OpenAI streaming tool test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let tools = create_streaming_tools();
     let registry = create_streaming_registry().await;
 
@@ -154,19 +154,21 @@ async fn test_openai_streaming_with_tools() {
     } else if !tool_calls_started {
         println!("No tool calls were made during streaming");
     }
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_anthropic_streaming_with_tools() {
+async fn test_anthropic_streaming_with_tools() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("ANTHROPIC_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping Anthropic streaming tool test - ANTHROPIC_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = Anthropic::with_api_key(api_key);
+    let provider = Anthropic::with_api_key(api_key)?;
     let tools = create_streaming_tools();
     let registry = create_streaming_registry().await;
 
@@ -227,19 +229,21 @@ async fn test_anthropic_streaming_with_tools() {
         !content_chunks.is_empty() || !response.tool_calls.is_empty(),
         "Expected either content or tool calls"
     );
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_streaming_accumulation_with_tools() {
+async fn test_streaming_accumulation_with_tools() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping streaming accumulation test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
 
     // Create tools
     let tools = vec![Tool {
@@ -327,19 +331,21 @@ async fn test_streaming_accumulation_with_tools() {
             assert!(args.get("max").is_some());
         }
     }
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_interleaved_content_and_tools() {
+async fn test_interleaved_content_and_tools() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping interleaved test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let tools = create_streaming_tools();
 
     // Request that should produce both content and tool calls
@@ -376,4 +382,6 @@ async fn test_interleaved_content_and_tools() {
         content_events > 0 || tool_events > 0,
         "Expected either content or tool events"
     );
+
+    Ok(())
 }

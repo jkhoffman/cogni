@@ -90,7 +90,7 @@ async fn main() -> Result<(), Error> {
     let api_key =
         std::env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY environment variable must be set");
 
-    let provider = OpenAI::with_api_key(api_key.clone());
+    let provider = OpenAI::with_api_key(api_key.clone())?;
 
     // 2. Create client with state persistence
     let state_store = Arc::new(
@@ -219,7 +219,7 @@ async fn main() -> Result<(), Error> {
     println!("\n=== Loading and Continuing Conversation ===\n");
 
     // Create a new client and agent to demonstrate loading
-    let provider2 = OpenAI::with_api_key(api_key);
+    let provider2 = OpenAI::with_api_key(api_key)?;
     let client2 = Client::new(provider2);
     let mut agent2 = client2.with_state(state_store.clone());
     agent2.load_conversation(conversation_id).await?;

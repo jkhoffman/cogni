@@ -66,13 +66,18 @@ impl Anthropic {
     }
 
     /// Create a new Anthropic provider with just an API key
-    pub fn with_api_key(api_key: impl Into<String>) -> Self {
+    pub fn with_api_key(api_key: impl Into<String>) -> Result<Self, Error> {
         let config = AnthropicConfig {
             api_key: api_key.into(),
             ..Default::default()
         };
-        let client = Arc::new(ReqwestClient::new().expect("Failed to create HTTP client"));
-        Self::new(config, client)
+        let client = Arc::new(ReqwestClient::new().map_err(|e| Error::Provider {
+            provider: "Anthropic".to_string(),
+            message: format!("Failed to create HTTP client: {}", e),
+            retry_after: None,
+            source: Some(Box::new(e)),
+        })?);
+        Ok(Self::new(config, client))
     }
 
     /// Create Anthropic-specific headers

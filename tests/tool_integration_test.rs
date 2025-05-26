@@ -144,16 +144,16 @@ async fn create_test_registry() -> ToolRegistry {
 }
 
 #[tokio::test]
-async fn test_openai_tool_execution() {
+async fn test_openai_tool_execution() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping OpenAI tool test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let tools = create_test_tools();
     let registry = create_test_registry().await;
 
@@ -194,19 +194,21 @@ async fn test_openai_tool_execution() {
         let result_json: serde_json::Value = serde_json::from_str(&result.content).unwrap();
         assert_eq!(result_json["result"], 100.0);
     }
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_anthropic_tool_execution() {
+async fn test_anthropic_tool_execution() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("ANTHROPIC_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping Anthropic tool test - ANTHROPIC_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = Anthropic::with_api_key(api_key);
+    let provider = Anthropic::with_api_key(api_key)?;
     let tools = create_test_tools();
     let registry = create_test_registry().await;
 
@@ -247,10 +249,12 @@ async fn test_anthropic_tool_execution() {
         let result_json: serde_json::Value = serde_json::from_str(&result.content).unwrap();
         assert_eq!(result_json["result"], 42.0);
     }
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_ollama_tool_execution() {
+async fn test_ollama_tool_execution() -> Result<(), Box<dyn std::error::Error>> {
     // Check if Ollama is running
     let client = reqwest::Client::new();
     if client
@@ -260,10 +264,10 @@ async fn test_ollama_tool_execution() {
         .is_err()
     {
         eprintln!("Skipping Ollama tool test - Ollama not running");
-        return;
+        return Ok(());
     }
 
-    let provider = Ollama::local();
+    let provider = Ollama::local()?;
     let tools = create_test_tools();
     let registry = create_test_registry().await;
 
@@ -302,19 +306,21 @@ async fn test_ollama_tool_execution() {
             eprintln!("Ollama request failed: {}", e);
         }
     }
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_multiple_tool_calls() {
+async fn test_multiple_tool_calls() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
             eprintln!("Skipping multiple tool test - OPENAI_API_KEY not set");
-            return;
+            return Ok(());
         }
     };
 
-    let provider = OpenAI::with_api_key(api_key);
+    let provider = OpenAI::with_api_key(api_key)?;
     let tools = create_test_tools();
     let registry = create_test_registry().await;
 
@@ -356,10 +362,12 @@ async fn test_multiple_tool_calls() {
             Err(e) => panic!("Tool execution failed: {}", e),
         }
     }
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_tool_error_handling() {
+async fn test_tool_error_handling() -> Result<(), Box<dyn std::error::Error>> {
     let registry = ToolRegistry::new();
 
     // Register a tool that always fails
@@ -391,10 +399,12 @@ async fn test_tool_error_handling() {
     // The result should indicate failure
     assert!(!result.success);
     assert!(result.content.contains("This tool always fails"));
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_tool_validation() {
+async fn test_tool_validation() -> Result<(), Box<dyn std::error::Error>> {
     let registry = ToolRegistry::new();
 
     // Register calculator with strict validation
@@ -418,4 +428,6 @@ async fn test_tool_validation() {
     // Should handle invalid operation gracefully
     let result_json: serde_json::Value = serde_json::from_str(&result.content).unwrap();
     assert!(result_json.get("error").is_some() || result_json.get("result").is_some());
+
+    Ok(())
 }
