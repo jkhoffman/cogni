@@ -59,7 +59,7 @@ async fn create_streaming_registry() -> ToolRegistry {
             let text = args["text"].as_str().unwrap_or("");
             let words: Vec<&str> = text.split_whitespace().collect();
             let chars = text.len();
-            let sentences = text.matches(|c| c == '.' || c == '!' || c == '?').count();
+            let sentences = text.matches(['.', '!', '?']).count();
 
             Ok(json!({
                 "word_count": words.len(),

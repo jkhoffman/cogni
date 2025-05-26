@@ -11,6 +11,7 @@ use reqwest_eventsource::EventSource;
 use std::sync::Arc;
 
 /// OpenAI provider
+#[derive(Clone)]
 pub struct OpenAI {
     client: Arc<dyn HttpClient>,
     config: OpenAIConfig,

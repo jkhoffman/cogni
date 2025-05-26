@@ -1,6 +1,7 @@
 //! High-level client implementation
 
 use crate::{RequestBuilder, StatefulClient};
+use cogni_context::ContextManager;
 use cogni_core::{
     Content, Error, Message, Metadata, Model, Parameters, Provider, Request, Response, Role,
     StreamEvent,
@@ -20,9 +21,10 @@ use std::sync::Arc;
 /// ```no_run
 /// use cogni_client::Client;
 /// use cogni_providers::OpenAI;
+/// use futures::StreamExt;
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// let provider = OpenAI::new("your-api-key");
+/// let provider = OpenAI::with_api_key("your-api-key".to_string());
 /// let client = Client::new(provider);
 ///
 /// // Simple chat
@@ -75,7 +77,7 @@ impl<P: Provider> Client<P> {
     /// # use cogni_state::MemoryStore;
     /// # use std::sync::Arc;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let provider = OpenAI::new("key");
+    /// # let provider = OpenAI::with_api_key("key".to_string());
     /// let client = Client::new(provider);
     /// let store = Arc::new(MemoryStore::new());
     /// let mut stateful = client.with_state(store);
@@ -141,7 +143,7 @@ impl<P: Provider> Client<P> {
     /// # use cogni_providers::OpenAI;
     /// # use cogni_core::Role;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let provider = OpenAI::new("key");
+    /// # let provider = OpenAI::with_api_key("key".to_string());
     /// # let client = Client::new(provider);
     /// let response = client
     ///     .request()
@@ -160,6 +162,7 @@ impl<P: Provider> Client<P> {
             builder: RequestBuilder::new()
                 .model(self.default_model.clone())
                 .parameters(self.default_parameters.clone()),
+            context_manager: None,
         }
     }
 
@@ -221,6 +224,7 @@ impl MessageInput {
 pub struct ConnectedRequestBuilder<'a, P: Provider> {
     client: &'a Client<P>,
     builder: RequestBuilder,
+    context_manager: Option<Arc<ContextManager>>,
 }
 
 impl<P: Provider> ConnectedRequestBuilder<'_, P> {
@@ -278,6 +282,35 @@ impl<P: Provider> ConnectedRequestBuilder<'_, P> {
         self
     }
 
+    /// Set a context manager for automatic message pruning
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use cogni_client::Client;
+    /// # use cogni_providers::OpenAI;
+    /// # use cogni_context::{ContextManager, TiktokenCounter};
+    /// # use std::sync::Arc;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let provider = OpenAI::with_api_key("key".to_string());
+    /// # let client = Client::new(provider);
+    /// let counter = Arc::new(TiktokenCounter::for_model("gpt-4")?);
+    /// let context_manager = Arc::new(ContextManager::new(counter));
+    ///
+    /// let response = client
+    ///     .request()
+    ///     .with_context_manager(context_manager)
+    ///     .user("Long conversation...")
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn with_context_manager(mut self, manager: Arc<ContextManager>) -> Self {
+        self.context_manager = Some(manager);
+        self
+    }
+
     /// Build the request
     pub fn build(self) -> Request {
         self.builder.build()
@@ -285,13 +318,31 @@ impl<P: Provider> ConnectedRequestBuilder<'_, P> {
 
     /// Send the request
     pub async fn send(self) -> Result<Response, Error> {
-        let request = self.builder.build();
+        let mut request = self.builder.build();
+
+        // Apply context management if configured
+        if let Some(manager) = &self.context_manager {
+            request.messages = manager
+                .fit_messages(request.messages)
+                .await
+                .map_err(|e| Error::Validation(format!("Context pruning failed: {}", e)))?;
+        }
+
         self.client.execute(request).await
     }
 
     /// Send the request and get a stream
     pub async fn stream(self) -> Result<P::Stream, Error> {
-        let request = self.builder.build();
+        let mut request = self.builder.build();
+
+        // Apply context management if configured
+        if let Some(manager) = &self.context_manager {
+            request.messages = manager
+                .fit_messages(request.messages)
+                .await
+                .map_err(|e| Error::Validation(format!("Context pruning failed: {}", e)))?;
+        }
+
         self.client.execute_stream(request).await
     }
 }

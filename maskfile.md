@@ -23,7 +23,7 @@ cargo test --all-features -- --nocapture
 > Run clippy linter
 
 ```bash
-cargo clippy --all-features -- -D warnings
+cargo clippy --all-targets --all-features -- -D warnings
 ```
 
 ## fmt
@@ -107,7 +107,7 @@ set -e
 echo "Checking formatting..."
 cargo fmt --all -- --check
 echo "Running clippy..."
-cargo clippy --all-features -- -D warnings
+cargo clippy --all-targets --all-features -- -D warnings
 echo "Running tests..."
 cargo test --all-features
 echo "All checks passed!"
@@ -148,7 +148,7 @@ cargo watch -x "test --all-features"
 > Start development mode (watch and run tests)
 
 ```bash
-cargo watch -x "test --all-features" -x "clippy --all-features -- -D warnings"
+mprocs "bacon clippy-all" "bacon test"
 ```
 
 ## todo

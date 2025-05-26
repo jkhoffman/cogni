@@ -11,6 +11,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 /// Parses OpenAI responses
+#[derive(Clone, Copy)]
 pub struct OpenAIParser;
 
 #[async_trait]

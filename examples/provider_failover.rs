@@ -97,21 +97,19 @@ async fn main() -> Result<(), Error> {
                     Err(e) => println!("Error: {}\n", e),
                 }
             }
-        } else {
-            if let Some(ref key) = anthropic_key {
-                println!("Request {} -> Anthropic", i + 1);
-                let anthropic = Anthropic::with_api_key(key.clone());
-                match anthropic.request(req).await {
-                    Ok(response) => println!("Response: {}\n", response.content.trim()),
-                    Err(e) => println!("Error: {}\n", e),
-                }
-            } else if let Some(ref key) = openai_key {
-                println!("Request {} -> OpenAI", i + 1);
-                let openai = OpenAI::with_api_key(key.clone());
-                match openai.request(req).await {
-                    Ok(response) => println!("Response: {}\n", response.content.trim()),
-                    Err(e) => println!("Error: {}\n", e),
-                }
+        } else if let Some(ref key) = anthropic_key {
+            println!("Request {} -> Anthropic", i + 1);
+            let anthropic = Anthropic::with_api_key(key.clone());
+            match anthropic.request(req).await {
+                Ok(response) => println!("Response: {}\n", response.content.trim()),
+                Err(e) => println!("Error: {}\n", e),
+            }
+        } else if let Some(ref key) = openai_key {
+            println!("Request {} -> OpenAI", i + 1);
+            let openai = OpenAI::with_api_key(key.clone());
+            match openai.request(req).await {
+                Ok(response) => println!("Response: {}\n", response.content.trim()),
+                Err(e) => println!("Error: {}\n", e),
             }
         }
     }

@@ -14,14 +14,15 @@ use std::sync::Arc;
 /// # Examples
 ///
 /// ```no_run
-/// use cogni_client::parallel::parallel_requests;
-/// use cogni_providers::{OpenAI, Anthropic};
+/// use cogni_client::parallel_requests;
+/// use cogni_providers::OpenAI;
 /// use cogni_core::{Request, Message};
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// // Note: All providers must be the same type
 /// let providers = vec![
-///     OpenAI::new("key1"),
-///     Anthropic::new("key2"),
+///     OpenAI::with_api_key("key1".to_string()),
+///     OpenAI::with_api_key("key2".to_string()),
 /// ];
 ///
 /// let request = Request::builder()
@@ -73,13 +74,14 @@ where
 /// # Examples
 ///
 /// ```no_run
-/// use cogni_client::parallel::parallel_chat;
-/// use cogni_providers::{OpenAI, Anthropic};
+/// use cogni_client::parallel_chat;
+/// use cogni_providers::OpenAI;
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// // Note: All providers must be the same type
 /// let providers = vec![
-///     OpenAI::new("key1"),
-///     Anthropic::new("key2"),
+///     OpenAI::with_api_key("key1".to_string()),
+///     OpenAI::with_api_key("key2".to_string()),
 /// ];
 ///
 /// let results = parallel_chat(providers, "What is the capital of France?").await;
@@ -124,21 +126,26 @@ where
 /// # Examples
 ///
 /// ```no_run
-/// use cogni_client::parallel::{ParallelClient, ExecutionStrategy};
-/// use cogni_providers::{OpenAI, Anthropic, Ollama};
+/// use cogni_client::{ParallelClient, ExecutionStrategy};
+/// use cogni_providers::OpenAI;
+/// use cogni_core::{Request, Message};
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// // Note: All providers must be the same type for ParallelClient
 /// let providers = vec![
-///     OpenAI::new("key1"),
-///     Anthropic::new("key2"),
-///     Ollama::default(),
+///     OpenAI::with_api_key("key1".to_string()),
+///     OpenAI::with_api_key("key2".to_string()),
+///     OpenAI::with_api_key("key3".to_string()),
 /// ];
 ///
-/// // Get the first successful response
 /// let client = ParallelClient::new(providers)
 ///     .with_strategy(ExecutionStrategy::FirstSuccess);
 ///
-/// let response = client.chat("Hello").await?;
+/// let request = Request::builder()
+///     .message(Message::user("Hello"))
+///     .build();
+///
+/// let response = client.request(request).await?;
 /// # Ok(())
 /// # }
 /// ```
@@ -298,12 +305,12 @@ impl<P: Provider + Clone> ParallelClient<P> {
 /// # Example
 ///
 /// ```no_run
-/// # use cogni_client::parallel::{ParallelClient, ExecutionStrategy};
-/// # use cogni_providers::openai::OpenAI;
+/// # use cogni_client::{ParallelClient, ExecutionStrategy};
+/// # use cogni_providers::OpenAI;
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let providers = vec![
-///     OpenAI::with_api_key("key1"),
-///     OpenAI::with_api_key("key2"),
+///     OpenAI::with_api_key("key1".to_string()),
+///     OpenAI::with_api_key("key2".to_string()),
 /// ];
 ///
 /// let client = ParallelClient::new(providers)

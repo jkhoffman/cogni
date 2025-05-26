@@ -6,6 +6,7 @@ use cogni_core::{Content, Error, Message, Request, Role};
 use serde_json::{json, Value};
 
 /// Converts generic requests to OpenAI format
+#[derive(Clone, Copy)]
 pub struct OpenAIConverter;
 
 #[async_trait]
