@@ -321,14 +321,17 @@ impl ProviderBuilder for OllamaBuilder {
     }
 
     fn build(self) -> Result<Self::Provider, Error> {
+        use crate::constants::{OLLAMA_DEFAULT_BASE_URL, OLLAMA_DEFAULT_MODEL};
         use crate::http::ReqwestClient;
         use crate::ollama::OllamaConfig;
 
         let config = OllamaConfig {
             base_url: self
                 .base_url
-                .unwrap_or_else(|| "http://localhost:11434".to_string()),
-            default_model: self.default_model.unwrap_or_else(|| "llama2".to_string()),
+                .unwrap_or_else(|| OLLAMA_DEFAULT_BASE_URL.to_string()),
+            default_model: self
+                .default_model
+                .unwrap_or_else(|| OLLAMA_DEFAULT_MODEL.to_string()),
         };
 
         let client = match self.client {

@@ -3,6 +3,8 @@
 #![warn(missing_docs)]
 
 pub mod builder;
+pub mod config_builder;
+pub mod constants;
 pub mod error;
 pub mod http;
 pub mod traits;

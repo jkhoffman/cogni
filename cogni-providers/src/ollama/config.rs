@@ -1,5 +1,7 @@
 //! Ollama provider configuration
 
+use crate::constants::{OLLAMA_DEFAULT_BASE_URL, OLLAMA_DEFAULT_MODEL};
+
 /// Configuration for the Ollama provider
 #[derive(Debug, Clone)]
 pub struct OllamaConfig {
@@ -12,8 +14,15 @@ pub struct OllamaConfig {
 impl Default for OllamaConfig {
     fn default() -> Self {
         Self {
-            base_url: "http://localhost:11434".to_string(),
-            default_model: "llama3.2".to_string(),
+            base_url: OLLAMA_DEFAULT_BASE_URL.to_string(),
+            default_model: OLLAMA_DEFAULT_MODEL.to_string(),
         }
+    }
+}
+
+impl OllamaConfig {
+    /// Create a new configuration builder
+    pub fn builder() -> crate::config_builder::OllamaConfigBuilder {
+        crate::config_builder::OllamaConfigBuilder::new()
     }
 }

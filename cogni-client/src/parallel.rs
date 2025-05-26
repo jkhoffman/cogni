@@ -257,18 +257,17 @@ impl<P: Provider + Clone> ParallelClient<P> {
         let successful_responses: Vec<Response> =
             results.into_iter().filter_map(|r| r.ok()).collect();
 
-        if successful_responses.is_empty() {
-            return Err(Error::Provider {
+        // For simplicity, just return the first response
+        // In a real implementation, you'd compare responses for similarity
+        successful_responses
+            .into_iter()
+            .next()
+            .ok_or_else(|| Error::Provider {
                 provider: "parallel".to_string(),
                 message: "All providers failed".to_string(),
                 retry_after: None,
                 source: None,
-            });
-        }
-
-        // For simplicity, just return the first response
-        // In a real implementation, you'd compare responses for similarity
-        Ok(successful_responses.into_iter().next().unwrap())
+            })
     }
 
     /// Race providers and return the fastest response

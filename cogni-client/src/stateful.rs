@@ -104,7 +104,10 @@ impl<P: Provider> StatefulClient<P> {
             self.new_conversation().await?;
         }
 
-        let state = self.current_state.as_mut().unwrap();
+        let state = self
+            .current_state
+            .as_mut()
+            .expect("current_state should exist after new_conversation");
 
         // Add user message to state
         let user_message = Message::user(message);
@@ -151,7 +154,10 @@ impl<P: Provider> StatefulClient<P> {
             self.new_conversation().await?;
         }
 
-        let state = self.current_state.as_mut().unwrap();
+        let state = self
+            .current_state
+            .as_mut()
+            .expect("current_state should exist after new_conversation");
 
         // Add user message to state
         let user_message = Message::user(message);

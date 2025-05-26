@@ -1,5 +1,6 @@
 //! Conversion between Cogni types and Anthropic API types
 
+use crate::constants::DEFAULT_MAX_TOKENS;
 use crate::traits::RequestConverter;
 use async_trait::async_trait;
 use cogni_core::{Content, Error, Message, Request, ResponseFormat, Role, Tool, ToolCall};
@@ -145,7 +146,7 @@ pub fn to_anthropic_request(request: &Request) -> AnthropicRequest {
     AnthropicRequest {
         model: request.model.to_string(),
         messages,
-        max_tokens: request.parameters.max_tokens.unwrap_or(4096),
+        max_tokens: request.parameters.max_tokens.unwrap_or(DEFAULT_MAX_TOKENS),
         temperature: request.parameters.temperature,
         stream: None, // Will be set by the provider
         tools,
