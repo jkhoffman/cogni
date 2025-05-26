@@ -1,6 +1,6 @@
 //! Anthropic Claude provider implementation
 
-pub mod config;
+mod config;
 pub(crate) mod converter;
 pub(crate) mod parser;
 mod provider;

@@ -1,4 +1,8 @@
 //! OpenAI provider implementation
+//!
+//! This module provides integration with OpenAI's API, supporting both
+//! chat completions and streaming responses. It implements the core `Provider`
+//! trait and uses the standardized request/response conversion pipeline.
 
 use crate::http::{create_headers, HttpClient, ReqwestClient};
 use crate::openai::{
@@ -7,10 +11,35 @@ use crate::openai::{
 use crate::traits::{RequestConverter, ResponseParser};
 use async_trait::async_trait;
 use cogni_core::{Error, Provider, Request, Response};
-use reqwest_eventsource::EventSource;
 use std::sync::Arc;
 
-/// OpenAI provider
+/// OpenAI provider for chat completions
+///
+/// This provider supports:
+/// - GPT-4 and GPT-3.5 models
+/// - Function/tool calling
+/// - Structured output with JSON mode
+/// - Streaming responses
+/// - Custom Azure OpenAI deployments
+///
+/// # Example
+///
+/// ```no_run
+/// use cogni_providers::OpenAI;
+///
+/// // Create with API key
+/// let provider = OpenAI::with_api_key("your-api-key");
+///
+/// // Or with custom configuration and client
+/// use cogni_providers::openai::OpenAIConfig;
+/// use cogni_providers::http::{HttpClient, ReqwestClient};
+/// use std::sync::Arc;
+///
+/// let config = OpenAIConfig::new("your-api-key")
+///     .with_organization("org-id");
+/// let client = Arc::new(ReqwestClient::new().expect("Failed to create client"));
+/// let provider = OpenAI::new(config, client);
+/// ```
 #[derive(Clone)]
 pub struct OpenAI {
     client: Arc<dyn HttpClient>,
@@ -20,9 +49,8 @@ pub struct OpenAI {
 }
 
 impl OpenAI {
-    /// Create a new OpenAI provider with the given configuration
-    pub fn new(config: OpenAIConfig) -> Self {
-        let client = Arc::new(ReqwestClient::new().expect("Failed to create HTTP client"));
+    /// Create a new OpenAI provider with the given configuration and client
+    pub fn new(config: OpenAIConfig, client: Arc<dyn HttpClient>) -> Self {
         Self {
             client,
             config,
@@ -33,17 +61,8 @@ impl OpenAI {
 
     /// Create a new OpenAI provider with just an API key
     pub fn with_api_key(api_key: impl Into<String>) -> Self {
-        Self::new(OpenAIConfig::new(api_key))
-    }
-
-    /// Create with a custom HTTP client
-    pub fn with_client(config: OpenAIConfig, client: Arc<dyn HttpClient>) -> Self {
-        Self {
-            client,
-            config,
-            converter: OpenAIConverter,
-            parser: OpenAIParser,
-        }
+        let client = Arc::new(ReqwestClient::new().expect("Failed to create HTTP client"));
+        Self::new(OpenAIConfig::new(api_key), client)
     }
 }
 
@@ -69,21 +88,9 @@ impl Provider for OpenAI {
         body["stream"] = serde_json::json!(true);
 
         let headers = create_headers(&self.config.api_key, None)?;
+        let url = self.config.chat_url();
 
-        // Create a reqwest request
-        let client = reqwest::Client::new();
-        let mut req = client.post(self.config.chat_url());
-
-        // Add headers
-        for (key, value) in headers.iter() {
-            req = req.header(key, value);
-        }
-
-        // Create EventSource
-        let event_source = EventSource::new(req.json(&body)).map_err(|e| Error::Network {
-            message: format!("Failed to create event source: {}", e),
-            source: None,
-        })?;
+        let event_source = self.client.post_event_stream(&url, headers, body).await?;
 
         Ok(OpenAIStream::new(event_source))
     }

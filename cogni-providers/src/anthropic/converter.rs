@@ -1,6 +1,8 @@
 //! Conversion between Cogni types and Anthropic API types
 
-use cogni_core::{Content, Request, ResponseFormat, Role, ToolCall};
+use crate::traits::RequestConverter;
+use async_trait::async_trait;
+use cogni_core::{Content, Error, Request, ResponseFormat, Role, ToolCall};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -299,4 +301,19 @@ pub fn extract_tool_calls(response: &AnthropicResponse) -> Vec<ToolCall> {
             _ => None,
         })
         .collect()
+}
+
+/// Converter implementation for Anthropic
+#[derive(Clone, Copy)]
+pub struct AnthropicConverter;
+
+#[async_trait]
+impl RequestConverter for AnthropicConverter {
+    async fn convert_request(&self, request: Request) -> Result<Value, Error> {
+        let anthropic_request = to_anthropic_request(&request);
+        serde_json::to_value(anthropic_request).map_err(|e| Error::Serialization {
+            message: e.to_string(),
+            source: None,
+        })
+    }
 }

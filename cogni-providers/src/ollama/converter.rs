@@ -1,6 +1,8 @@
 //! Conversion between Cogni types and Ollama API types
 
-use cogni_core::{Content, Request, ResponseFormat, Role, ToolCall};
+use crate::traits::RequestConverter;
+use async_trait::async_trait;
+use cogni_core::{Content, Error, Request, ResponseFormat, Role, ToolCall};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -216,4 +218,19 @@ pub fn extract_tool_calls(message: &OllamaMessage) -> Vec<ToolCall> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+/// Converter implementation for Ollama
+#[derive(Clone, Copy)]
+pub struct OllamaConverter;
+
+#[async_trait]
+impl RequestConverter for OllamaConverter {
+    async fn convert_request(&self, request: Request) -> Result<Value, Error> {
+        let ollama_request = to_ollama_request(&request);
+        serde_json::to_value(ollama_request).map_err(|e| Error::Serialization {
+            message: e.to_string(),
+            source: None,
+        })
+    }
 }

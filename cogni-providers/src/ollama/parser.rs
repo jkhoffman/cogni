@@ -1,7 +1,10 @@
 //! Ollama response parsing
 
 use crate::ollama::converter::{extract_text_content, extract_tool_calls, OllamaResponse};
+use crate::traits::ResponseParser;
+use async_trait::async_trait;
 use cogni_core::{Error, FinishReason, Response, ResponseMetadata, Usage};
+use serde_json::Value;
 
 pub fn parse_response(response: OllamaResponse) -> Result<Response, Error> {
     let content = extract_text_content(&response.message);
@@ -56,4 +59,20 @@ pub fn parse_response(response: OllamaResponse) -> Result<Response, Error> {
         tool_calls,
         metadata,
     })
+}
+
+/// Parser implementation for Ollama
+#[derive(Clone, Copy)]
+pub struct OllamaParser;
+
+#[async_trait]
+impl ResponseParser for OllamaParser {
+    async fn parse_response(&self, value: Value) -> Result<Response, Error> {
+        let ollama_response: OllamaResponse =
+            serde_json::from_value(value).map_err(|e| Error::Serialization {
+                message: e.to_string(),
+                source: None,
+            })?;
+        parse_response(ollama_response)
+    }
 }

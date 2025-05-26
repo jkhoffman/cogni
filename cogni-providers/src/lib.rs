@@ -2,8 +2,10 @@
 
 #![warn(missing_docs)]
 
+pub mod builder;
 pub mod error;
 pub mod http;
+pub mod stream_utils;
 pub mod traits;
 pub mod utils;
 

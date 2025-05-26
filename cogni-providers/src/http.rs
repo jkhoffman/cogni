@@ -5,6 +5,7 @@ use bytes::Bytes;
 use cogni_core::Error;
 use futures::Stream;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
+use reqwest_eventsource::EventSource;
 use serde_json::Value;
 use std::pin::Pin;
 
@@ -17,13 +18,21 @@ pub trait HttpClient: Send + Sync {
     /// Send a POST request
     async fn post(&self, url: &str, headers: HeaderMap, body: Value) -> Result<Value, Error>;
 
-    /// Send a streaming POST request
-    async fn post_stream(
+    /// Send a streaming POST request and get the raw response
+    async fn post_raw(
         &self,
         url: &str,
         headers: HeaderMap,
         body: Value,
-    ) -> Result<ResponseStream, Error>;
+    ) -> Result<reqwest::Response, Error>;
+
+    /// Send an SSE (Server-Sent Events) POST request
+    async fn post_event_stream(
+        &self,
+        url: &str,
+        headers: HeaderMap,
+        body: Value,
+    ) -> Result<EventSource, Error>;
 }
 
 /// Default HTTP client implementation using reqwest
@@ -67,12 +76,12 @@ impl HttpClient for ReqwestClient {
         response.json().await.map_err(error::network_error)
     }
 
-    async fn post_stream(
+    async fn post_raw(
         &self,
         url: &str,
         headers: HeaderMap,
         body: Value,
-    ) -> Result<ResponseStream, Error> {
+    ) -> Result<reqwest::Response, Error> {
         let response = self
             .client
             .post(url)
@@ -91,7 +100,34 @@ impl HttpClient for ReqwestClient {
             });
         }
 
-        Ok(Box::pin(response.bytes_stream()))
+        Ok(response)
+    }
+
+    async fn post_event_stream(
+        &self,
+        url: &str,
+        headers: HeaderMap,
+        body: Value,
+    ) -> Result<EventSource, Error> {
+        use reqwest_eventsource::RequestBuilderExt;
+
+        let mut request = self.client.post(url);
+
+        // Add headers
+        for (key, value) in headers.iter() {
+            request = request.header(key, value);
+        }
+
+        // Create EventSource
+        let event_source = request
+            .json(&body)
+            .eventsource()
+            .map_err(|e| Error::Network {
+                message: format!("Failed to create event source: {}", e),
+                source: None,
+            })?;
+
+        Ok(event_source)
     }
 }
 

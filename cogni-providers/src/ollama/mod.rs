@@ -7,4 +7,4 @@ mod provider;
 mod stream;
 
 pub use config::OllamaConfig;
-pub use provider::Ollama;
+pub use provider::{Ollama, OllamaBuilder};

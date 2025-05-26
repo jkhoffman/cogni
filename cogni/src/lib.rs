@@ -17,16 +17,14 @@
 //! ```no_run
 //! # use cogni::prelude::*;
 //! # #[cfg(feature = "providers")]
-//! # use cogni::providers::{OpenAI, openai::OpenAIConfig};
+//! # use cogni::providers::OpenAI;
 //! #
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), cogni::Error> {
 //! #     #[cfg(feature = "providers")]
 //! #     {
 //!     // Create a provider
-//!     let provider = OpenAI::new(
-//!         OpenAIConfig::new("your-api-key")
-//!     );
+//!     let provider = OpenAI::with_api_key("your-api-key");
 //!
 //!     // Create a request
 //!     let request = Request::builder()

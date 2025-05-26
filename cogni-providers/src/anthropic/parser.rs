@@ -1,7 +1,10 @@
 //! Anthropic response parsing
 
 use crate::anthropic::converter::{extract_text_content, extract_tool_calls, AnthropicResponse};
+use crate::traits::ResponseParser;
+use async_trait::async_trait;
 use cogni_core::{Error, FinishReason, Response, ResponseMetadata, Usage};
+use serde_json::Value;
 
 pub fn parse_response(response: AnthropicResponse) -> Result<Response, Error> {
     let mut content = extract_text_content(&response);
@@ -51,5 +54,21 @@ pub fn parse_usage(usage: &crate::anthropic::converter::AnthropicUsage) -> Usage
         prompt_tokens: usage.input_tokens,
         completion_tokens: usage.output_tokens,
         total_tokens: usage.input_tokens + usage.output_tokens,
+    }
+}
+
+/// Parser implementation for Anthropic
+#[derive(Clone, Copy)]
+pub struct AnthropicParser;
+
+#[async_trait]
+impl ResponseParser for AnthropicParser {
+    async fn parse_response(&self, value: Value) -> Result<Response, Error> {
+        let anthropic_response: AnthropicResponse =
+            serde_json::from_value(value).map_err(|e| Error::Serialization {
+                message: e.to_string(),
+                source: None,
+            })?;
+        parse_response(anthropic_response)
     }
 }
