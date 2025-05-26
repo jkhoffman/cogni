@@ -23,7 +23,7 @@ impl ToolRegistry {
 
     /// Create a registry from a collection of executors
     pub async fn from_executors(
-        executors: impl IntoIterator<Item = Box<dyn ToolExecutor>>,
+        executors: impl IntoIterator<Item = impl ToolExecutor + 'static>,
     ) -> Result<Self> {
         let registry = Self::new();
         registry.register(executors).await?;
@@ -90,12 +90,6 @@ impl ToolRegistry {
     pub async fn remove(&self, name: &str) -> Option<Arc<dyn ToolExecutor>> {
         let mut tools = self.tools.write().await;
         tools.remove(name)
-    }
-
-    /// Clear all tools
-    pub async fn clear(&self) {
-        let mut tools = self.tools.write().await;
-        tools.clear();
     }
 
     /// Check if a tool exists
