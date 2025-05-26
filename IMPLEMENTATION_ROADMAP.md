@@ -106,7 +106,7 @@ pub struct StateLayer {
 
 impl<S> Layer<S> for StateLayer {
     type Service = StateService<S>;
-    
+
     fn layer(&self, inner: S) -> Self::Service {
         StateService {
             inner,
@@ -168,7 +168,7 @@ impl ContextManager {
         if total_tokens <= self.available_tokens() {
             return Ok(messages);
         }
-        
+
         self.pruning_strategy.prune(messages, self.available_tokens(), &*self.counter)
     }
 }
@@ -251,7 +251,7 @@ pub enum ResponseFormat {
 impl RequestConverter for OpenAIConverter {
     fn convert_request(&self, request: Request) -> Result<OpenAIRequest, Error> {
         let mut openai_req = // ... existing conversion
-        
+
         if let Some(format) = request.response_format {
             openai_req.response_format = Some(match format {
                 ResponseFormat::JsonSchema { schema, strict } => {
@@ -278,14 +278,14 @@ impl Response {
     pub fn parse_structured<T: StructuredOutput>(&self) -> Result<T, Error> {
         let json_str = self.content.as_text()
             .ok_or(Error::InvalidFormat("Expected text content"))?;
-        
+
         let value: T = serde_json::from_str(json_str)?;
-        
+
         // Optional: validate against schema
         if let Err(e) = validate_against_schema(&value, &T::schema()) {
             return Err(Error::ValidationError(e));
         }
-        
+
         Ok(value)
     }
 }
@@ -311,7 +311,7 @@ impl Client {
             .with_structured_output::<T>()
             .send()
             .await?;
-            
+
         response.parse_structured()
     }
 }
@@ -343,7 +343,10 @@ pub struct StructuredRetryLayer {
   - Mock provider tests for deterministic behavior
   - Real provider integration test with OpenAI
   - Tests for all feature combinations
-- ⏳ Performance benchmarks for token counting and state operations
+- ✅ Performance benchmarks for token counting and state operations
+  - Created `benches/context_bench.rs` for token counting benchmarks
+  - Created `benches/state_bench.rs` for state persistence benchmarks
+  - Benchmarks cover various scenarios and message sizes
 - ⏳ Additional example agents demonstrating real-world usage
 
 ### D.3: Documentation (PENDING)

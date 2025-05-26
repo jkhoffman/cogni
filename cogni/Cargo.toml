@@ -104,3 +104,15 @@ harness = false
 name = "client_bench"
 path = "../benches/client_bench.rs"
 harness = false
+
+[[bench]]
+name = "context_bench"
+path = "../benches/context_bench.rs"
+harness = false
+required-features = ["context"]
+
+[[bench]]
+name = "state_bench"
+path = "../benches/state_bench.rs"
+harness = false
+required-features = ["state"]
