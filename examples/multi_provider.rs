@@ -38,16 +38,38 @@ async fn main() -> Result<(), Error> {
         Err(e) => println!("Error: {}\n", e),
     }
 
-    // Test Anthropic
+    // Test Anthropic (with Claude model)
     println!("Anthropic Response:");
-    match anthropic.request(request.clone()).await {
+    let anthropic_request = Request::builder()
+        .message(Message::system(
+            "You are a helpful assistant. Keep your responses brief.",
+        ))
+        .message(Message::user(
+            "What is the capital of France? Answer in one word.",
+        ))
+        .model("claude-3-haiku-20240307")
+        .max_tokens(100)
+        .temperature(0.7)
+        .build();
+    match anthropic.request(anthropic_request).await {
         Ok(response) => println!("{}\n", response.content),
         Err(e) => println!("Error: {}\n", e),
     }
 
     // Test Ollama (if running)
     println!("Ollama Response:");
-    match ollama.request(request.clone()).await {
+    let ollama_request = Request::builder()
+        .message(Message::system(
+            "You are a helpful assistant. Keep your responses brief.",
+        ))
+        .message(Message::user(
+            "What is the capital of France? Answer in one word.",
+        ))
+        .model("llama2")
+        .max_tokens(100)
+        .temperature(0.7)
+        .build();
+    match ollama.request(ollama_request).await {
         Ok(response) => println!("{}\n", response.content),
         Err(e) => println!("Error: {} (Is Ollama running locally?)\n", e),
     }
@@ -71,14 +93,28 @@ async fn main() -> Result<(), Error> {
 
     // Stream from Anthropic
     println!("\nAnthropic (streaming):");
-    match stream_provider(&anthropic, streaming_request.clone()).await {
+    let anthropic_streaming_request = Request::builder()
+        .message(Message::user(
+            "Count from 1 to 5 slowly, one number per line.",
+        ))
+        .model("claude-3-haiku-20240307")
+        .max_tokens(50)
+        .build();
+    match stream_provider(&anthropic, anthropic_streaming_request).await {
         Ok(_) => println!(),
         Err(e) => println!("Error: {}", e),
     }
 
     // Stream from Ollama
     println!("\nOllama (streaming):");
-    match stream_provider(&ollama, streaming_request.clone()).await {
+    let ollama_streaming_request = Request::builder()
+        .message(Message::user(
+            "Count from 1 to 5 slowly, one number per line.",
+        ))
+        .model("llama2")
+        .max_tokens(50)
+        .build();
+    match stream_provider(&ollama, ollama_streaming_request).await {
         Ok(_) => println!(),
         Err(e) => println!("Error: {} (Is Ollama running locally?)", e),
     }

@@ -26,7 +26,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     while let Some(chunk) = stream.next().await {
         match chunk {
             Ok(text) => print!("{}", text),
-            Err(e) => eprintln!("\nError: {}", e),
+            Err(e) => {
+                eprintln!("\nError: {}", e);
+                break; // Exit on error to prevent infinite loop
+            }
         }
     }
     println!("\n\nDone!");

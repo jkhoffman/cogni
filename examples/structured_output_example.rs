@@ -61,11 +61,12 @@ impl StructuredOutput for WeatherReport {
 }
 
 /// A person structure for extraction
+/// Note: When using strict mode with OpenAI, all fields must be required
 #[derive(Debug, Serialize, Deserialize)]
 struct Person {
     name: String,
-    age: Option<u8>,
-    occupation: Option<String>,
+    age: u8,
+    occupation: String,
     skills: Vec<String>,
 }
 
@@ -79,13 +80,13 @@ impl StructuredOutput for Person {
                     "description": "The person's full name"
                 },
                 "age": {
-                    "type": ["integer", "null"],
+                    "type": "integer",
                     "minimum": 0,
                     "maximum": 150,
                     "description": "The person's age in years"
                 },
                 "occupation": {
-                    "type": ["string", "null"],
+                    "type": "string",
                     "description": "The person's job or profession"
                 },
                 "skills": {
@@ -96,7 +97,7 @@ impl StructuredOutput for Person {
                     "description": "List of the person's skills"
                 }
             },
-            "required": ["name", "skills"],
+            "required": ["name", "age", "occupation", "skills"],
             "additionalProperties": false
         })
     }

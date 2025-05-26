@@ -45,7 +45,7 @@ async fn main() -> Result<(), Error> {
         .message(Message::user(
             "What's the weather like in Tokyo and New York?",
         ))
-        .tools([weather_tool])
+        .tools([weather_tool.clone()])
         .max_tokens(500)
         .build();
 
@@ -71,7 +71,15 @@ async fn main() -> Result<(), Error> {
 
     // Test Anthropic
     println!("Anthropic with tools:");
-    match anthropic.request(request.clone()).await {
+    let anthropic_request = Request::builder()
+        .message(Message::user(
+            "What's the weather like in Tokyo and New York?",
+        ))
+        .model("claude-3-haiku-20240307")
+        .tools([weather_tool.clone()])
+        .max_tokens(500)
+        .build();
+    match anthropic.request(anthropic_request).await {
         Ok(response) => {
             if response.has_tool_calls() {
                 println!("Tool calls requested:");
@@ -120,7 +128,36 @@ async fn main() -> Result<(), Error> {
 
     // Stream from Anthropic
     println!("\nAnthropic (streaming with tools):");
-    match stream_with_tools(&anthropic, streaming_request.clone()).await {
+    let anthropic_streaming_request = Request::builder()
+        .message(Message::user(
+            "Check the weather in Paris, France using the weather tool.",
+        ))
+        .model("claude-3-haiku-20240307")
+        .tools([Tool {
+            name: "get_weather".to_string(),
+            description: "Get the current weather in a given location".to_string(),
+            function: Function {
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "The city and state, e.g. San Francisco, CA"
+                        },
+                        "unit": {
+                            "type": "string",
+                            "enum": ["celsius", "fahrenheit"],
+                            "description": "The unit of temperature"
+                        }
+                    },
+                    "required": ["location"]
+                }),
+                returns: Some("Weather information".to_string()),
+            },
+        }])
+        .max_tokens(500)
+        .build();
+    match stream_with_tools(&anthropic, anthropic_streaming_request).await {
         Ok(_) => println!(),
         Err(e) => println!("Error: {}", e),
     }

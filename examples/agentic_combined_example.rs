@@ -69,7 +69,8 @@ impl StructuredOutput for DataAnalysis {
                             "description": "Risk assessment score (0-100)"
                         }
                     },
-                    "required": ["total_revenue", "growth_percentage", "top_performing_category", "risk_score"]
+                    "required": ["total_revenue", "growth_percentage", "top_performing_category", "risk_score"],
+                    "additionalProperties": false
                 },
                 "recommendations": {
                     "type": "array",
@@ -77,7 +78,8 @@ impl StructuredOutput for DataAnalysis {
                     "description": "Actionable recommendations based on analysis"
                 }
             },
-            "required": ["summary", "key_insights", "metrics", "recommendations"]
+            "required": ["summary", "key_insights", "metrics", "recommendations"],
+            "additionalProperties": false
         })
     }
 }

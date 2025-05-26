@@ -6,13 +6,14 @@ use cogni::{ResponseFormat, StructuredOutput};
 use serde::{Deserialize, Serialize};
 
 // Define a struct with the StructuredOutput derive macro
+// Note: When using strict mode with OpenAI, all fields must be required (non-optional)
 #[derive(Debug, Clone, Serialize, Deserialize, StructuredOutput)]
 struct WeatherReport {
     location: String,
     temperature: f64,
     conditions: String,
-    humidity: Option<u32>,
-    wind_speed: Option<f64>,
+    humidity: u32,
+    wind_speed: f64,
     forecast: Vec<String>,
 }
 
@@ -20,8 +21,8 @@ struct WeatherReport {
 struct Person {
     name: String,
     age: u32,
-    email: Option<String>,
-    phone: Option<String>,
+    email: String,
+    phone: String,
     interests: Vec<String>,
 }
 
@@ -64,12 +65,8 @@ async fn main() -> Result<(), cogni::Error> {
             println!("Location: {}", weather.location);
             println!("Temperature: {}°F", weather.temperature);
             println!("Conditions: {}", weather.conditions);
-            if let Some(humidity) = weather.humidity {
-                println!("Humidity: {}%", humidity);
-            }
-            if let Some(wind) = weather.wind_speed {
-                println!("Wind Speed: {} mph", wind);
-            }
+            println!("Humidity: {}%", weather.humidity);
+            println!("Wind Speed: {} mph", weather.wind_speed);
             if !weather.forecast.is_empty() {
                 println!("Forecast: {:?}", weather.forecast);
             }
