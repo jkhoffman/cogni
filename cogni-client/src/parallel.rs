@@ -304,31 +304,6 @@ impl<P: Provider + Clone> ParallelClient<P> {
     }
 }
 
-/// Create a parallel client from multiple providers of the same type
-///
-/// # Example
-///
-/// ```no_run
-/// # use cogni_client::{ParallelClient, ExecutionStrategy};
-/// # use cogni_providers::OpenAI;
-/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// let providers = vec![
-///     OpenAI::with_api_key("key1".to_string()),
-///     OpenAI::with_api_key("key2".to_string()),
-/// ];
-///
-/// let client = ParallelClient::new(providers)
-///     .with_strategy(ExecutionStrategy::Race);
-/// # Ok(())
-/// # }
-/// ```
-pub fn create_parallel_client<P>(providers: Vec<P>) -> ParallelClient<P>
-where
-    P: Provider + Clone,
-{
-    ParallelClient::new(providers)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

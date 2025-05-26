@@ -34,8 +34,9 @@ impl<P: Provider> StatefulClient<P> {
     }
 
     /// Set whether to automatically save state after each interaction
-    pub fn set_auto_save(&mut self, auto_save: bool) {
+    pub fn with_auto_save(mut self, auto_save: bool) -> Self {
         self.auto_save = auto_save;
+        self
     }
 
     /// Create a new conversation

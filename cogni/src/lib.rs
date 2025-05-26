@@ -26,7 +26,7 @@
 //!     // Create a provider
 //!     let provider = OpenAI::new(
 //!         OpenAIConfig::new("your-api-key")
-//!     )?;
+//!     );
 //!
 //!     // Create a request
 //!     let request = Request::builder()

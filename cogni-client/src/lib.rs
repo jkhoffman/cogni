@@ -12,9 +12,7 @@ mod stateful;
 pub use builder::RequestBuilder;
 pub use client::Client;
 pub use middleware::MiddlewareProvider;
-pub use parallel::{
-    create_parallel_client, parallel_chat, parallel_requests, ExecutionStrategy, ParallelClient,
-};
+pub use parallel::{parallel_chat, parallel_requests, ExecutionStrategy, ParallelClient};
 pub use stateful::StatefulClient;
 
 /// Prelude module for convenient imports

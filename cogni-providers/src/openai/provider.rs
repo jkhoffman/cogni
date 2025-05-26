@@ -21,19 +21,7 @@ pub struct OpenAI {
 
 impl OpenAI {
     /// Create a new OpenAI provider with the given configuration
-    pub fn new(config: OpenAIConfig) -> Result<Self, Error> {
-        let client = Arc::new(ReqwestClient::new()?);
-        Ok(Self {
-            client,
-            config,
-            converter: OpenAIConverter,
-            parser: OpenAIParser,
-        })
-    }
-
-    /// Create a new OpenAI provider with just an API key
-    pub fn with_api_key(api_key: impl Into<String>) -> Self {
-        let config = OpenAIConfig::new(api_key);
+    pub fn new(config: OpenAIConfig) -> Self {
         let client = Arc::new(ReqwestClient::new().expect("Failed to create HTTP client"));
         Self {
             client,
@@ -41,6 +29,11 @@ impl OpenAI {
             converter: OpenAIConverter,
             parser: OpenAIParser,
         }
+    }
+
+    /// Create a new OpenAI provider with just an API key
+    pub fn with_api_key(api_key: impl Into<String>) -> Self {
+        Self::new(OpenAIConfig::new(api_key))
     }
 
     /// Create with a custom HTTP client
