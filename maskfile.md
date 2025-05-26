@@ -175,6 +175,30 @@ cargo outdated
 cargo audit
 ```
 
+## setup
+
+> Set up development environment including pre-commit hooks
+
+```bash
+./scripts/setup-pre-commit.sh
+```
+
+## precommit
+
+> Run pre-commit hooks on all files
+
+```bash
+pre-commit run --all-files
+```
+
+## precommit-update
+
+> Update pre-commit hooks to latest versions
+
+```bash
+pre-commit autoupdate
+```
+
 ## release
 
 > Prepare for release (run all checks)

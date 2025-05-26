@@ -53,7 +53,10 @@ By participating in this project, you agree to abide by our Code of Conduct: be 
 We use pre-commit hooks to ensure code quality. To set them up:
 
 ```bash
-# Run the setup script
+# Using mask (recommended)
+mask setup
+
+# Or run the setup script directly
 ./scripts/setup-pre-commit.sh
 
 # Or manually:

@@ -8,8 +8,8 @@ This document describes the pre-commit hooks configured for the Cogni project.
 # Run the setup script
 ./scripts/setup-pre-commit.sh
 
-# Or use make
-make setup
+# Or use mask
+mask setup
 ```
 
 ## What Gets Checked
