@@ -347,6 +347,12 @@ impl<P: Provider> ConnectedRequestBuilder<'_, P> {
         self
     }
 
+    /// Add multiple tools
+    pub fn tools(mut self, tools: impl IntoIterator<Item = cogni_core::Tool>) -> Self {
+        self.builder = self.builder.tools(tools);
+        self
+    }
+
     /// Set the response format
     pub fn response_format(mut self, format: cogni_core::ResponseFormat) -> Self {
         self.builder = self.builder.response_format(format);

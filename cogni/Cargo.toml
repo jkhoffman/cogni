@@ -123,6 +123,11 @@ name = "multi_provider_client_example"
 path = "../examples/client/multi_provider_client_example.rs"
 required-features = ["providers", "client"]
 
+[[example]]
+name = "tools_api_demo"
+path = "../examples/tools_api_demo.rs"
+required-features = ["providers", "client", "tools", "derive"]
+
 [dev-dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }

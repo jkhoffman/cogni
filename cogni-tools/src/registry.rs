@@ -26,6 +26,17 @@ impl ToolRegistry {
         RegistryBuilder::new()
     }
 
+    /// Create a registry from a collection of executors
+    pub async fn from_executors(
+        executors: impl IntoIterator<Item = Box<dyn ToolExecutor>>,
+    ) -> Result<Self> {
+        let registry = Self::new();
+        registry
+            .register_many(executors.into_iter().collect())
+            .await?;
+        Ok(registry)
+    }
+
     /// Register a tool executor
     pub async fn register(&self, executor: impl ToolExecutor + 'static) -> Result<()> {
         let tool = executor.tool();
@@ -33,6 +44,17 @@ impl ToolRegistry {
 
         let mut tools = self.tools.write().await;
         tools.insert(name, Arc::new(executor));
+
+        Ok(())
+    }
+
+    /// Register a boxed tool executor
+    pub async fn register_boxed(&self, executor: Box<dyn ToolExecutor>) -> Result<()> {
+        let tool = executor.tool();
+        let name = tool.name.clone();
+
+        let mut tools = self.tools.write().await;
+        tools.insert(name, Arc::from(executor));
 
         Ok(())
     }
@@ -220,5 +242,47 @@ mod tests {
         registry.remove("test_tool").await;
         assert!(!registry.contains("test_tool").await);
         assert!(registry.is_empty().await);
+    }
+
+    #[tokio::test]
+    async fn test_from_executors() {
+        // Create multiple tools
+        let tool1 = FunctionExecutorBuilder::new("tool1")
+            .description("First tool")
+            .build_sync(|_| Ok(json!({ "result": "tool1" })));
+
+        let tool2 = FunctionExecutorBuilder::new("tool2")
+            .description("Second tool")
+            .build_sync(|_| Ok(json!({ "result": "tool2" })));
+
+        let tool3 = FunctionExecutorBuilder::new("tool3")
+            .description("Third tool")
+            .build_sync(|_| Ok(json!({ "result": "tool3" })));
+
+        // Create registry from executors
+        let registry = ToolRegistry::from_executors(vec![
+            Box::new(tool1) as Box<dyn ToolExecutor>,
+            Box::new(tool2) as Box<dyn ToolExecutor>,
+            Box::new(tool3) as Box<dyn ToolExecutor>,
+        ])
+        .await
+        .unwrap();
+
+        // Verify all tools are registered
+        assert_eq!(registry.len().await, 3);
+        assert!(registry.contains("tool1").await);
+        assert!(registry.contains("tool2").await);
+        assert!(registry.contains("tool3").await);
+
+        // Verify they work
+        let call = ToolCall {
+            id: "test-1".to_string(),
+            name: "tool2".to_string(),
+            arguments: "{}".to_string(),
+        };
+
+        let result = registry.execute(&call).await.unwrap();
+        assert!(result.success);
+        assert!(result.content.contains("tool2"));
     }
 }
