@@ -1,2 +1,21 @@
 /target
 mprocs.log
+
+# Coverage reports
+coverage.info
+lcov.info
+*.profraw
+*.profdata
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pre-commit
+.pre-commit-config.yaml.lock

@@ -35,7 +35,7 @@ By participating in this project, you agree to abide by our Code of Conduct: be 
 5. Ensure all tests pass (`cargo test --all-features`)
 6. Run clippy (`cargo clippy --all-features`)
 7. Format code (`cargo fmt`)
-8. Commit with clear messages
+8. Commit with clear messages (pre-commit hooks will run automatically)
 9. Push and create a Pull Request
 
 ## Development Setup
@@ -47,6 +47,38 @@ By participating in this project, you agree to abide by our Code of Conduct: be 
   - `OPENAI_API_KEY`
   - `ANTHROPIC_API_KEY`
   - Ollama running locally
+
+### Setting up Pre-commit Hooks
+
+We use pre-commit hooks to ensure code quality. To set them up:
+
+```bash
+# Run the setup script
+./scripts/setup-pre-commit.sh
+
+# Or manually:
+pip install pre-commit
+cargo install taplo-cli cargo-audit
+pre-commit install
+```
+
+Pre-commit will automatically:
+- Format Rust code with `cargo fmt`
+- Run `cargo clippy` with strict warnings
+- Check for trailing whitespace and file issues
+- Verify TOML file formatting
+- Check for typos in code and documentation
+- Detect accidentally committed secrets
+
+To run hooks manually:
+```bash
+pre-commit run --all-files
+```
+
+To skip hooks temporarily (not recommended):
+```bash
+git commit --no-verify
+```
 
 ### Building
 

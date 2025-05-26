@@ -1,0 +1,32 @@
+# Configuration for typos spell checker
+# https://github.com/crate-ci/typos
+
+[files]
+extend-exclude = [
+    "target/",
+    "*.lock",
+    "coverage.info",
+]
+
+[default.extend-words]
+# Add project-specific words that should not be considered typos
+cogni = "cogni"
+anthropic = "anthropic"
+ollama = "ollama"
+openai = "openai"
+reqwest = "reqwest"
+serde = "serde"
+tiktoken = "tiktoken"
+tomls = "tomls"
+clippy = "clippy"
+rustfmt = "rustfmt"
+
+# Common abbreviations in the codebase
+impl = "impl"
+struct = "struct"
+async = "async"
+fn = "fn"
+
+[type.rust.extend-words]
+# Rust-specific terms
+tokio = "tokio"
