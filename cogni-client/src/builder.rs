@@ -1,6 +1,9 @@
 //! Request builder for fluent API
 
-use cogni_core::{Content, Message, Metadata, Model, Parameters, Request, Role, Tool};
+use cogni_core::{
+    Content, Message, Metadata, Model, Parameters, Request, ResponseFormat, Role, StructuredOutput,
+    Tool,
+};
 
 /// Builder for constructing requests with a fluent API
 ///
@@ -23,6 +26,7 @@ pub struct RequestBuilder {
     model: Option<Model>,
     parameters: Parameters,
     tools: Vec<Tool>,
+    response_format: Option<ResponseFormat>,
 }
 
 impl RequestBuilder {
@@ -59,6 +63,12 @@ impl RequestBuilder {
     /// Add a message with full control
     pub fn with_message(mut self, message: Message) -> Self {
         self.messages.push(message);
+        self
+    }
+
+    /// Add multiple messages
+    pub fn messages(mut self, messages: impl IntoIterator<Item = Message>) -> Self {
+        self.messages.extend(messages);
         self
     }
 
@@ -122,6 +132,27 @@ impl RequestBuilder {
         self
     }
 
+    /// Set the response format
+    pub fn response_format(mut self, format: ResponseFormat) -> Self {
+        self.response_format = Some(format);
+        self
+    }
+
+    /// Request structured output of a specific type
+    pub fn with_structured_output<T: StructuredOutput>(mut self) -> Self {
+        self.response_format = Some(ResponseFormat::JsonSchema {
+            schema: T::schema(),
+            strict: true,
+        });
+        self
+    }
+
+    /// Request JSON object output
+    pub fn json_mode(mut self) -> Self {
+        self.response_format = Some(ResponseFormat::JsonObject);
+        self
+    }
+
     /// Build the request
     ///
     /// # Panics
@@ -137,6 +168,7 @@ impl RequestBuilder {
             model: self.model.unwrap_or_default(),
             parameters: self.parameters,
             tools: self.tools,
+            response_format: self.response_format,
         }
     }
 
@@ -151,6 +183,7 @@ impl RequestBuilder {
             model: self.model.unwrap_or_default(),
             parameters: self.parameters,
             tools: self.tools,
+            response_format: self.response_format,
         })
     }
 }

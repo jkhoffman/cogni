@@ -16,14 +16,18 @@ cogni-providers = { path = "../cogni-providers", optional = true }
 cogni-middleware = { path = "../cogni-middleware", optional = true }
 cogni-tools = { path = "../cogni-tools", optional = true }
 cogni-client = { path = "../cogni-client", optional = true }
+cogni-state = { path = "../cogni-state", optional = true }
+cogni-context = { path = "../cogni-context", optional = true }
 
 [features]
-default = ["providers", "tools", "client"]
+default = ["providers", "tools", "client", "state", "context"]
 providers = ["dep:cogni-providers"]
 middleware = ["dep:cogni-middleware"]
 tools = ["dep:cogni-tools"]
 client = ["dep:cogni-client", "providers"]
-full = ["providers", "middleware", "tools", "client"]
+state = ["dep:cogni-state"]
+context = ["dep:cogni-context"]
+full = ["providers", "middleware", "tools", "client", "state", "context"]
 
 [[test]]
 name = "core_types"
@@ -38,6 +42,16 @@ required-features = ["tools", "providers"]
 name = "tool_streaming_test"
 path = "../tests/tool_streaming_test.rs"
 required-features = ["tools", "providers"]
+
+[[test]]
+name = "structured_output_test"
+path = "../tests/structured_output_test.rs"
+required-features = ["providers", "client"]
+
+[[test]]
+name = "agentic_features_test"
+path = "../tests/agentic_features_test.rs"
+required-features = ["providers", "client", "state", "context"]
 
 [[example]]
 name = "basic_openai"
@@ -59,7 +73,18 @@ path = "../examples/multi_provider_tools.rs"
 name = "provider_failover"
 path = "../examples/provider_failover.rs"
 
+[[example]]
+name = "structured_output_example"
+path = "../examples/structured_output_example.rs"
+required-features = ["providers", "client"]
+
+[[example]]
+name = "agentic_combined_example"
+path = "../examples/agentic_combined_example.rs"
+required-features = ["providers", "client", "middleware", "state", "context"]
+
 [dev-dependencies]
+serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 futures = { workspace = true }
@@ -67,6 +92,8 @@ chrono = { workspace = true }
 reqwest = { workspace = true }
 async-trait = { workspace = true }
 criterion = { version = "0.5", features = ["async_tokio"] }
+uuid = { workspace = true }
+tempfile = "3.0"
 
 [[bench]]
 name = "provider_bench"

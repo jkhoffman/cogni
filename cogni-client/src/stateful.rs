@@ -115,6 +115,7 @@ impl<P: Provider> StatefulClient<P> {
             model: self.client.default_model.clone(),
             parameters: self.client.default_parameters.clone(),
             tools: vec![],
+            response_format: None,
         };
 
         // Send request
@@ -161,6 +162,7 @@ impl<P: Provider> StatefulClient<P> {
             model: self.client.default_model.clone(),
             parameters: self.client.default_parameters.clone(),
             tools: vec![],
+            response_format: None,
         };
 
         // Note: We'll need to accumulate the response and save it after streaming completes

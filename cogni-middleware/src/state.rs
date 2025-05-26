@@ -225,6 +225,7 @@ where
                 model: request.model,
                 parameters: request.parameters,
                 tools: request.tools,
+                response_format: request.response_format,
             };
 
             // Update state with response
@@ -271,6 +272,7 @@ mod tests {
             model: Default::default(),
             parameters: Default::default(),
             tools: vec![],
+            response_format: None,
         };
 
         let response = service.call(request).await.unwrap();
@@ -299,6 +301,7 @@ mod tests {
             model: Default::default(),
             parameters: Default::default(),
             tools: vec![],
+            response_format: None,
         };
 
         let response = service.call(request).await.unwrap();
@@ -337,6 +340,7 @@ mod tests {
             model: Default::default(),
             parameters: Default::default(),
             tools: vec![],
+            response_format: None,
         };
 
         let _response = service.call(request).await.unwrap();

@@ -53,6 +53,12 @@ pub enum Error {
 
     /// Storage errors (for state management)
     Storage(String),
+
+    /// Response parsing errors
+    ResponseError {
+        /// Error message
+        message: String,
+    },
 }
 
 impl fmt::Display for Error {
@@ -71,6 +77,7 @@ impl fmt::Display for Error {
             Error::Authentication(msg) => write!(f, "Authentication error: {}", msg),
             Error::Configuration(msg) => write!(f, "Configuration error: {}", msg),
             Error::Storage(msg) => write!(f, "Storage error: {}", msg),
+            Error::ResponseError { message } => write!(f, "Response error: {}", message),
         }
     }
 }

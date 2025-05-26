@@ -4,10 +4,11 @@ use crate::{RequestBuilder, StatefulClient};
 use cogni_context::ContextManager;
 use cogni_core::{
     Content, Error, Message, Metadata, Model, Parameters, Provider, Request, Response, Role,
-    StreamEvent,
+    StreamEvent, StructuredOutput,
 };
 use cogni_state::StateStore;
 use futures::{Stream, StreamExt};
+use serde::Deserialize;
 use std::pin::Pin;
 use std::sync::Arc;
 
@@ -101,6 +102,7 @@ impl<P: Provider> Client<P> {
             model: self.default_model.clone(),
             parameters: self.default_parameters.clone(),
             tools: Vec::new(),
+            response_format: None,
         };
 
         let response = self.provider.request(request).await?;
@@ -122,6 +124,7 @@ impl<P: Provider> Client<P> {
             model: self.default_model.clone(),
             parameters: self.default_parameters.clone(),
             tools: Vec::new(),
+            response_format: None,
         };
 
         let stream = self.provider.stream(request).await?;
@@ -164,6 +167,62 @@ impl<P: Provider> Client<P> {
                 .parameters(self.default_parameters.clone()),
             context_manager: None,
         }
+    }
+
+    /// Chat with structured output
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use cogni_client::Client;
+    /// # use cogni_providers::OpenAI;
+    /// # use cogni_core::StructuredOutput;
+    /// # use serde::{Deserialize, Serialize};
+    /// # use serde_json::json;
+    /// #
+    /// # #[derive(Debug, Serialize, Deserialize)]
+    /// # struct WeatherReport {
+    /// #     temperature: f32,
+    /// #     conditions: String,
+    /// # }
+    /// #
+    /// # impl StructuredOutput for WeatherReport {
+    /// #     fn schema() -> serde_json::Value {
+    /// #         json!({
+    /// #             "type": "object",
+    /// #             "properties": {
+    /// #                 "temperature": { "type": "number" },
+    /// #                 "conditions": { "type": "string" }
+    /// #             },
+    /// #             "required": ["temperature", "conditions"]
+    /// #         })
+    /// #     }
+    /// # }
+    /// #
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let provider = OpenAI::with_api_key("key".to_string());
+    /// # let client = Client::new(provider);
+    /// let weather: WeatherReport = client
+    ///     .chat_structured("What's the weather like in San Francisco?")
+    ///     .await?;
+    /// println!("Temperature: {}°F", weather.temperature);
+    /// println!("Conditions: {}", weather.conditions);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn chat_structured<T, M>(&self, messages: M) -> Result<T, Error>
+    where
+        T: StructuredOutput + for<'de> Deserialize<'de>,
+        M: Into<MessageInput>,
+    {
+        let response = self
+            .request()
+            .with_structured_output::<T>()
+            .messages(messages.into().into_messages())
+            .send()
+            .await?;
+
+        response.parse_structured()
     }
 
     /// Get a reference to the underlying provider
@@ -276,9 +335,33 @@ impl<P: Provider> ConnectedRequestBuilder<'_, P> {
         self
     }
 
+    /// Add multiple messages
+    pub fn messages(mut self, messages: impl IntoIterator<Item = Message>) -> Self {
+        self.builder = self.builder.messages(messages);
+        self
+    }
+
     /// Add a tool
     pub fn tool(mut self, tool: impl Into<cogni_core::Tool>) -> Self {
         self.builder = self.builder.tool(tool);
+        self
+    }
+
+    /// Set the response format
+    pub fn response_format(mut self, format: cogni_core::ResponseFormat) -> Self {
+        self.builder = self.builder.response_format(format);
+        self
+    }
+
+    /// Request structured output of a specific type
+    pub fn with_structured_output<T: cogni_core::StructuredOutput>(mut self) -> Self {
+        self.builder = self.builder.with_structured_output::<T>();
+        self
+    }
+
+    /// Request JSON object output
+    pub fn json_mode(mut self) -> Self {
+        self.builder = self.builder.json_mode();
         self
     }
 

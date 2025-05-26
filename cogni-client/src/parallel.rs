@@ -402,6 +402,7 @@ mod tests {
             model: cogni_core::Model::default(),
             parameters: cogni_core::Parameters::default(),
             tools: vec![],
+            response_format: None,
         };
 
         let response = client.request(request).await.unwrap();
@@ -421,6 +422,7 @@ mod tests {
             model: cogni_core::Model::default(),
             parameters: cogni_core::Parameters::default(),
             tools: vec![],
+            response_format: None,
         };
 
         let response = client.request(request).await.unwrap();

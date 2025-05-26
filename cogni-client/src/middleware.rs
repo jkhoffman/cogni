@@ -103,6 +103,7 @@ mod tests {
                 model: cogni_core::Model::default(),
                 parameters: cogni_core::Parameters::default(),
                 tools: vec![],
+                response_format: None,
             })
             .await
             .unwrap();

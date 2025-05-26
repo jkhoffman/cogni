@@ -209,7 +209,7 @@ impl RequestBuilder {
 // Automatically prune messages before sending
 ```
 
-## Phase C: Structured Output (4-5 days)
+## Phase C: Structured Output (4-5 days) ✅ COMPLETED
 
 ### C.1: Core Types
 ```rust
@@ -328,35 +328,29 @@ pub struct StructuredRetryLayer {
 // On validation failure, retry with error context
 ```
 
-## Phase D: Integration & Polish (2-3 days)
+## Phase D: Integration & Polish (2-3 days) (PARTIALLY COMPLETED)
 
-### D.1: Combined Features
-```rust
-// Example: Stateful, context-aware, structured agent
-let agent = Client::new(provider)
-    .with_state(FileStore::new("./conversations")?)
-    .with_context_manager(
-        ContextManager::new(TiktokenCounter::for_model("gpt-4")?)
-            .with_strategy(SummarizationStrategy::new())
-    );
+### D.1: Combined Features ✅ COMPLETED
+- Created comprehensive example in `examples/agentic_combined_example.rs`
+- Demonstrates all three features working together:
+  - Stateful conversation management with FileStore
+  - Context window management with TiktokenCounter
+  - Structured output generation with JSON schema validation
+- Example shows realistic business analysis scenario
 
-let analysis: DataAnalysis = agent
-    .load_conversation(conversation_id)?
-    .chat_structured("Analyze the sales data from our previous discussion")
-    .await?;
-```
+### D.2: Testing Strategy (IN PROGRESS)
+- ✅ Integration tests for feature combinations (`tests/agentic_features_test.rs`)
+  - Mock provider tests for deterministic behavior
+  - Real provider integration test with OpenAI
+  - Tests for all feature combinations
+- ⏳ Performance benchmarks for token counting and state operations
+- ⏳ Additional example agents demonstrating real-world usage
 
-### D.2: Testing Strategy
-- Unit tests for each new component
-- Integration tests for feature combinations
-- Performance benchmarks for token counting and state operations
-- Example agents demonstrating real-world usage
-
-### D.3: Documentation
-- Architecture guide explaining the agentic features
-- Migration guide for existing users
-- Best practices for building agents
-- Performance tuning guide
+### D.3: Documentation (PENDING)
+- ⏳ Architecture guide explaining the agentic features
+- ⏳ Migration guide for existing users
+- ⏳ Best practices for building agents
+- ⏳ Performance tuning guide
 
 ## Implementation Order
 
@@ -415,6 +409,19 @@ While the goal is backwards compatibility, some changes may be necessary:
 - Added Default and Into conversions where appropriate
 - Unified builder patterns across the codebase
 
-### Next Steps:
-- Phase C: Structured Output (4-5 days)
-- Phase D: Integration & Polish (2-3 days)
+3. Phase C: Structured Output (✅ COMPLETED)
+   - StructuredOutput trait for type-safe JSON responses
+   - ResponseFormat enum supporting JsonSchema and JsonObject
+   - Provider support for OpenAI, Anthropic, and Ollama
+   - Response parsing with parse_structured() and parse_json()
+   - Client convenience method chat_structured()
+   - RequestBuilder methods: with_structured_output() and json_mode()
+   - Comprehensive examples and tests
+
+### Current Status:
+Phase D is in progress with the following completed:
+- D.1: Combined features example ✅
+- D.2: Integration tests ✅
+- D.2: Performance benchmarks (pending)
+- D.2: Additional example agents (pending)
+- D.3: Documentation (pending)

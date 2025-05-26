@@ -76,6 +76,20 @@ pub mod client {
     pub use cogni_client::*;
 }
 
+#[cfg(feature = "state")]
+#[cfg_attr(docsrs, doc(cfg(feature = "state")))]
+pub mod state {
+    //! Conversation state persistence
+    pub use cogni_state::*;
+}
+
+#[cfg(feature = "context")]
+#[cfg_attr(docsrs, doc(cfg(feature = "context")))]
+pub mod context {
+    //! Context window management
+    pub use cogni_context::*;
+}
+
 /// Prelude module for convenient imports
 pub mod prelude {
 

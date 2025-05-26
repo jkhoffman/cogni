@@ -1,6 +1,6 @@
 //! Conversion between Cogni types and Anthropic API types
 
-use cogni_core::{Content, Request, Role, ToolCall};
+use cogni_core::{Content, Request, ResponseFormat, Role, ToolCall};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -18,6 +18,8 @@ pub struct AnthropicRequest {
     pub tools: Option<Vec<AnthropicTool>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub system: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub response_format: Option<Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -183,6 +185,21 @@ pub fn to_anthropic_request(request: &Request) -> AnthropicRequest {
         )
     };
 
+    let response_format = request.response_format.as_ref().map(|format| match format {
+        ResponseFormat::JsonSchema { schema, strict } => {
+            serde_json::json!({
+                "type": "json_schema",
+                "json_schema": {
+                    "strict": strict,
+                    "schema": schema
+                }
+            })
+        }
+        ResponseFormat::JsonObject => {
+            serde_json::json!({ "type": "json_object" })
+        }
+    });
+
     AnthropicRequest {
         model: request.model.to_string(),
         messages,
@@ -191,6 +208,7 @@ pub fn to_anthropic_request(request: &Request) -> AnthropicRequest {
         stream: None, // Will be set by the provider
         tools,
         system: system_message,
+        response_format,
     }
 }
 

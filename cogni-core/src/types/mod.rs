@@ -4,6 +4,7 @@ pub mod message;
 pub mod request;
 pub mod response;
 pub mod stream;
+pub mod structured;
 pub mod tool;
 
 // Common type aliases

@@ -1,6 +1,6 @@
 //! Conversion between Cogni types and Ollama API types
 
-use cogni_core::{Content, Request, Role, ToolCall};
+use cogni_core::{Content, Request, ResponseFormat, Role, ToolCall};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -15,6 +15,8 @@ pub struct OllamaRequest {
     pub options: Option<OllamaOptions>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tools: Option<Vec<OllamaTool>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -176,12 +178,18 @@ pub fn to_ollama_request(request: &Request) -> OllamaRequest {
         )
     };
 
+    let format = request.response_format.as_ref().map(|format| match format {
+        ResponseFormat::JsonSchema { .. } => "json".to_string(),
+        ResponseFormat::JsonObject => "json".to_string(),
+    });
+
     OllamaRequest {
         model: request.model.to_string(),
         messages,
         stream: None, // Will be set by the provider
         options: Some(options),
         tools,
+        format,
     }
 }
 

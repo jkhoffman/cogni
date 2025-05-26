@@ -2,7 +2,7 @@
 
 use crate::traits::RequestConverter;
 use async_trait::async_trait;
-use cogni_core::{Content, Error, Message, Request, Role};
+use cogni_core::{Content, Error, Message, Request, ResponseFormat, Role};
 use serde_json::{json, Value};
 
 /// Converts generic requests to OpenAI format
@@ -47,6 +47,25 @@ impl RequestConverter for OpenAIConverter {
         // Add tools if present
         if !request.tools.is_empty() {
             body["tools"] = json!(self.convert_tools(&request.tools));
+        }
+
+        // Add response format if present
+        if let Some(format) = &request.response_format {
+            body["response_format"] = match format {
+                ResponseFormat::JsonSchema { schema, strict } => {
+                    json!({
+                        "type": "json_schema",
+                        "json_schema": {
+                            "name": "response",
+                            "strict": strict,
+                            "schema": schema
+                        }
+                    })
+                }
+                ResponseFormat::JsonObject => {
+                    json!({ "type": "json_object" })
+                }
+            };
         }
 
         Ok(body)

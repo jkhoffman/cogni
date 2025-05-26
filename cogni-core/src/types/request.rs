@@ -1,6 +1,7 @@
 //! Request types for LLM interactions
 
 use crate::types::message::Message;
+use crate::types::structured::ResponseFormat;
 use crate::types::tool::Tool;
 use thiserror::Error;
 
@@ -115,6 +116,8 @@ pub struct Request {
     pub parameters: Parameters,
     /// Available tools/functions
     pub tools: Vec<Tool>,
+    /// Response format specification
+    pub response_format: Option<ResponseFormat>,
 }
 
 impl Request {
@@ -130,6 +133,7 @@ impl Request {
             model: Model::default(),
             parameters: Parameters::default(),
             tools: Vec::new(),
+            response_format: None,
         }
     }
 
@@ -146,6 +150,7 @@ pub struct RequestBuilder {
     model: Option<Model>,
     parameters: Parameters,
     tools: Vec<Tool>,
+    response_format: Option<ResponseFormat>,
 }
 
 impl RequestBuilder {
@@ -191,6 +196,12 @@ impl RequestBuilder {
         self
     }
 
+    /// Set the response format
+    pub fn response_format(mut self, format: ResponseFormat) -> Self {
+        self.response_format = Some(format);
+        self
+    }
+
     /// Build the request
     pub fn build(self) -> Request {
         Request {
@@ -198,6 +209,7 @@ impl RequestBuilder {
             model: self.model.unwrap_or_default(),
             parameters: self.parameters,
             tools: self.tools,
+            response_format: self.response_format,
         }
     }
 
@@ -212,6 +224,7 @@ impl RequestBuilder {
             model: self.model.unwrap_or_default(),
             parameters: self.parameters,
             tools: self.tools,
+            response_format: self.response_format,
         })
     }
 }

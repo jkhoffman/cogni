@@ -1,6 +1,9 @@
 //! Response types for LLM interactions
 
+use crate::types::structured::StructuredOutput;
 use crate::types::tool::ToolCall;
+use crate::Error;
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -69,6 +72,28 @@ impl Response {
     /// Check if the response contains tool calls
     pub fn has_tool_calls(&self) -> bool {
         !self.tool_calls.is_empty()
+    }
+
+    /// Parse the response content as structured output
+    pub fn parse_structured<T>(&self) -> Result<T, Error>
+    where
+        T: StructuredOutput + for<'de> Deserialize<'de>,
+    {
+        let value: T = serde_json::from_str(&self.content).map_err(|e| Error::ResponseError {
+            message: format!("Failed to parse structured response: {}", e),
+        })?;
+
+        // TODO: Optional schema validation could be added here
+        // validate_against_schema(&value, &T::schema())?;
+
+        Ok(value)
+    }
+
+    /// Try to parse the response content as JSON Value
+    pub fn parse_json(&self) -> Result<serde_json::Value, Error> {
+        serde_json::from_str(&self.content).map_err(|e| Error::ResponseError {
+            message: format!("Failed to parse JSON response: {}", e),
+        })
     }
 }
 

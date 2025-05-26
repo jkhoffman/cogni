@@ -18,5 +18,6 @@ pub use types::{
     request::{Model, Parameters, ParametersBuilder, Request, RequestBuilder},
     response::{FinishReason, Response, ResponseMetadata, Usage},
     stream::{ContentDelta, MetadataDelta, StreamAccumulator, StreamEvent, ToolCallDelta},
+    structured::{ResponseFormat, StructuredOutput},
     tool::{Function, Tool, ToolCall, ToolChoice, ToolResult},
 };
