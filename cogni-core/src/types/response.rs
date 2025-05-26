@@ -2,6 +2,7 @@
 
 use crate::types::tool::ToolCall;
 use std::collections::HashMap;
+use std::fmt;
 
 /// Metadata about a response
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -19,7 +20,7 @@ pub struct ResponseMetadata {
 }
 
 /// Token usage statistics
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Usage {
     /// Tokens in the prompt
     pub prompt_tokens: u32,
@@ -68,5 +69,37 @@ impl Response {
     /// Check if the response contains tool calls
     pub fn has_tool_calls(&self) -> bool {
         !self.tool_calls.is_empty()
+    }
+}
+
+impl fmt::Display for Response {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.content)?;
+        if !self.tool_calls.is_empty() {
+            write!(f, " [+{} tool calls]", self.tool_calls.len())?;
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Display for FinishReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FinishReason::Stop => write!(f, "stop"),
+            FinishReason::Length => write!(f, "length"),
+            FinishReason::StopSequence => write!(f, "stop_sequence"),
+            FinishReason::ToolCalls => write!(f, "tool_calls"),
+            FinishReason::ContentFilter => write!(f, "content_filter"),
+        }
+    }
+}
+
+impl fmt::Display for Usage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Usage(prompt: {}, completion: {}, total: {})",
+            self.prompt_tokens, self.completion_tokens, self.total_tokens
+        )
     }
 }

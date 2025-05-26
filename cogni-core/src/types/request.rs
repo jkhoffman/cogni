@@ -2,9 +2,10 @@
 
 use crate::types::message::Message;
 use crate::types::tool::Tool;
+use thiserror::Error;
 
 /// A model identifier
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Model(pub String);
 
 impl Model {
@@ -131,6 +132,11 @@ impl Request {
             tools: Vec::new(),
         }
     }
+
+    /// Check if the request has tools available
+    pub fn has_tools(&self) -> bool {
+        !self.tools.is_empty()
+    }
 }
 
 /// Builder for Request
@@ -194,4 +200,26 @@ impl RequestBuilder {
             tools: self.tools,
         }
     }
+
+    /// Try to build the request, returning an error if validation fails
+    pub fn try_build(self) -> Result<Request, BuildError> {
+        if self.messages.is_empty() {
+            return Err(BuildError::NoMessages);
+        }
+
+        Ok(Request {
+            messages: self.messages,
+            model: self.model.unwrap_or_default(),
+            parameters: self.parameters,
+            tools: self.tools,
+        })
+    }
+}
+
+/// Errors that can occur when building a request
+#[derive(Debug, Error)]
+pub enum BuildError {
+    /// Request must contain at least one message
+    #[error("Request must contain at least one message")]
+    NoMessages,
 }

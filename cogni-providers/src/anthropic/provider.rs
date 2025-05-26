@@ -11,6 +11,7 @@ use crate::anthropic::{
     parser::parse_response,
     stream::AnthropicStream,
 };
+use crate::utils;
 
 /// Anthropic Claude provider implementation
 #[derive(Debug, Clone)]
@@ -55,29 +56,12 @@ impl Provider for Anthropic {
             .json(&anthropic_request)
             .send()
             .await
-            .map_err(|e| Error::Network {
-                message: e.to_string(),
-                source: None,
-            })?;
+            .map_err(utils::to_network_error)?;
 
-        if !response.status().is_success() {
-            let error_text = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(Error::Provider {
-                provider: "anthropic".to_string(),
-                message: error_text,
-                retry_after: None,
-                source: None,
-            });
-        }
+        let response = utils::check_response_status(response, "anthropic").await?;
 
         let anthropic_response: AnthropicResponse =
-            response.json().await.map_err(|e| Error::Serialization {
-                message: e.to_string(),
-                source: None,
-            })?;
+            response.json().await.map_err(utils::to_network_error)?;
 
         parse_response(anthropic_response)
     }

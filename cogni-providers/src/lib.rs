@@ -5,6 +5,7 @@
 pub mod error;
 pub mod http;
 pub mod traits;
+pub mod utils;
 
 // Provider implementations
 pub mod anthropic;

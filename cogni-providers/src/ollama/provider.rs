@@ -10,6 +10,7 @@ use crate::ollama::{
     parser::parse_response,
     stream::OllamaStream,
 };
+use crate::utils;
 
 /// Ollama provider implementation
 #[derive(Debug, Clone)]
@@ -56,29 +57,12 @@ impl Provider for Ollama {
             .json(&ollama_request)
             .send()
             .await
-            .map_err(|e| Error::Network {
-                message: e.to_string(),
-                source: None,
-            })?;
+            .map_err(utils::to_network_error)?;
 
-        if !response.status().is_success() {
-            let error_text = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(Error::Provider {
-                provider: "ollama".to_string(),
-                message: error_text,
-                retry_after: None,
-                source: None,
-            });
-        }
+        let response = utils::check_response_status(response, "ollama").await?;
 
         let ollama_response: OllamaResponse =
-            response.json().await.map_err(|e| Error::Serialization {
-                message: e.to_string(),
-                source: None,
-            })?;
+            response.json().await.map_err(utils::to_network_error)?;
 
         parse_response(ollama_response)
     }
@@ -93,23 +77,9 @@ impl Provider for Ollama {
             .json(&ollama_request)
             .send()
             .await
-            .map_err(|e| Error::Network {
-                message: e.to_string(),
-                source: None,
-            })?;
+            .map_err(utils::to_network_error)?;
 
-        if !response.status().is_success() {
-            let error_text = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(Error::Provider {
-                provider: "ollama".to_string(),
-                message: error_text,
-                retry_after: None,
-                source: None,
-            });
-        }
+        let response = utils::check_response_status(response, "ollama").await?;
 
         Ok(OllamaStream::new(response))
     }

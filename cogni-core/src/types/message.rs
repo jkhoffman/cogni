@@ -96,6 +96,13 @@ impl Message {
     pub fn assistant(text: impl Into<String>) -> Self {
         Self::text(Role::Assistant, text)
     }
+
+    /// Create a tool message
+    pub fn tool(text: impl Into<String>, tool_call_id: impl Into<String>) -> Self {
+        let mut msg = Self::text(Role::Tool, text);
+        msg.metadata.tool_call_id = Some(tool_call_id.into());
+        msg
+    }
 }
 
 impl Content {
@@ -103,6 +110,22 @@ impl Content {
     pub fn as_text(&self) -> Option<&str> {
         match self {
             Content::Text(s) => Some(s),
+            _ => None,
+        }
+    }
+
+    /// Get image content if this is an Image variant
+    pub fn as_image(&self) -> Option<&Image> {
+        match self {
+            Content::Image(img) => Some(img),
+            _ => None,
+        }
+    }
+
+    /// Get audio content if this is an Audio variant
+    pub fn as_audio(&self) -> Option<&Audio> {
+        match self {
+            Content::Audio(audio) => Some(audio),
             _ => None,
         }
     }

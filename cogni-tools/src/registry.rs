@@ -21,6 +21,11 @@ impl ToolRegistry {
         }
     }
 
+    /// Create a new registry builder
+    pub fn builder() -> RegistryBuilder {
+        RegistryBuilder::new()
+    }
+
     /// Register a tool executor
     pub async fn register(&self, executor: impl ToolExecutor + 'static) -> Result<()> {
         let tool = executor.tool();
