@@ -190,9 +190,7 @@ async fn run_data_analysis_agent() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create context manager
     let counter = TiktokenCounter::for_model("gpt-4o")?;
-    let context_manager = ContextManager::new(
-        Arc::new(counter)
-    );
+    let context_manager = ContextManager::new(Arc::new(counter));
 
     // Create client with caching for repeated analyses
     let client = Client::new(provider)
@@ -343,10 +341,7 @@ Focus on:
 
     println!("\n📊 RECOMMENDED VISUALIZATIONS:");
     for viz in &analysis_report.recommended_visualizations {
-        println!(
-            "\n[{:?}] {:?}: {}",
-            viz.priority, viz.chart_type, viz.title
-        );
+        println!("\n[{:?}] {:?}: {}", viz.priority, viz.chart_type, viz.title);
         println!("   Purpose: {}", viz.purpose);
         println!("   Variables: {}", viz.variables.join(", "));
     }
@@ -405,7 +400,10 @@ Focus on:
         )
         .await?;
 
-    println!("PREDICTIVE ANALYSIS: {}", predictive_analysis.forecast_period);
+    println!(
+        "PREDICTIVE ANALYSIS: {}",
+        predictive_analysis.forecast_period
+    );
     println!("\nPredicted Trends:");
     for trend in &predictive_analysis.predicted_trends {
         println!(

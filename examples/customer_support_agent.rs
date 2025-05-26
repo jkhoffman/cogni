@@ -102,8 +102,8 @@ impl SupportAgent {
         let importance_scorer = |msg: &Message| -> f32 {
             // Score messages by importance
             match msg.role {
-                Role::System => 1.0,       // Always keep system messages
-                Role::User => 0.9,         // Customer messages are very important
+                Role::System => 1.0, // Always keep system messages
+                Role::User => 0.9,   // Customer messages are very important
                 Role::Assistant => {
                     // Keep messages with structured data or resolutions
                     if msg.content.as_text().unwrap_or("").contains("resolved") {
@@ -116,9 +116,7 @@ impl SupportAgent {
             }
         };
 
-        let context_manager = ContextManager::new(
-            Arc::new(counter)
-        );
+        let context_manager = ContextManager::new(Arc::new(counter));
 
         Ok(Self {
             client,
@@ -138,7 +136,7 @@ impl SupportAgent {
 
         // Create stateful client for this conversation
         let mut stateful_client = self.client.clone().into_stateful();
-        
+
         // Load or create conversation
         if stateful_client.load_conversation(session_id).await.is_err() {
             // New conversation
@@ -221,9 +219,7 @@ Please provide a helpful response to the customer."#,
 
         stateful_client.add_message(Message::user(message)).await?;
 
-        let response: SupportResponse = stateful_client
-            .chat_structured(&response_prompt)
-            .await?;
+        let response: SupportResponse = stateful_client.chat_structured(&response_prompt).await?;
 
         Ok(response)
     }
@@ -237,14 +233,12 @@ Please provide a helpful response to the customer."#,
             let profile = CustomerProfile {
                 customer_id: customer_id.to_string(),
                 account_type: "Premium".to_string(),
-                previous_issues: vec![
-                    "Password reset".to_string(),
-                    "Billing question".to_string(),
-                ],
+                previous_issues: vec!["Password reset".to_string(), "Billing question".to_string()],
                 satisfaction_score: 4.2,
                 preferred_communication_style: "Concise and technical".to_string(),
             };
-            self.customer_profiles.insert(customer_id.to_string(), profile);
+            self.customer_profiles
+                .insert(customer_id.to_string(), profile);
         }
         Ok(self.customer_profiles.get(customer_id).unwrap())
     }

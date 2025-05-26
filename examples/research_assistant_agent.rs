@@ -12,7 +12,7 @@ use cogni::{
     providers::OpenAIProvider,
     state::{FileStore, StateMetadata},
     tools::{builtin::*, ToolExecutor, ToolRegistry},
-    Message, MessageContent, Role, ToolCall, ToolResult, StructuredOutput,
+    Message, MessageContent, Role, StructuredOutput, ToolCall, ToolResult,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -184,9 +184,7 @@ async fn run_research_assistant() -> Result<(), Box<dyn std::error::Error>> {
     // Create context manager with summarization strategy
     let counter = TiktokenCounter::for_model("gpt-4o")?;
     let summarizer_provider = provider.clone();
-    let context_manager = ContextManager::new(
-        Arc::new(counter)
-    );
+    let context_manager = ContextManager::new(Arc::new(counter));
 
     // Create client with tools
     let client = Client::new(provider)
@@ -229,16 +227,15 @@ Always create a research plan before starting your investigation."#;
     println!("🔬 Research Assistant Started\n");
     println!("📋 Creating research plan...\n");
 
-    let research_topic = "Recent advances in AI alignment and safety measures in large language models";
+    let research_topic =
+        "Recent advances in AI alignment and safety measures in large language models";
 
     let plan_prompt = format!(
         "Create a research plan for investigating: {}",
         research_topic
     );
 
-    let research_plan: ResearchPlan = stateful_client
-        .chat_structured(&plan_prompt)
-        .await?;
+    let research_plan: ResearchPlan = stateful_client.chat_structured(&plan_prompt).await?;
 
     println!("Research Plan:");
     println!("  Approach: {}", research_plan.approach);
@@ -258,27 +255,21 @@ Use the web_search tool to find relevant information, then use read_document to 
         research_topic
     );
 
-    let research_response = stateful_client
-        .chat_with_tools(&research_prompt)
-        .await?;
+    let research_response = stateful_client.chat_with_tools(&research_prompt).await?;
 
     // Process tool calls
     if let Some(tool_calls) = &research_response.tool_calls {
         println!("📡 Executing {} tool calls...", tool_calls.len());
-        
+
         for tool_call in tool_calls {
             println!("  - {}: {}", tool_call.name, tool_call.id);
         }
 
         // Execute tools and get results
-        let tool_results = stateful_client
-            .execute_tool_calls(tool_calls)
-            .await?;
+        let tool_results = stateful_client.execute_tool_calls(tool_calls).await?;
 
         // Continue conversation with tool results
-        let synthesis_response = stateful_client
-            .continue_with_tools(tool_results)
-            .await?;
+        let synthesis_response = stateful_client.continue_with_tools(tool_results).await?;
 
         println!("\n📊 Initial findings gathered");
     }
@@ -288,9 +279,7 @@ Use the web_search tool to find relevant information, then use read_document to 
 
     let report_prompt = "Based on your research, please generate a comprehensive research report with all findings, sources, and recommendations.";
 
-    let report: ResearchReport = stateful_client
-        .chat_structured(report_prompt)
-        .await?;
+    let report: ResearchReport = stateful_client.chat_structured(report_prompt).await?;
 
     // Display report
     println!("=" * 60);
@@ -315,7 +304,10 @@ Use the web_search tool to find relevant information, then use read_document to 
 
     println!("\nSOURCES:");
     for source in &report.sources {
-        println!("- {} (Credibility: {:.1}/5.0)", source.title, source.credibility_score);
+        println!(
+            "- {} (Credibility: {:.1}/5.0)",
+            source.title, source.credibility_score
+        );
         println!("  {}", source.citation);
     }
 

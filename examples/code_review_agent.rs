@@ -155,9 +155,7 @@ impl UserAuth {
         code_to_review
     );
 
-    let review: CodeReview = stateful_client
-        .chat_structured(&review_prompt)
-        .await?;
+    let review: CodeReview = stateful_client.chat_structured(&review_prompt).await?;
 
     // Display review results
     println!("📊 Code Review Results");
