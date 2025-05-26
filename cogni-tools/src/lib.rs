@@ -25,7 +25,7 @@ pub use error::{ToolError, ToolErrorKind};
 pub use executor::{
     AsyncToolFunction, FunctionExecutor, FunctionExecutorBuilder, SyncToolFunction, ToolExecutor,
 };
-pub use registry::{RegistryBuilder, ToolRegistry};
+pub use registry::ToolRegistry;
 pub use validation::ToolValidator;
 
 /// Macro for creating a vector of boxed tool executors

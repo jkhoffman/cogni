@@ -21,11 +21,6 @@ impl ToolRegistry {
         }
     }
 
-    /// Create a new registry builder
-    pub fn builder() -> RegistryBuilder {
-        RegistryBuilder::new()
-    }
-
     /// Create a registry from a collection of executors
     pub async fn from_executors(
         executors: impl IntoIterator<Item = Box<dyn ToolExecutor>>,
@@ -64,15 +59,6 @@ impl ToolRegistry {
             result.push(executor.tool().clone());
         }
         result
-    }
-
-    /// Get tool names
-    pub async fn list_names(&self) -> Vec<String> {
-        let tools = self.tools.read().await;
-        // Pre-allocate with known capacity
-        let mut names = Vec::with_capacity(tools.len());
-        names.extend(tools.keys().cloned());
-        names
     }
 
     /// Execute a tool call
@@ -132,45 +118,6 @@ impl ToolRegistry {
 }
 
 impl Default for ToolRegistry {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Builder for creating a registry with tools
-pub struct RegistryBuilder {
-    executors: Vec<Box<dyn ToolExecutor>>,
-}
-
-impl RegistryBuilder {
-    /// Create a new builder
-    pub fn new() -> Self {
-        Self {
-            executors: Vec::new(),
-        }
-    }
-
-    /// Add one or more tool executors
-    pub fn with_tools<I>(mut self, executors: I) -> Self
-    where
-        I: IntoIterator,
-        I::Item: ToolExecutor + 'static,
-    {
-        for executor in executors {
-            self.executors.push(Box::new(executor));
-        }
-        self
-    }
-
-    /// Build the registry
-    pub async fn build(self) -> Result<ToolRegistry> {
-        let registry = ToolRegistry::new();
-        registry.register(self.executors).await?;
-        Ok(registry)
-    }
-}
-
-impl Default for RegistryBuilder {
     fn default() -> Self {
         Self::new()
     }

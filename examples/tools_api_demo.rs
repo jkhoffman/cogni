@@ -157,13 +157,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         registry2.len().await
     );
 
-    // Method 4: Using the builder pattern (most ergonomic for inline creation)
-    let registry3 = ToolRegistry::builder()
-        .with_tools(tools_vec![create_weather_tool(), create_calculator_tool()])
-        .build()
+    // Method 4: Inline creation with new() and register()
+    let registry3 = ToolRegistry::new();
+    registry3
+        .register(tools_vec![create_weather_tool(), create_calculator_tool()])
         .await?;
 
-    println!("Builder registry has {} tools", registry3.len().await);
+    println!("Inline registry has {} tools", registry3.len().await);
 
     Ok(())
 }

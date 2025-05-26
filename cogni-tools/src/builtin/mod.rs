@@ -2,7 +2,6 @@
 
 use crate::error::Result;
 use crate::executor::{FunctionExecutor, FunctionExecutorBuilder};
-use crate::registry::RegistryBuilder;
 use crate::validation::param_schema;
 use serde_json::{json, Value};
 
@@ -210,7 +209,9 @@ pub async fn create_builtin_registry() -> Result<crate::registry::ToolRegistry> 
     let mut tools = vec![calculator(), string_tools(), json_tools()];
     tools.extend(math_tools());
 
-    RegistryBuilder::new().with_tools(tools).build().await
+    let registry = crate::registry::ToolRegistry::new();
+    registry.register(tools).await?;
+    Ok(registry)
 }
 
 #[cfg(test)]
