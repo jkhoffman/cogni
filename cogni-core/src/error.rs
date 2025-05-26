@@ -116,3 +116,195 @@ impl From<serde_json::Error> for Error {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io;
+
+    #[test]
+    fn test_error_display() {
+        let error = Error::Network {
+            message: "Connection refused".into(),
+            source: None,
+        };
+        assert_eq!(error.to_string(), "Network error: Connection refused");
+
+        let error = Error::Provider {
+            provider: "openai".into(),
+            message: "Rate limit exceeded".into(),
+            retry_after: Some(Duration::from_secs(60)),
+            source: None,
+        };
+        assert_eq!(
+            error.to_string(),
+            "Provider error (openai): Rate limit exceeded"
+        );
+
+        let error = Error::Serialization {
+            message: "Invalid JSON".into(),
+            source: None,
+        };
+        assert_eq!(error.to_string(), "Serialization error: Invalid JSON");
+
+        let error = Error::Validation("Missing required field".into());
+        assert_eq!(error.to_string(), "Validation error: Missing required field");
+
+        let error = Error::ToolExecution("Tool not found".into());
+        assert_eq!(error.to_string(), "Tool execution error: Tool not found");
+
+        let error = Error::Timeout;
+        assert_eq!(error.to_string(), "Operation timed out");
+
+        let error = Error::Authentication("Invalid API key".into());
+        assert_eq!(error.to_string(), "Authentication error: Invalid API key");
+
+        let error = Error::Configuration("Invalid model name".into());
+        assert_eq!(error.to_string(), "Configuration error: Invalid model name");
+
+        let error = Error::Storage("Failed to save state".into());
+        assert_eq!(error.to_string(), "Storage error: Failed to save state");
+
+        let error = Error::ResponseError {
+            message: "Failed to parse response".into(),
+        };
+        assert_eq!(error.to_string(), "Response error: Failed to parse response");
+    }
+
+    #[test]
+    fn test_error_source() {
+        // Error without source
+        let error = Error::Network {
+            message: "Connection failed".into(),
+            source: None,
+        };
+        assert!(error.source().is_none());
+
+        // Error with source
+        let io_error = io::Error::new(io::ErrorKind::ConnectionRefused, "refused");
+        let error = Error::Network {
+            message: "Connection failed".into(),
+            source: Some(Box::new(io_error)),
+        };
+        assert!(error.source().is_some());
+
+        // Provider error with source
+        let io_error = io::Error::new(io::ErrorKind::TimedOut, "timeout");
+        let error = Error::Provider {
+            provider: "anthropic".into(),
+            message: "Request timed out".into(),
+            retry_after: None,
+            source: Some(Box::new(io_error)),
+        };
+        assert!(error.source().is_some());
+
+        // Serialization error with source
+        let json_error = serde_json::from_str::<String>("invalid").unwrap_err();
+        let error = Error::Serialization {
+            message: "JSON parse error".into(),
+            source: Some(Box::new(json_error)),
+        };
+        assert!(error.source().is_some());
+
+        // Errors without source field
+        let error = Error::Validation("test".into());
+        assert!(error.source().is_none());
+
+        let error = Error::Timeout;
+        assert!(error.source().is_none());
+    }
+
+    #[test]
+    fn test_error_from_io_error() {
+        let io_error = io::Error::new(io::ErrorKind::ConnectionRefused, "Connection refused");
+        let error: Error = io_error.into();
+
+        match error {
+            Error::Network { message, source } => {
+                assert!(message.contains("Connection refused"));
+                assert!(source.is_some());
+            }
+            _ => panic!("Expected Network error"),
+        }
+    }
+
+    #[test]
+    fn test_error_from_serde_json_error() {
+        let json_error = serde_json::from_str::<String>("invalid json").unwrap_err();
+        let error: Error = json_error.into();
+
+        match error {
+            Error::Serialization { message, source } => {
+                assert!(!message.is_empty());
+                assert!(source.is_some());
+            }
+            _ => panic!("Expected Serialization error"),
+        }
+    }
+
+    #[test]
+    fn test_provider_error_with_retry_after() {
+        let error = Error::Provider {
+            provider: "openai".into(),
+            message: "Rate limit exceeded".into(),
+            retry_after: Some(Duration::from_secs(30)),
+            source: None,
+        };
+
+        match error {
+            Error::Provider { retry_after, .. } => {
+                assert_eq!(retry_after, Some(Duration::from_secs(30)));
+            }
+            _ => panic!("Expected Provider error"),
+        }
+    }
+
+    #[test]
+    fn test_error_debug_format() {
+        let error = Error::Network {
+            message: "Test error".into(),
+            source: None,
+        };
+        let debug_str = format!("{:?}", error);
+        assert!(debug_str.contains("Network"));
+        assert!(debug_str.contains("Test error"));
+    }
+
+    #[test]
+    fn test_result_type_alias() {
+        fn test_function() -> Result<String> {
+            Ok("success".to_string())
+        }
+
+        let result = test_function();
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "success");
+
+        fn failing_function() -> Result<String> {
+            Err(Error::Validation("Test failure".into()))
+        }
+
+        let result = failing_function();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_error_is_send_sync() {
+        fn assert_send<T: Send>() {}
+        fn assert_sync<T: Sync>() {}
+
+        assert_send::<Error>();
+        assert_sync::<Error>();
+    }
+
+    #[test]
+    fn test_nested_error_source() {
+        let io_error = io::Error::new(io::ErrorKind::PermissionDenied, "Access denied");
+        let error: Error = io_error.into();
+
+        let wrapper_error = Error::Storage(format!("Failed to save: {}", error));
+        
+        // Check the wrapper error message includes the nested error
+        assert!(wrapper_error.to_string().contains("Failed to save"));
+    }
+}

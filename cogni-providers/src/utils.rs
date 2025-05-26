@@ -64,7 +64,7 @@ mod tests {
     use super::*;
     use serde::{Deserialize, Serialize};
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
     struct TestRequest {
         message: String,
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -80,5 +80,74 @@ mod tests {
 
         let updated = set_stream_field(request, true);
         assert_eq!(updated.stream, Some(true));
+    }
+
+    #[test]
+    fn test_set_stream_field_with_existing_value() {
+        let request = TestRequest {
+            message: "test".to_string(),
+            stream: Some(false),
+        };
+
+        let updated = set_stream_field(request, true);
+        assert_eq!(updated.stream, Some(true));
+    }
+
+    // Note: We can't easily test check_response_status without http crate or a real server
+    // Those functions are tested indirectly through provider integration tests
+
+    // Note: to_network_error requires a reqwest::Error which is hard to construct in tests
+    // This function is tested indirectly through provider integration tests
+
+    #[test]
+    fn test_to_serialization_error() {
+        let json_err = serde_json::from_str::<TestRequest>("invalid json").unwrap_err();
+        let ser_err = to_serialization_error(json_err);
+
+        match ser_err {
+            Error::Serialization { message, source } => {
+                assert!(!message.is_empty());
+                assert!(source.is_some());
+            }
+            _ => panic!("Expected Serialization error"),
+        }
+    }
+
+    #[test]
+    fn test_set_stream_field_with_non_object() {
+        #[derive(Serialize, Deserialize, Debug, PartialEq)]
+        struct SimpleValue(String);
+
+        let value = SimpleValue("test".to_string());
+        let result = set_stream_field(value, true);
+        
+        // Should return the original value unchanged
+        assert_eq!(result, SimpleValue("test".to_string()));
+    }
+
+    #[test]
+    fn test_set_stream_field_preserves_other_fields() {
+        #[derive(Serialize, Deserialize, Debug, PartialEq)]
+        struct ComplexRequest {
+            message: String,
+            count: u32,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            stream: Option<bool>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            optional: Option<String>,
+        }
+
+        let request = ComplexRequest {
+            message: "test".to_string(),
+            count: 42,
+            stream: None,
+            optional: Some("value".to_string()),
+        };
+
+        let updated = set_stream_field(request, false);
+        assert_eq!(updated.message, "test");
+        assert_eq!(updated.count, 42);
+        assert_eq!(updated.stream, Some(false));
+        assert_eq!(updated.optional, Some("value".to_string()));
     }
 }

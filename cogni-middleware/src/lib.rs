@@ -225,7 +225,7 @@ impl Default for ServiceBuilder<Identity> {
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
-    use cogni_core::ResponseMetadata;
+    use cogni_core::{ResponseMetadata, Message, Model, Content};
 
     /// A simple echo service for testing
     #[derive(Clone)]
@@ -241,7 +241,10 @@ pub(crate) mod tests {
                 let content = request
                     .messages
                     .last()
-                    .and_then(|m| m.content.as_text())
+                    .and_then(|m| match &m.content {
+                        Content::Text(text) => Some(text.as_str()),
+                        _ => None,
+                    })
                     .unwrap_or("No message");
 
                 Ok(Response {
@@ -251,5 +254,243 @@ pub(crate) mod tests {
                 })
             })
         }
+    }
+
+    #[test]
+    fn test_box_service_creation() {
+        let echo = EchoService;
+        let _boxed = BoxService::new(echo);
+        // Just verify it compiles
+    }
+
+    #[tokio::test]
+    async fn test_box_service_call() {
+        let echo = EchoService;
+        let mut boxed = BoxService::new(echo);
+        
+        let request = Request::builder()
+            .model(Model("test".into()))
+            .message(Message::user("Hello"))
+            .build();
+        
+        let response = boxed.call(request).await.unwrap();
+        assert_eq!(response.content, "Echo: Hello");
+    }
+
+    #[test]
+    fn test_provider_service_creation() {
+        #[derive(Clone)]
+        struct MockProvider;
+        
+        #[async_trait::async_trait]
+        impl Provider for MockProvider {
+            type Stream = futures::stream::Empty<Result<cogni_core::StreamEvent, Error>>;
+            
+            async fn request(&self, _request: Request) -> Result<Response, Error> {
+                Ok(Response {
+                    content: "Mock response".to_string(),
+                    tool_calls: vec![],
+                    metadata: ResponseMetadata::default(),
+                })
+            }
+            
+            async fn stream(
+                &self,
+                _request: Request,
+            ) -> Result<Self::Stream, Error> {
+                Ok(futures::stream::empty())
+            }
+        }
+        
+        let provider = MockProvider;
+        let _service = ProviderService::new(provider);
+    }
+
+    #[tokio::test]
+    async fn test_provider_service_call() {
+        #[derive(Clone)]
+        struct MockProvider;
+        
+        #[async_trait::async_trait]
+        impl Provider for MockProvider {
+            type Stream = futures::stream::Empty<Result<cogni_core::StreamEvent, Error>>;
+            
+            async fn request(&self, _request: Request) -> Result<Response, Error> {
+                Ok(Response {
+                    content: "Provider response".to_string(),
+                    tool_calls: vec![],
+                    metadata: ResponseMetadata::default(),
+                })
+            }
+            
+            async fn stream(
+                &self,
+                _request: Request,
+            ) -> Result<Self::Stream, Error> {
+                Ok(futures::stream::empty())
+            }
+        }
+        
+        let provider = MockProvider;
+        let mut service = ProviderService::new(provider);
+        
+        let request = Request::builder()
+            .model(Model("test".into()))
+            .message(Message::user("Test"))
+            .build();
+        
+        let response = service.call(request).await.unwrap();
+        assert_eq!(response.content, "Provider response");
+    }
+
+    #[test]
+    fn test_provider_ext_into_service() {
+        #[derive(Clone)]
+        struct MockProvider;
+        
+        #[async_trait::async_trait]
+        impl Provider for MockProvider {
+            type Stream = futures::stream::Empty<Result<cogni_core::StreamEvent, Error>>;
+            
+            async fn request(&self, _request: Request) -> Result<Response, Error> {
+                unimplemented!()
+            }
+            
+            async fn stream(
+                &self,
+                _request: Request,
+            ) -> Result<Self::Stream, Error> {
+                unimplemented!()
+            }
+        }
+        
+        let provider = MockProvider;
+        let _service = provider.into_service();
+    }
+
+    #[test]
+    fn test_identity_layer() {
+        let identity = Identity;
+        let echo = EchoService;
+        let service = identity.layer(echo.clone());
+        
+        // Should return the same service
+        // Can't directly compare, but we can verify it compiles
+        let _: EchoService = service;
+    }
+
+    #[test]
+    fn test_stack_layer() {
+        struct DoubleLayer;
+        impl<S> Layer<S> for DoubleLayer {
+            type Service = DoubleService<S>;
+            fn layer(&self, inner: S) -> Self::Service {
+                DoubleService { inner }
+            }
+        }
+        
+        struct DoubleService<S> {
+            inner: S,
+        }
+        
+        impl<S> Service<Request> for DoubleService<S>
+        where
+            S: Service<Request, Response = Response, Error = Error>,
+            S::Future: Send + 'static,
+        {
+            type Response = Response;
+            type Error = Error;
+            type Future = BoxFuture<Result<Response, Error>>;
+            
+            fn call(&mut self, request: Request) -> Self::Future {
+                let fut = self.inner.call(request);
+                Box::pin(async move {
+                    let mut response = fut.await?;
+                    response.content = format!("{} x2", response.content);
+                    Ok(response)
+                })
+            }
+        }
+        
+        let stack = Stack::new(Identity, DoubleLayer);
+        let echo = EchoService;
+        let _service = stack.layer(echo);
+    }
+
+    #[test]
+    fn test_service_builder() {
+        let builder = ServiceBuilder::new();
+        let echo = EchoService;
+        let service = builder.service(echo.clone());
+        
+        // Identity layer should return the same service
+        let _: EchoService = service;
+    }
+
+    #[test]
+    fn test_service_builder_with_layer() {
+        struct PrefixLayer(&'static str);
+        impl<S> Layer<S> for PrefixLayer {
+            type Service = PrefixService<S>;
+            fn layer(&self, inner: S) -> Self::Service {
+                PrefixService { 
+                    inner,
+                    prefix: self.0,
+                }
+            }
+        }
+        
+        struct PrefixService<S> {
+            inner: S,
+            prefix: &'static str,
+        }
+        
+        impl<S> Service<Request> for PrefixService<S>
+        where
+            S: Service<Request, Response = Response, Error = Error>,
+            S::Future: Send + 'static,
+        {
+            type Response = Response;
+            type Error = Error;
+            type Future = BoxFuture<Result<Response, Error>>;
+            
+            fn call(&mut self, request: Request) -> Self::Future {
+                let fut = self.inner.call(request);
+                let prefix = self.prefix;
+                Box::pin(async move {
+                    let mut response = fut.await?;
+                    response.content = format!("{}: {}", prefix, response.content);
+                    Ok(response)
+                })
+            }
+        }
+        
+        let builder = ServiceBuilder::new()
+            .layer(PrefixLayer("First"))
+            .layer(PrefixLayer("Second"));
+        
+        let echo = EchoService;
+        let _service = builder.service(echo);
+    }
+
+    #[test]
+    fn test_service_builder_default() {
+        let builder = ServiceBuilder::default();
+        let echo = EchoService;
+        let _service = builder.service(echo);
+    }
+
+    #[tokio::test]
+    async fn test_service_wrapper() {
+        let echo = EchoService;
+        let mut wrapper = ServiceWrapper { service: echo };
+        
+        let request = Request::builder()
+            .model(Model("test".into()))
+            .message(Message::user("Hi"))
+            .build();
+        
+        let response = wrapper.call(request).await.unwrap();
+        assert_eq!(response.content, "Echo: Hi");
     }
 }

@@ -22,3 +22,6 @@ serde_json = { workspace = true }
 sha2 = "0.10"
 indexmap = "2.0"
 uuid = { workspace = true }
+
+[dev-dependencies]
+tracing-test = "0.2"

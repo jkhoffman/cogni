@@ -236,3 +236,248 @@ pub enum BuildError {
     #[error("Request must contain at least one message")]
     NoMessages,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::message::Message;
+    use crate::types::tool::{Tool, Function};
+    use serde_json::json;
+
+    #[test]
+    fn test_model_creation() {
+        let model = Model::new("gpt-4");
+        assert_eq!(model.0, "gpt-4");
+
+        let model = Model::from("claude-3");
+        assert_eq!(model.0, "claude-3");
+
+        let model = Model::from("llama".to_string());
+        assert_eq!(model.0, "llama");
+
+        let model: Model = "custom-model".into();
+        assert_eq!(model.0, "custom-model");
+    }
+
+    #[test]
+    fn test_model_default() {
+        let model = Model::default();
+        assert_eq!(model.0, "gpt-4");
+    }
+
+    #[test]
+    fn test_model_display() {
+        let model = Model("test-model".to_string());
+        assert_eq!(model.to_string(), "test-model");
+    }
+
+    #[test]
+    fn test_parameters_builder() {
+        let params = Parameters::builder()
+            .max_tokens(100)
+            .temperature(0.7)
+            .top_p(0.9)
+            .stop(vec!["\\n", "STOP"])
+            .build();
+
+        assert_eq!(params.max_tokens, Some(100));
+        assert_eq!(params.temperature, Some(0.7));
+        assert_eq!(params.top_p, Some(0.9));
+        assert_eq!(params.stop, Some(vec!["\\n".to_string(), "STOP".to_string()]));
+        assert_eq!(params.n, None);
+        assert_eq!(params.presence_penalty, None);
+        assert_eq!(params.frequency_penalty, None);
+        assert_eq!(params.seed, None);
+    }
+
+    #[test]
+    fn test_parameters_default() {
+        let params = Parameters::default();
+        assert!(params.max_tokens.is_none());
+        assert!(params.temperature.is_none());
+        assert!(params.top_p.is_none());
+        assert!(params.stop.is_none());
+    }
+
+    #[test]
+    fn test_request_new() {
+        let messages = vec![
+            Message::system("You are a helpful assistant"),
+            Message::user("Hello"),
+        ];
+        let request = Request::new(messages.clone());
+
+        assert_eq!(request.messages.len(), 2);
+        assert_eq!(request.model.0, "gpt-4");
+        assert_eq!(request.parameters, Parameters::default());
+        assert!(request.tools.is_empty());
+        assert!(request.response_format.is_none());
+    }
+
+    #[test]
+    fn test_request_has_tools() {
+        let request = Request::new(vec![Message::user("test")]);
+        assert!(!request.has_tools());
+
+        let mut request_with_tools = request.clone();
+        request_with_tools.tools.push(Tool {
+            name: "test".to_string(),
+            description: "test tool".to_string(),
+            function: Function {
+                parameters: json!({}),
+                returns: None,
+            },
+        });
+        assert!(request_with_tools.has_tools());
+    }
+
+    #[test]
+    fn test_request_builder_basic() {
+        let request = Request::builder()
+            .message(Message::system("System message"))
+            .message(Message::user("User message"))
+            .model("gpt-3.5-turbo")
+            .temperature(0.5)
+            .max_tokens(1000)
+            .build();
+
+        assert_eq!(request.messages.len(), 2);
+        assert_eq!(request.model.0, "gpt-3.5-turbo");
+        assert_eq!(request.parameters.temperature, Some(0.5));
+        assert_eq!(request.parameters.max_tokens, Some(1000));
+    }
+
+    #[test]
+    fn test_request_builder_with_messages() {
+        let messages = vec![
+            Message::user("First"),
+            Message::assistant("Response"),
+            Message::user("Second"),
+        ];
+
+        let request = Request::builder()
+            .messages(messages.clone())
+            .build();
+
+        assert_eq!(request.messages.len(), 3);
+    }
+
+    #[test]
+    fn test_request_builder_with_parameters() {
+        let params = Parameters::builder()
+            .temperature(0.8)
+            .max_tokens(500)
+            .build();
+
+        let request = Request::builder()
+            .message(Message::user("test"))
+            .parameters(params.clone())
+            .temperature(0.9) // This should override the params temperature
+            .build();
+
+        assert_eq!(request.parameters.temperature, Some(0.9));
+        assert_eq!(request.parameters.max_tokens, Some(500));
+    }
+
+    #[test]
+    fn test_request_builder_with_tools() {
+        let tool = Tool {
+            name: "calculator".to_string(),
+            description: "Calculates math".to_string(),
+            function: Function {
+                parameters: json!({"type": "object"}),
+                returns: Some("number".to_string()),
+            },
+        };
+
+        let request = Request::builder()
+            .message(Message::user("Calculate 2+2"))
+            .tool(tool.clone())
+            .build();
+
+        assert_eq!(request.tools.len(), 1);
+        assert_eq!(request.tools[0].name, "calculator");
+    }
+
+    #[test]
+    fn test_request_builder_with_response_format() {
+        let format = ResponseFormat::JsonObject;
+
+        let request = Request::builder()
+            .message(Message::user("test"))
+            .response_format(format.clone())
+            .build();
+
+        assert_eq!(request.response_format, Some(ResponseFormat::JsonObject));
+    }
+
+    #[test]
+    fn test_request_builder_try_build_success() {
+        let result = Request::builder()
+            .message(Message::user("test"))
+            .try_build();
+
+        assert!(result.is_ok());
+        let request = result.unwrap();
+        assert_eq!(request.messages.len(), 1);
+    }
+
+    #[test]
+    fn test_request_builder_try_build_no_messages() {
+        let result = Request::builder().try_build();
+
+        assert!(result.is_err());
+        match result {
+            Err(BuildError::NoMessages) => {},
+            _ => panic!("Expected NoMessages error"),
+        }
+    }
+
+    #[test]
+    fn test_build_error_display() {
+        let error = BuildError::NoMessages;
+        assert_eq!(error.to_string(), "Request must contain at least one message");
+    }
+
+    #[test]
+    fn test_request_builder_default() {
+        let builder = RequestBuilder::default();
+        let request = builder
+            .message(Message::user("test"))
+            .build();
+        
+        assert_eq!(request.model.0, "gpt-4");
+    }
+
+    #[test]
+    fn test_model_equality() {
+        let model1 = Model("gpt-4".to_string());
+        let model2 = Model("gpt-4".to_string());
+        let model3 = Model("claude".to_string());
+
+        assert_eq!(model1, model2);
+        assert_ne!(model1, model3);
+    }
+
+    #[test]
+    fn test_parameters_equality() {
+        let params1 = Parameters::builder().temperature(0.7).build();
+        let params2 = Parameters::builder().temperature(0.7).build();
+        let params3 = Parameters::builder().temperature(0.8).build();
+
+        assert_eq!(params1, params2);
+        assert_ne!(params1, params3);
+    }
+
+    #[test]
+    fn test_request_clone() {
+        let request = Request::builder()
+            .message(Message::user("test"))
+            .model("test-model")
+            .temperature(0.5)
+            .build();
+
+        let cloned = request.clone();
+        assert_eq!(request, cloned);
+    }
+}
