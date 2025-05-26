@@ -9,7 +9,7 @@ use tracing::{debug, trace};
 use uuid::Uuid;
 
 /// In-memory state store implementation
-/// 
+///
 /// This store keeps all conversation states in memory and is suitable for
 /// development, testing, or short-lived applications. Data is lost when
 /// the application stops.
@@ -70,10 +70,7 @@ impl StateStore for MemoryStore {
     async fn load(&self, id: &Uuid) -> StateResult<ConversationState> {
         trace!("Loading conversation {} from memory store", id);
         let states = self.states.read().await;
-        states
-            .get(id)
-            .cloned()
-            .ok_or_else(|| StateError::NotFound(*id))
+        states.get(id).cloned().ok_or(StateError::NotFound(*id))
     }
 
     async fn delete(&self, id: &Uuid) -> StateResult<()> {
@@ -93,7 +90,10 @@ impl StateStore for MemoryStore {
         let mut conversations: Vec<_> = states.values().cloned().collect();
         // Sort by updated_at descending (most recent first)
         conversations.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
-        debug!("Listed {} conversations from memory store", conversations.len());
+        debug!(
+            "Listed {} conversations from memory store",
+            conversations.len()
+        );
         Ok(conversations)
     }
 
@@ -185,24 +185,24 @@ mod tests {
     #[tokio::test]
     async fn test_memory_store_list_ordering() {
         let store = MemoryStore::new();
-        
+
         // Create states with small delays to ensure different timestamps
         let mut state1 = ConversationState::new();
         state1.set_title("First");
         store.save(&state1).await.unwrap();
-        
+
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
-        
+
         let mut state2 = ConversationState::new();
         state2.set_title("Second");
         store.save(&state2).await.unwrap();
-        
+
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
-        
+
         // Update the first state to make it most recent
         state1.add_tag("updated");
         store.save(&state1).await.unwrap();
-        
+
         let list = store.list().await.unwrap();
         assert_eq!(list.len(), 2);
         assert_eq!(list[0].id, state1.id); // Most recently updated

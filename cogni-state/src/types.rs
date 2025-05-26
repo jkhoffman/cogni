@@ -157,16 +157,16 @@ mod tests {
     fn test_add_message() {
         let mut state = ConversationState::new();
         let original_updated = state.updated_at;
-        
+
         // Sleep briefly to ensure time difference
         std::thread::sleep(std::time::Duration::from_millis(10));
-        
+
         state.add_message(Message {
             role: Role::User,
             content: Content::Text("Hello".to_string()),
             metadata: Metadata::default(),
         });
-        
+
         assert_eq!(state.messages.len(), 1);
         assert!(state.updated_at > original_updated);
     }
@@ -174,15 +174,15 @@ mod tests {
     #[test]
     fn test_tags() {
         let mut state = ConversationState::new();
-        
+
         state.add_tag("test");
         state.add_tag("conversation");
         state.add_tag("test"); // Duplicate, shouldn't be added
-        
+
         assert_eq!(state.metadata.tags.len(), 2);
         assert!(state.metadata.tags.contains(&"test".to_string()));
         assert!(state.metadata.tags.contains(&"conversation".to_string()));
-        
+
         assert!(state.remove_tag("test"));
         assert!(!state.remove_tag("nonexistent"));
         assert_eq!(state.metadata.tags.len(), 1);
@@ -191,10 +191,10 @@ mod tests {
     #[test]
     fn test_custom_metadata() {
         let mut state = ConversationState::new();
-        
+
         state.set_custom("user_id", "12345");
         state.set_custom("session_type", "support");
-        
+
         assert_eq!(state.get_custom("user_id"), Some("12345"));
         assert_eq!(state.get_custom("session_type"), Some("support"));
         assert_eq!(state.get_custom("nonexistent"), None);

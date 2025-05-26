@@ -4,8 +4,8 @@ use crate::{ConversationState, StateError, StateResult};
 use async_trait::async_trait;
 use uuid::Uuid;
 
-mod memory;
 mod file;
+mod memory;
 
 pub use file::FileStore;
 pub use memory::MemoryStore;
@@ -151,7 +151,10 @@ mod tests {
         store.save(&state2).await.unwrap();
         store.save(&state3).await.unwrap();
 
-        let important = store.find_by_tags(&["important".to_string()]).await.unwrap();
+        let important = store
+            .find_by_tags(&["important".to_string()])
+            .await
+            .unwrap();
         assert_eq!(important.len(), 1);
         assert_eq!(important[0].id, state1.id);
 

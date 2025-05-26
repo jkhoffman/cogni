@@ -75,7 +75,10 @@ pub struct StateService<S> {
 
 impl<S> StateService<S> {
     /// Get or create a conversation state for a request
-    async fn get_or_create_state(&self, conversation_id: Option<Uuid>) -> Result<ConversationState, Error> {
+    async fn get_or_create_state(
+        &self,
+        conversation_id: Option<Uuid>,
+    ) -> Result<ConversationState, Error> {
         if let Some(id) = conversation_id {
             // Check cache first
             let cache = self.state_cache.lock().await;
@@ -107,7 +110,9 @@ impl<S> StateService<S> {
     /// Extract conversation ID from request metadata
     fn extract_conversation_id(request: &Request) -> Option<Uuid> {
         // Look for conversation ID in the first message's metadata
-        request.messages.first()
+        request
+            .messages
+            .first()
             .and_then(|msg| msg.metadata.custom.get("conversation_id"))
             .and_then(|id| Uuid::parse_str(id).ok())
     }
@@ -138,14 +143,23 @@ impl<S> StateService<S> {
         }
 
         // Save to cache
-        self.state_cache.lock().await.insert(state.id, state.clone());
+        self.state_cache
+            .lock()
+            .await
+            .insert(state.id, state.clone());
 
         // Save to store if auto-save is enabled and we have a conversation ID
         // (don't save ephemeral conversations)
-        if self.config.auto_save && request.messages.first()
-            .and_then(|msg| msg.metadata.custom.get("conversation_id"))
-            .is_some() {
-            self.store.save(&state).await
+        if self.config.auto_save
+            && request
+                .messages
+                .first()
+                .and_then(|msg| msg.metadata.custom.get("conversation_id"))
+                .is_some()
+        {
+            self.store
+                .save(&state)
+                .await
                 .map_err(|e| Error::Storage(format!("Failed to save state: {}", e)))?;
         }
 
@@ -170,7 +184,10 @@ where
         Box::pin(async move {
             // Extract conversation ID
             let conversation_id = Self::extract_conversation_id(&request);
-            trace!("Processing request with conversation_id: {:?}", conversation_id);
+            trace!(
+                "Processing request with conversation_id: {:?}",
+                conversation_id
+            );
 
             // Get or create state
             let state = service.get_or_create_state(conversation_id).await?;
@@ -181,7 +198,9 @@ where
             // Include conversation history if configured
             if config.include_history && !state.messages.is_empty() {
                 let history_messages = if let Some(max) = config.max_history_messages {
-                    state.messages.iter()
+                    state
+                        .messages
+                        .iter()
                         .rev()
                         .take(max)
                         .rev()
@@ -209,9 +228,14 @@ where
             };
 
             // Update state with response
-            service.update_state(state, &update_request, &response).await?;
+            service
+                .update_state(state, &update_request, &response)
+                .await?;
 
-            debug!("State middleware processed request for conversation: {:?}", conversation_id);
+            debug!(
+                "State middleware processed request for conversation: {:?}",
+                conversation_id
+            );
             Ok(response)
         })
     }
@@ -265,10 +289,10 @@ mod tests {
 
         let conversation_id = Uuid::new_v4();
         let mut message = Message::user("Hello");
-        message.metadata.custom.insert(
-            "conversation_id".to_string(),
-            conversation_id.to_string(),
-        );
+        message
+            .metadata
+            .custom
+            .insert("conversation_id".to_string(), conversation_id.to_string());
 
         let request = Request {
             messages: vec![message],
@@ -303,10 +327,10 @@ mod tests {
 
         // Send new message with same conversation ID
         let mut message = Message::user("Second message");
-        message.metadata.custom.insert(
-            "conversation_id".to_string(),
-            conversation_id.to_string(),
-        );
+        message
+            .metadata
+            .custom
+            .insert("conversation_id".to_string(), conversation_id.to_string());
 
         let request = Request {
             messages: vec![message],

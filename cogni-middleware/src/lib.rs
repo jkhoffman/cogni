@@ -238,11 +238,12 @@ pub(crate) mod tests {
 
         fn call(&mut self, request: Request) -> Self::Future {
             Box::pin(async move {
-                let content = request.messages
+                let content = request
+                    .messages
                     .last()
                     .and_then(|m| m.content.as_text())
                     .unwrap_or("No message");
-                
+
                 Ok(Response {
                     content: format!("Echo: {}", content),
                     tool_calls: vec![],

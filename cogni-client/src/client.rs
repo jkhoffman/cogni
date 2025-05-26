@@ -66,9 +66,9 @@ impl<P: Provider> Client<P> {
     }
 
     /// Create a stateful client with conversation persistence
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```no_run
     /// # use cogni_client::Client;
     /// # use cogni_providers::OpenAI;
@@ -79,7 +79,7 @@ impl<P: Provider> Client<P> {
     /// let client = Client::new(provider);
     /// let store = Arc::new(MemoryStore::new());
     /// let mut stateful = client.with_state(store);
-    /// 
+    ///
     /// // Start a new conversation
     /// stateful.new_conversation().await?;
     /// let response = stateful.chat("Hello!").await?;

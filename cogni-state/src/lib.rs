@@ -32,7 +32,7 @@ mod tests {
             content: Content::Text("Hello".to_string()),
             metadata: Metadata::default(),
         };
-        
+
         state.add_message(message.clone());
         assert_eq!(state.messages.len(), 1);
         assert_eq!(state.messages[0].content, message.content);

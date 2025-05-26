@@ -8,7 +8,7 @@ use tracing::{debug, trace};
 use uuid::Uuid;
 
 /// A client that maintains conversation state across interactions
-/// 
+///
 /// This wrapper around the base `Client` automatically manages conversation
 /// history, saving and loading state through a `StateStore`.
 pub struct StatefulClient<P: Provider> {
@@ -53,7 +53,8 @@ impl<P: Provider> StatefulClient<P> {
     /// Load an existing conversation
     pub async fn load_conversation(&mut self, id: Uuid) -> Result<(), Error> {
         trace!("Loading conversation: {}", id);
-        let state = self.store
+        let state = self
+            .store
             .load(&id)
             .await
             .map_err(|e| Error::Storage(format!("Failed to load conversation: {}", e)))?;
@@ -183,12 +184,12 @@ impl<P: Provider> StatefulClient<P> {
             .delete(id)
             .await
             .map_err(|e| Error::Storage(format!("Failed to delete conversation: {}", e)))?;
-        
+
         // Clear current if it's the one being deleted
         if self.current_conversation_id() == Some(*id) {
             self.clear_current();
         }
-        
+
         Ok(())
     }
 
@@ -231,12 +232,13 @@ mod tests {
 
     #[async_trait::async_trait]
     impl Provider for MockProvider {
-        type Stream = Pin<Box<dyn futures::Stream<Item = Result<cogni_core::StreamEvent, Error>> + Send>>;
+        type Stream =
+            Pin<Box<dyn futures::Stream<Item = Result<cogni_core::StreamEvent, Error>> + Send>>;
 
         async fn request(&self, _request: Request) -> Result<Response, Error> {
             let mut index = self.current_index.lock().unwrap();
             let responses = self.responses.lock().unwrap();
-            
+
             if *index < responses.len() {
                 let response = responses[*index].clone();
                 *index += 1;
@@ -257,19 +259,18 @@ mod tests {
 
     #[tokio::test]
     async fn test_stateful_client_basic() {
-        let provider = MockProvider::new()
-            .with_response(Response {
-                content: "Hello! How can I help you?".to_string(),
-                tool_calls: vec![],
-                metadata: ResponseMetadata {
-                    usage: Some(Usage {
-                        prompt_tokens: 10,
-                        completion_tokens: 8,
-                        total_tokens: 18,
-                    }),
-                    ..Default::default()
-                },
-            });
+        let provider = MockProvider::new().with_response(Response {
+            content: "Hello! How can I help you?".to_string(),
+            tool_calls: vec![],
+            metadata: ResponseMetadata {
+                usage: Some(Usage {
+                    prompt_tokens: 10,
+                    completion_tokens: 8,
+                    total_tokens: 18,
+                }),
+                ..Default::default()
+            },
+        });
 
         let client = Client::new(provider);
         let store = Arc::new(MemoryStore::new());
@@ -281,10 +282,7 @@ mod tests {
 
         // Send a message
         let response = stateful.chat("Hello!").await.unwrap();
-        assert_eq!(
-            response.content,
-            "Hello! How can I help you?"
-        );
+        assert_eq!(response.content, "Hello! How can I help you?");
 
         // Check state was updated
         let state = stateful.current_state().unwrap();
@@ -310,12 +308,18 @@ mod tests {
 
         // Create multiple conversations
         let id1 = stateful.new_conversation().await.unwrap();
-        stateful.current_state_mut().unwrap().set_title("First conversation");
+        stateful
+            .current_state_mut()
+            .unwrap()
+            .set_title("First conversation");
         stateful.current_state_mut().unwrap().add_tag("test");
         stateful.save().await.unwrap();
 
         let id2 = stateful.new_conversation().await.unwrap();
-        stateful.current_state_mut().unwrap().set_title("Second conversation");
+        stateful
+            .current_state_mut()
+            .unwrap()
+            .set_title("Second conversation");
         stateful.current_state_mut().unwrap().add_tag("example");
         stateful.save().await.unwrap();
 
