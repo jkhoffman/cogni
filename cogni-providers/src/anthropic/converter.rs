@@ -2,7 +2,7 @@
 
 use crate::traits::RequestConverter;
 use async_trait::async_trait;
-use cogni_core::{Content, Error, Request, ResponseFormat, Role, ToolCall};
+use cogni_core::{Content, Error, Message, Request, ResponseFormat, Role, Tool, ToolCall};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -139,104 +139,8 @@ pub struct MessageDelta {
 
 // Conversion functions
 pub fn to_anthropic_request(request: &Request) -> AnthropicRequest {
-    let mut messages = Vec::new();
-    let mut system_message = None;
-
-    for msg in &request.messages {
-        match msg.role {
-            Role::System => {
-                // Anthropic uses a separate system parameter
-                if let Content::Text(text) = &msg.content {
-                    system_message = Some(text.clone());
-                }
-            }
-            Role::User => {
-                messages.push(AnthropicMessage {
-                    role: "user".to_string(),
-                    content: convert_content(&msg.content),
-                });
-            }
-            Role::Assistant => {
-                messages.push(AnthropicMessage {
-                    role: "assistant".to_string(),
-                    content: convert_content(&msg.content),
-                });
-            }
-            Role::Tool => {
-                // Tool responses are handled via content blocks
-                if let Some(tool_call_id) = &msg.metadata.tool_call_id {
-                    if let Content::Text(text) = &msg.content {
-                        messages.push(AnthropicMessage {
-                            role: "user".to_string(),
-                            content: AnthropicContent::Blocks(vec![ContentBlock::ToolResult {
-                                tool_use_id: tool_call_id.clone(),
-                                content: text.clone(),
-                            }]),
-                        });
-                    }
-                }
-            }
-            _ => {
-                // Unknown role - skip this message
-                continue;
-            }
-        }
-    }
-
-    // Handle structured output via tool use workaround
-    let (tools, tool_choice) = if let Some(format) = &request.response_format {
-        // Create a tool for structured output
-        let structured_tool = match format {
-            ResponseFormat::JsonSchema { schema, .. } => AnthropicTool {
-                name: "structured_output".to_string(),
-                description: "Generate structured output according to the schema".to_string(),
-                input_schema: schema.clone(),
-            },
-            ResponseFormat::JsonObject => AnthropicTool {
-                name: "json_output".to_string(),
-                description: "Generate JSON output".to_string(),
-                input_schema: serde_json::json!({
-                    "type": "object",
-                    "additionalProperties": true
-                }),
-            },
-        };
-
-        // Combine with existing tools if any
-        let mut all_tools = request
-            .tools
-            .iter()
-            .map(|tool| AnthropicTool {
-                name: tool.name.clone(),
-                description: tool.description.clone(),
-                input_schema: tool.function.parameters.clone(),
-            })
-            .collect::<Vec<_>>();
-
-        let tool_name = structured_tool.name.clone();
-        all_tools.push(structured_tool);
-
-        // Force the use of our structured output tool
-        let tool_choice = Some(ToolChoice::Tool { name: tool_name });
-
-        (Some(all_tools), tool_choice)
-    } else if request.tools.is_empty() {
-        (None, None)
-    } else {
-        // Regular tools without structured output
-        let tools = Some(
-            request
-                .tools
-                .iter()
-                .map(|tool| AnthropicTool {
-                    name: tool.name.clone(),
-                    description: tool.description.clone(),
-                    input_schema: tool.function.parameters.clone(),
-                })
-                .collect(),
-        );
-        (tools, None)
-    };
+    let (messages, system_message) = convert_messages(&request.messages);
+    let (tools, tool_choice) = convert_tools_and_format(request);
 
     AnthropicRequest {
         model: request.model.to_string(),
@@ -248,6 +152,118 @@ pub fn to_anthropic_request(request: &Request) -> AnthropicRequest {
         system: system_message,
         tool_choice,
     }
+}
+
+/// Convert messages to Anthropic format, extracting system message
+fn convert_messages(messages: &[Message]) -> (Vec<AnthropicMessage>, Option<String>) {
+    let mut anthropic_messages = Vec::new();
+    let mut system_message = None;
+
+    for msg in messages {
+        match msg.role {
+            Role::System => {
+                // Anthropic uses a separate system parameter
+                if let Content::Text(text) = &msg.content {
+                    system_message = Some(text.clone());
+                }
+            }
+            Role::User => {
+                anthropic_messages.push(AnthropicMessage {
+                    role: "user".to_string(),
+                    content: convert_content(&msg.content),
+                });
+            }
+            Role::Assistant => {
+                anthropic_messages.push(AnthropicMessage {
+                    role: "assistant".to_string(),
+                    content: convert_content(&msg.content),
+                });
+            }
+            Role::Tool => {
+                if let Some(anthropic_msg) = convert_tool_message(msg) {
+                    anthropic_messages.push(anthropic_msg);
+                }
+            }
+            _ => {
+                // Unknown role - skip this message
+                continue;
+            }
+        }
+    }
+
+    (anthropic_messages, system_message)
+}
+
+/// Convert a tool message to Anthropic format
+fn convert_tool_message(msg: &Message) -> Option<AnthropicMessage> {
+    if let Some(tool_call_id) = &msg.metadata.tool_call_id {
+        if let Content::Text(text) = &msg.content {
+            return Some(AnthropicMessage {
+                role: "user".to_string(),
+                content: AnthropicContent::Blocks(vec![ContentBlock::ToolResult {
+                    tool_use_id: tool_call_id.clone(),
+                    content: text.clone(),
+                }]),
+            });
+        }
+    }
+    None
+}
+
+/// Convert tools and response format to Anthropic format
+fn convert_tools_and_format(request: &Request) -> (Option<Vec<AnthropicTool>>, Option<ToolChoice>) {
+    if let Some(format) = &request.response_format {
+        convert_structured_output_as_tool(format, &request.tools)
+    } else if request.tools.is_empty() {
+        (None, None)
+    } else {
+        // Regular tools without structured output
+        let tools = Some(convert_tools_to_anthropic(&request.tools));
+        (tools, None)
+    }
+}
+
+/// Convert structured output format to a tool
+fn convert_structured_output_as_tool(
+    format: &ResponseFormat,
+    existing_tools: &[Tool],
+) -> (Option<Vec<AnthropicTool>>, Option<ToolChoice>) {
+    let structured_tool = match format {
+        ResponseFormat::JsonSchema { schema, .. } => AnthropicTool {
+            name: "structured_output".to_string(),
+            description: "Generate structured output according to the schema".to_string(),
+            input_schema: schema.clone(),
+        },
+        ResponseFormat::JsonObject => AnthropicTool {
+            name: "json_output".to_string(),
+            description: "Generate JSON output".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "additionalProperties": true
+            }),
+        },
+    };
+
+    let tool_name = structured_tool.name.clone();
+    let mut all_tools = convert_tools_to_anthropic(existing_tools);
+    all_tools.push(structured_tool);
+
+    // Force the use of our structured output tool
+    let tool_choice = Some(ToolChoice::Tool { name: tool_name });
+
+    (Some(all_tools), tool_choice)
+}
+
+/// Convert tools to Anthropic format
+fn convert_tools_to_anthropic(tools: &[Tool]) -> Vec<AnthropicTool> {
+    tools
+        .iter()
+        .map(|tool| AnthropicTool {
+            name: tool.name.clone(),
+            description: tool.description.clone(),
+            input_schema: tool.function.parameters.clone(),
+        })
+        .collect()
 }
 
 fn convert_content(content: &Content) -> AnthropicContent {

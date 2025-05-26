@@ -14,7 +14,7 @@
 //! // Basic usage
 //! let provider = OpenAIBuilder::new("api-key")
 //!     .build()
-//!     .expect("Failed to build provider");
+//!     .unwrap();
 //!
 //! // With all options
 //! # let custom_client = Arc::new(cogni_providers::http::ReqwestClient::new().unwrap());
@@ -24,7 +24,7 @@
 //!     .default_model("gpt-4")
 //!     .with_client(custom_client)
 //!     .build()
-//!     .expect("Failed to build provider");
+//!     .unwrap();
 //! ```
 
 use crate::http::HttpClient;
@@ -66,7 +66,7 @@ pub trait ProviderBuilder: Sized {
 ///     .organization("org-...")
 ///     .default_model("gpt-4-turbo-preview")
 ///     .build()
-///     .expect("Failed to build OpenAI provider");
+///     .unwrap();
 /// ```
 pub struct OpenAIBuilder {
     api_key: String,
@@ -128,9 +128,15 @@ impl OpenAIBuilder {
         // Note: default_model is stored in the builder but not used in OpenAIConfig
         // It could be used if OpenAI provider supported per-instance default models
 
-        let client = self.client.unwrap_or_else(|| {
-            Arc::new(ReqwestClient::new().expect("Failed to create HTTP client"))
-        });
+        let client = match self.client {
+            Some(client) => client,
+            None => Arc::new(ReqwestClient::new().map_err(|e| Error::Provider {
+                provider: "OpenAI".to_string(),
+                message: format!("Failed to create HTTP client: {}", e),
+                retry_after: None,
+                source: Some(Box::new(e)),
+            })?),
+        };
 
         Ok(crate::OpenAI::new(config, client))
     }
@@ -164,7 +170,7 @@ impl ProviderBuilder for OpenAIBuilder {
 /// let provider = AnthropicBuilder::new("sk-ant-...")
 ///     .default_model("claude-3-opus-20240229")
 ///     .build()
-///     .expect("Failed to build Anthropic provider");
+///     .unwrap();
 /// ```
 pub struct AnthropicBuilder {
     api_key: String,
@@ -225,9 +231,15 @@ impl AnthropicBuilder {
                 .unwrap_or_else(|| "claude-3-sonnet-20240229".to_string()),
         };
 
-        let client = self.client.unwrap_or_else(|| {
-            Arc::new(ReqwestClient::new().expect("Failed to create HTTP client"))
-        });
+        let client = match self.client {
+            Some(client) => client,
+            None => Arc::new(ReqwestClient::new().map_err(|e| Error::Provider {
+                provider: "Anthropic".to_string(),
+                message: format!("Failed to create HTTP client: {}", e),
+                retry_after: None,
+                source: Some(Box::new(e)),
+            })?),
+        };
 
         Ok(crate::Anthropic::new(config, client))
     }
@@ -262,14 +274,14 @@ impl ProviderBuilder for AnthropicBuilder {
 /// // For local Ollama instance
 /// let provider = OllamaBuilder::new()
 ///     .build()
-///     .expect("Failed to build Ollama provider");
+///     .unwrap();
 ///
 /// // For remote Ollama instance
 /// let provider = OllamaBuilder::new()
 ///     .base_url("http://remote-server:11434")
 ///     .default_model("llama2")
 ///     .build()
-///     .expect("Failed to build Ollama provider");
+///     .unwrap();
 /// ```
 pub struct OllamaBuilder {
     base_url: Option<String>,
@@ -319,9 +331,15 @@ impl ProviderBuilder for OllamaBuilder {
             default_model: self.default_model.unwrap_or_else(|| "llama2".to_string()),
         };
 
-        let client = self.client.unwrap_or_else(|| {
-            Arc::new(ReqwestClient::new().expect("Failed to create HTTP client"))
-        });
+        let client = match self.client {
+            Some(client) => client,
+            None => Arc::new(ReqwestClient::new().map_err(|e| Error::Provider {
+                provider: "Ollama".to_string(),
+                message: format!("Failed to create HTTP client: {}", e),
+                retry_after: None,
+                source: Some(Box::new(e)),
+            })?),
+        };
 
         Ok(crate::Ollama::new(config, client))
     }
