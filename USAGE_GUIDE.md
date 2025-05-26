@@ -39,14 +39,14 @@ use cogni_providers::OpenAI;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a provider
     let provider = OpenAI::with_api_key("your-api-key".to_string());
-    
+
     // Create a client
     let client = Client::new(provider);
-    
+
     // Send a message
     let response = client.chat("Hello, how are you?").await?;
     println!("{}", response);
-    
+
     Ok(())
 }
 ```
@@ -202,7 +202,7 @@ let executor = FunctionExecutor::new_sync(calculator, |args: Value| {
     let op = args["operation"].as_str().unwrap();
     let a = args["a"].as_f64().unwrap();
     let b = args["b"].as_f64().unwrap();
-    
+
     let result = match op {
         "add" => a + b,
         "subtract" => a - b,
@@ -210,7 +210,7 @@ let executor = FunctionExecutor::new_sync(calculator, |args: Value| {
         "divide" => a / b,
         _ => return Err("Unknown operation".into()),
     };
-    
+
     Ok(json!({ "result": result }))
 });
 ```
@@ -406,7 +406,7 @@ let mut stream = provider.stream(request).await?;
 
 while let Some(event) = stream.next().await {
     accumulator.process_event(event?)?;
-    
+
     // Get accumulated content so far
     println!("Current: {}", accumulator.content());
 }
@@ -429,7 +429,7 @@ let mut accumulator = StreamAccumulator::new();
 
 while let Some(event) = stream.next().await {
     let event = event?;
-    
+
     match &event {
         StreamEvent::ToolCall(delta) => {
             println!("Tool call: {:?}", delta);
@@ -439,7 +439,7 @@ while let Some(event) = stream.next().await {
         }
         _ => {}
     }
-    
+
     accumulator.process_event(event)?;
 }
 ```
@@ -560,7 +560,7 @@ let logging = LoggingLayer::with_level(LogLevel::Info);
 enum AppError {
     #[error("LLM error: {0}")]
     Llm(#[from] cogni::Error),
-    
+
     #[error("Business logic error: {0}")]
     Business(String),
 }

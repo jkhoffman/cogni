@@ -1,7 +1,7 @@
 //! Request builder example showing advanced client usage
 
 use cogni_client::Client;
-use cogni_core::{Parameters, Role, Tool};
+use cogni_core::{Parameters, Tool, ToolFunction};
 use cogni_providers::openai::OpenAI;
 use std::env;
 
@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .max_tokens(200)
         .send()
         .await?;
-    
+
     println!("Response: {}\n", response.content);
 
     // Example 2: Multi-turn conversation
@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .temperature(0.5)
         .send()
         .await?;
-    
+
     println!("Response: {}\n", response.content);
 
     // Example 3: With custom parameters
@@ -56,24 +56,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .parameters(params)
         .send()
         .await?;
-    
+
     println!("Creative haiku:\n{}\n", response.content);
 
     // Example 4: With tools
     println!("=== With Tools ===");
     let word_count_tool = Tool {
-        name: "count_words".to_string(),
-        description: "Count the number of words in a text".to_string(),
-        input_schema: serde_json::json!({
-            "type": "object",
-            "properties": {
-                "text": {
-                    "type": "string",
-                    "description": "The text to count words in"
-                }
-            },
-            "required": ["text"]
-        }),
+        function: ToolFunction {
+            name: "count_words".to_string(),
+            description: "Count the number of words in a text".to_string(),
+            parameters: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "The text to count words in"
+                    }
+                },
+                "required": ["text"]
+            }),
+        },
     };
 
     let response = client
@@ -83,14 +85,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .tool(word_count_tool)
         .send()
         .await?;
-    
+
     if !response.tool_calls.is_empty() {
         println!("Tool calls made:");
         for call in &response.tool_calls {
             println!("  - {} with args: {}", call.name, call.arguments);
         }
     }
-    
+
     if !response.content.is_empty() {
         println!("Response: {}", response.content);
     }
@@ -103,18 +105,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .system("You are a helpful assistant. Always be concise.")
         .temperature(0.7)
         .build();
-    
+
     // Use the base request with different user messages
-    let questions = vec![
-        "What is Rust?",
-        "What is Python?",
-        "What is JavaScript?",
-    ];
+    let questions = vec!["What is Rust?", "What is Python?", "What is JavaScript?"];
 
     for question in questions {
         let mut request = base_request.clone();
         request.messages.push(cogni_core::Message::user(question));
-        
+
         let response = client.execute(request).await?;
         println!("Q: {}", question);
         println!("A: {}\n", response.content);

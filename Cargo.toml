@@ -1,14 +1,14 @@
 [workspace]
 resolver = "2"
 members = [
-    "cogni-core",
-    "cogni-providers",
-    "cogni-middleware",
-    "cogni-tools",
-    "cogni-client",
-    "cogni",
-    "cogni-state",
-    "cogni-context",
+  "cogni-core",
+  "cogni-providers",
+  "cogni-middleware",
+  "cogni-tools",
+  "cogni-client",
+  "cogni",
+  "cogni-state",
+  "cogni-context",
 ]
 
 [workspace.package]

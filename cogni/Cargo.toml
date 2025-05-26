@@ -154,6 +154,27 @@ name = "advanced_patterns_example"
 path = "../examples/client/advanced_patterns_example.rs"
 required-features = ["providers", "client", "middleware"]
 
+# Agent examples demonstrating real-world usage
+[[example]]
+name = "code_review_agent"
+path = "../examples/code_review_agent.rs"
+required-features = ["providers", "client", "state", "context"]
+
+[[example]]
+name = "customer_support_agent"
+path = "../examples/customer_support_agent.rs"
+required-features = ["providers", "client", "middleware", "state", "context"]
+
+[[example]]
+name = "research_assistant_agent"
+path = "../examples/research_assistant_agent.rs"
+required-features = ["providers", "client", "tools", "state", "context"]
+
+[[example]]
+name = "data_analysis_agent"
+path = "../examples/data_analysis_agent.rs"
+required-features = ["providers", "client", "middleware", "state", "context"]
+
 [dev-dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }

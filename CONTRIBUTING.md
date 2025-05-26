@@ -213,11 +213,11 @@ pub struct NewProvider { ... }
 
 impl Provider for NewProvider {
     type Stream = NewProviderStream;
-    
+
     async fn request(&self, request: Request) -> Result<Response, Error> {
         // Implementation
     }
-    
+
     async fn stream(&self, request: Request) -> Result<Self::Stream, Error> {
         // Implementation
     }

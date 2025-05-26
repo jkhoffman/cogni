@@ -10,13 +10,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Ok(api_key) = env::var("OPENAI_API_KEY") {
         println!("=== OpenAI Client ===");
         let provider = OpenAI::with_api_key(api_key);
-        let client = Client::new(provider)
-            .with_model("gpt-4o-mini");
+        let client = Client::new(provider).with_model("gpt-4o-mini");
 
         let response = client
             .chat("What are the main features of Rust in one sentence?")
             .await?;
-        
+
         println!("OpenAI says: {}\n", response);
     }
 
@@ -24,13 +23,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Ok(api_key) = env::var("ANTHROPIC_API_KEY") {
         println!("=== Anthropic Client ===");
         let provider = Anthropic::with_api_key(api_key);
-        let client = Client::new(provider)
-            .with_model("claude-3-haiku-20240307");
+        let client = Client::new(provider).with_model("claude-3-haiku-20240307");
 
         let response = client
             .chat("What are the main features of Rust in one sentence?")
             .await?;
-        
+
         println!("Claude says: {}\n", response);
     }
 
@@ -38,19 +36,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Ok(api_key) = env::var("OPENAI_API_KEY") {
         println!("=== Client with Custom Defaults ===");
         let provider = OpenAI::with_api_key(api_key);
-        
+
         let mut default_params = cogni_core::Parameters::default();
         default_params.temperature = Some(0.3);
         default_params.max_tokens = Some(100);
-        
+
         let client = Client::new(provider)
             .with_model("gpt-4o-mini")
             .with_parameters(default_params);
 
         // All requests will use these defaults
         let response1 = client.chat("Define 'algorithm' in one sentence.").await?;
-        let response2 = client.chat("Define 'data structure' in one sentence.").await?;
-        
+        let response2 = client
+            .chat("Define 'data structure' in one sentence.")
+            .await?;
+
         println!("Algorithm: {}", response1);
         println!("Data structure: {}", response2);
     }
@@ -72,7 +72,7 @@ async fn analyze_sentiment<P: cogni_core::Provider>(
     text: &str,
 ) -> Result<String, cogni_core::Error> {
     let client = Client::new(provider);
-    
+
     client
         .request()
         .model("gpt-4o-mini") // You might want to make this configurable

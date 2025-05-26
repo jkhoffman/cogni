@@ -84,7 +84,7 @@ If issues are discovered post-release:
 ### Release Announcement Template
 
 ```
-🎉 Cogni v0.1.0 Released! 
+🎉 Cogni v0.1.0 Released!
 
 Cogni is a unified Rust library for interacting with multiple LLM providers.
 

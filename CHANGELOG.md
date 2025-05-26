@@ -106,7 +106,7 @@ If you were using development versions, note these breaking changes:
    ```rust
    // Old
    impl Middleware for MyMiddleware { ... }
-   
+
    // New
    impl<S> Service<Request> for MyService<S> { ... }
    impl<S> Layer<S> for MyLayer { ... }
@@ -130,7 +130,7 @@ If you were using development versions, note these breaking changes:
    ```rust
    // Old
    use cogni_providers::anthropic::config::AnthropicConfig;
-   
+
    // New
    use cogni_providers::AnthropicConfig;
    ```

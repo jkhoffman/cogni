@@ -69,7 +69,7 @@ impl ApiKey {
     pub fn new(key: impl Into<String>) -> Self {
         Self(key.into())
     }
-    
+
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -95,7 +95,7 @@ impl BaseUrl {
     pub fn new(url: impl Into<String>) -> Self {
         Self(url.into())
     }
-    
+
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -128,7 +128,7 @@ impl OrganizationId {
     pub fn new(id: impl Into<String>) -> Self {
         Self(id.into())
     }
-    
+
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -156,37 +156,37 @@ use futures::Stream;
 use std::pin::Pin;
 
 /// Core trait for LLM providers
-/// 
+///
 /// Implementations of this trait provide access to specific LLM providers
 /// such as OpenAI, Anthropic, or Ollama.
 #[async_trait]
 pub trait LlmProvider: Send + Sync {
     /// The type of response chunk returned when streaming chat completions
     type ChatChunk: Send + 'static;
-    
+
     /// Execute a chat completion request
-    /// 
+    ///
     /// If the provider has a tool executor configured and the request includes tools,
     /// this method will handle tool execution automatically.
     async fn chat(&self, request: &ChatRequest) -> Result<ChatResponse, LlmError>;
-    
+
     /// Execute a text completion request
     async fn completion(&self, request: &CompletionRequest) -> Result<CompletionResponse, LlmError>;
-    
+
     /// Generate embeddings for given input
     async fn embeddings(&self, request: &EmbeddingRequest) -> Result<EmbeddingResponse, LlmError>;
-    
+
     /// Stream a chat completion response
-    /// 
+    ///
     /// Returns a Stream of response chunks that can be processed as they arrive.
     async fn stream_chat<'a>(
-        &'a self, 
+        &'a self,
         request: &'a ChatRequest
     ) -> Result<Pin<Box<dyn Stream<Item = Result<Self::ChatChunk, LlmError>> + Send + 'a>>, LlmError>;
-    
+
     /// Returns the supported models by this provider
     fn supported_models(&self) -> Vec<String>;
-    
+
     /// Check if a specific feature is supported by this provider
     fn supports_feature(&self, feature: ProviderFeature) -> bool;
 }
@@ -208,20 +208,20 @@ The `ToolExecutor` trait defines the interface for executing external tools, inc
 
 ```rust
 /// Trait for executing external tools
-/// 
+///
 /// This trait is implemented by components that can execute tools,
 /// such as MCP clients or custom tool implementations.
 #[async_trait]
 pub trait ToolExecutor: Send + Sync {
     /// Execute a tool with the given name and arguments
     async fn execute_tool(&self, name: &str, arguments: &str) -> Result<String, ToolError>;
-    
+
     /// Get a list of available tools
     async fn get_available_tools(&self) -> Result<Vec<Tool>, ToolError>;
 }
 
 /// No-op implementation of ToolExecutor that does nothing
-/// 
+///
 /// This is used as a default type parameter for providers that don't need tools
 #[derive(Debug, Clone, Copy, Default)]
 pub struct NoopToolExecutor;
@@ -231,7 +231,7 @@ impl ToolExecutor for NoopToolExecutor {
     async fn execute_tool(&self, _name: &str, _arguments: &str) -> Result<String, ToolError> {
         Err(ToolError::UnsupportedOperation("This provider does not support tools".into()))
     }
-    
+
     async fn get_available_tools(&self) -> Result<Vec<Tool>, ToolError> {
         Ok(Vec::new())
     }
@@ -242,22 +242,22 @@ impl ToolExecutor for NoopToolExecutor {
 pub enum ToolError {
     #[error("Tool not found: {0}")]
     ToolNotFound(String),
-    
+
     #[error("Invalid arguments: {0}")]
     InvalidArguments(String),
-    
+
     #[error("Tool execution failed: {0}")]
     ExecutionFailed(String),
-    
+
     #[error("Serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
-    
+
     #[error("Network error: {0}")]
     NetworkError(#[from] reqwest::Error),
-    
+
     #[error("Process error: {0}")]
     ProcessError(#[from] std::io::Error),
-    
+
     #[error("Unsupported operation: {0}")]
     UnsupportedOperation(String),
 }
@@ -282,14 +282,14 @@ The `McpTransport` trait abstracts the underlying communication mechanism for MC
 
 ```rust
 /// Trait for MCP transport mechanisms
-/// 
+///
 /// This trait abstracts different ways of communicating with MCP servers,
 /// such as HTTP or stdio.
 #[async_trait]
 pub trait McpTransport: Send + Sync {
     /// Execute a tool with the given name and arguments
     async fn execute_tool(&self, name: &str, arguments: &str) -> Result<String, ToolError>;
-    
+
     /// Get a list of available tools
     async fn get_available_tools(&self) -> Result<Vec<Tool>, ToolError>;
 }
@@ -511,7 +511,7 @@ pub struct Tool {
     pub function: Function,
 }
 
-/// Type of tool 
+/// Type of tool
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ToolType {
     Function,
@@ -571,40 +571,40 @@ A comprehensive error system that captures provider-specific errors while provid
 pub enum LlmError {
     #[error("API request failed: {0}")]
     ApiError(String),
-    
+
     #[error("Authentication error: {0}")]
     AuthError(String),
-    
+
     #[error("Rate limit exceeded")]
     RateLimitExceeded,
-    
+
     #[error("Invalid request: {0}")]
     InvalidRequest(String),
-    
+
     #[error("Model not found: {0}")]
     ModelNotFound(String),
-    
+
     #[error("Network error: {0}")]
     NetworkError(#[from] reqwest::Error),
-    
+
     #[error("Configuration error: {0}")]
     ConfigurationError(String),
-    
+
     #[error("Provider-specific error: {0}")]
     ProviderSpecific(String),
-    
+
     #[error("Feature not supported by provider: {0}")]
     UnsupportedFeature(String),
-    
+
     #[error("Serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
-    
+
     #[error("Stream error: {0}")]
     StreamError(String),
-    
+
     #[error("Tool execution error: {0}")]
     ToolExecutionError(String),
-    
+
     #[error("Timeout error")]
     Timeout,
 }
@@ -644,13 +644,13 @@ impl<T> OpenAiProvider<T> {
         self.organization = Some(organization.into());
         self
     }
-    
+
     /// Use a custom base URL
     pub fn with_base_url(mut self, base_url: impl Into<BaseUrl>) -> Self {
         self.base_url = base_url.into();
         self
     }
-    
+
     /// Send a chat request to the OpenAI API
     async fn send_chat_request(&self, request: &ChatRequest) -> Result<ChatResponse, LlmError> {
         // Implementation details...
@@ -669,7 +669,7 @@ impl<T: ToolExecutor> OpenAiProvider<T> {
             tool_executor,
         }
     }
-    
+
     /// Create a new provider with a different tool executor
     pub fn with_tool_executor<U: ToolExecutor>(self, tool_executor: U) -> OpenAiProvider<U> {
         OpenAiProvider {
@@ -685,11 +685,11 @@ impl<T: ToolExecutor> OpenAiProvider<T> {
 #[async_trait]
 impl<T: ToolExecutor + Send + Sync> LlmProvider for OpenAiProvider<T> {
     type ChatChunk = ChatResponseChunk;
-    
+
     async fn chat(&self, request: &ChatRequest) -> Result<ChatResponse, LlmError> {
         // Step 1: Determine if we need to augment the request with tools
         let mut augmented_request = request.clone();
-        
+
         if request.tools.is_none() {
             // Get tools from the executor
             match self.tool_executor.get_available_tools().await {
@@ -700,25 +700,25 @@ impl<T: ToolExecutor + Send + Sync> LlmProvider for OpenAiProvider<T> {
                 _ => {}
             }
         }
-        
+
         // Step 2: Send the request to OpenAI API
         let response = self.send_chat_request(&augmented_request).await?;
-        
+
         // Step 3: If response contains tool calls, handle them
         if let Some(tool_calls) = &response.message.tool_calls {
             if !tool_calls.is_empty() {
                 // Create a new message list with the original messages and the model's response
                 let mut messages = request.messages.clone();
                 messages.push(response.message.clone());
-                
+
                 // Process each tool call
                 for tool_call in tool_calls {
                     // Execute the tool
                     let result = self.tool_executor.execute_tool(
-                        &tool_call.function.name, 
+                        &tool_call.function.name,
                         &tool_call.function.arguments
                     ).await?;
-                    
+
                     // Add the tool response to the message list
                     messages.push(ChatMessage {
                         role: MessageRole::Tool,
@@ -728,7 +728,7 @@ impl<T: ToolExecutor + Send + Sync> LlmProvider for OpenAiProvider<T> {
                         tool_call_id: Some(tool_call.id.clone()),
                     });
                 }
-                
+
                 // Create a new request with the updated messages
                 let final_request = ChatRequest {
                     messages,
@@ -741,34 +741,34 @@ impl<T: ToolExecutor + Send + Sync> LlmProvider for OpenAiProvider<T> {
                     response_format: request.response_format.clone(),
                     provider_options: request.provider_options.clone(),
                 };
-                
+
                 // Get the final response with tool results incorporated
                 return self.send_chat_request(&final_request).await;
             }
         }
-        
+
         // If no tool calls or no executor, return the original response
         Ok(response)
     }
-    
+
     async fn completion(&self, request: &CompletionRequest) -> Result<CompletionResponse, LlmError> {
         // Implementation details...
         todo!()
     }
-    
+
     async fn embeddings(&self, request: &EmbeddingRequest) -> Result<EmbeddingResponse, LlmError> {
         // Implementation details...
         todo!()
     }
-    
+
     async fn stream_chat<'a>(
-        &'a self, 
+        &'a self,
         request: &'a ChatRequest
     ) -> Result<Pin<Box<dyn Stream<Item = Result<Self::ChatChunk, LlmError>> + Send + 'a>>, LlmError> {
         // Implementation details...
         todo!()
     }
-    
+
     fn supported_models(&self) -> Vec<String> {
         vec![
             "gpt-4".to_string(),
@@ -777,7 +777,7 @@ impl<T: ToolExecutor + Send + Sync> LlmProvider for OpenAiProvider<T> {
             // Add more models as needed
         ]
     }
-    
+
     fn supports_feature(&self, feature: ProviderFeature) -> bool {
         match feature {
             ProviderFeature::ToolCalling => true,
@@ -831,7 +831,7 @@ impl<T: ToolExecutor> AnthropicProvider<T> {
             tool_executor,
         }
     }
-    
+
     /// Create a new provider with a different tool executor
     pub fn with_tool_executor<U: ToolExecutor>(self, tool_executor: U) -> AnthropicProvider<U> {
         AnthropicProvider {
@@ -846,29 +846,29 @@ impl<T: ToolExecutor> AnthropicProvider<T> {
 #[async_trait]
 impl<T: ToolExecutor + Send + Sync> LlmProvider for AnthropicProvider<T> {
     type ChatChunk = ChatResponseChunk;
-    
+
     // Similar implementation to OpenAiProvider's chat method
     async fn chat(&self, request: &ChatRequest) -> Result<ChatResponse, LlmError> {
         // Implementation follows the same pattern as OpenAiProvider
         todo!()
     }
-    
+
     // Other method implementations...
     async fn completion(&self, request: &CompletionRequest) -> Result<CompletionResponse, LlmError> {
         todo!()
     }
-    
+
     async fn embeddings(&self, request: &EmbeddingRequest) -> Result<EmbeddingResponse, LlmError> {
         todo!()
     }
-    
+
     async fn stream_chat<'a>(
-        &'a self, 
+        &'a self,
         request: &'a ChatRequest
     ) -> Result<Pin<Box<dyn Stream<Item = Result<Self::ChatChunk, LlmError>> + Send + 'a>>, LlmError> {
         todo!()
     }
-    
+
     fn supported_models(&self) -> Vec<String> {
         vec![
             "claude-3-opus-20240229".to_string(),
@@ -877,7 +877,7 @@ impl<T: ToolExecutor + Send + Sync> LlmProvider for AnthropicProvider<T> {
             // Add more models as needed
         ]
     }
-    
+
     fn supports_feature(&self, feature: ProviderFeature) -> bool {
         match feature {
             ProviderFeature::ToolCalling => true,
@@ -910,7 +910,7 @@ impl OllamaProvider {
             tool_executor: NoopToolExecutor,
         }
     }
-    
+
     /// Create a new Ollama provider with the default localhost URL
     pub fn local() -> Self {
         Self::new("http://localhost:11434")
@@ -926,7 +926,7 @@ impl<T: ToolExecutor> OllamaProvider<T> {
             tool_executor,
         }
     }
-    
+
     /// Create a new provider with a different tool executor
     pub fn with_tool_executor<U: ToolExecutor>(self, tool_executor: U) -> OllamaProvider<U> {
         OllamaProvider {
@@ -940,32 +940,32 @@ impl<T: ToolExecutor> OllamaProvider<T> {
 #[async_trait]
 impl<T: ToolExecutor + Send + Sync> LlmProvider for OllamaProvider<T> {
     type ChatChunk = ChatResponseChunk;
-    
+
     // Method implementations for accessing local models through Ollama's API
     // This is the only supported method for local model integration
     // Similar tool handling pattern to OpenAiProvider
-    
+
     async fn chat(&self, request: &ChatRequest) -> Result<ChatResponse, LlmError> {
         // Similar implementation to OpenAiProvider's chat method, adapted for Ollama
         todo!()
     }
-    
+
     // Other method implementations...
     async fn completion(&self, request: &CompletionRequest) -> Result<CompletionResponse, LlmError> {
         todo!()
     }
-    
+
     async fn embeddings(&self, request: &EmbeddingRequest) -> Result<EmbeddingResponse, LlmError> {
         todo!()
     }
-    
+
     async fn stream_chat<'a>(
-        &'a self, 
+        &'a self,
         request: &'a ChatRequest
     ) -> Result<Pin<Box<dyn Stream<Item = Result<Self::ChatChunk, LlmError>> + Send + 'a>>, LlmError> {
         todo!()
     }
-    
+
     fn supported_models(&self) -> Vec<String> {
         // This would typically be fetched from the Ollama API at runtime
         vec![
@@ -975,7 +975,7 @@ impl<T: ToolExecutor + Send + Sync> LlmProvider for OllamaProvider<T> {
             // These are examples; actual models depend on what's installed in Ollama
         ]
     }
-    
+
     fn supports_feature(&self, feature: ProviderFeature) -> bool {
         match feature {
             ProviderFeature::ToolCalling => false, // Most Ollama models don't support tool calling natively
@@ -1010,7 +1010,7 @@ impl McpHttpTransport {
             auth_token: None,
         }
     }
-    
+
     /// Add authentication token for HTTP MCP server
     pub fn with_auth_token(mut self, auth_token: impl Into<String>) -> Self {
         self.auth_token = Some(auth_token.into());
@@ -1024,57 +1024,57 @@ impl McpTransport for McpHttpTransport {
         let request_body = serde_json::json!({
             "arguments": arguments
         });
-        
+
         let mut request = self.client
             .post(format!("{}/tools/{}", self.base_url.as_str(), name))
             .json(&request_body);
-            
+
         if let Some(token) = &self.auth_token {
             request = request.header("Authorization", format!("Bearer {}", token));
         }
-        
+
         let response = request.send()
             .await
             .map_err(ToolError::NetworkError)?;
-        
+
         if !response.status().is_success() {
             return Err(ToolError::ExecutionFailed(format!(
                 "MCP tool execution failed with status: {}", response.status()
             )));
         }
-        
+
         let result: serde_json::Value = response.json()
             .await
             .map_err(ToolError::NetworkError)?;
-        
+
         Ok(result.get("result")
             .and_then(|v| v.as_str())
             .unwrap_or_default()
             .to_string())
     }
-    
+
     async fn get_available_tools(&self) -> Result<Vec<Tool>, ToolError> {
         let mut request = self.client
             .get(format!("{}/tools", self.base_url.as_str()));
-        
+
         if let Some(token) = &self.auth_token {
             request = request.header("Authorization", format!("Bearer {}", token));
         }
-        
+
         let response = request.send()
             .await
             .map_err(ToolError::NetworkError)?;
-        
+
         if !response.status().is_success() {
             return Err(ToolError::ExecutionFailed(format!(
                 "Failed to fetch MCP tools with status: {}", response.status()
             )));
         }
-        
+
         let tools: Vec<Tool> = response.json()
             .await
             .map_err(ToolError::SerializationError)?;
-        
+
         Ok(tools)
     }
 }
@@ -1092,7 +1092,7 @@ impl McpStdioTransport {
         let process_args: Vec<&str> = args.iter()
             .map(AsRef::as_ref)
             .collect();
-            
+
         let mut process = tokio::process::Command::new(command.as_ref())
             .args(&process_args)
             .stdin(std::process::Stdio::piped())
@@ -1100,15 +1100,15 @@ impl McpStdioTransport {
             .stderr(std::process::Stdio::piped())
             .spawn()
             .map_err(|e| ToolError::ProcessError(e))?;
-            
+
         let stdin = process.stdin.take()
             .ok_or_else(|| ToolError::ExecutionFailed("Failed to open stdin".to_string()))?;
-            
+
         let stdout = process.stdout.take()
             .ok_or_else(|| ToolError::ExecutionFailed("Failed to open stdout".to_string()))?;
-            
+
         let stdout_reader = tokio::io::BufReader::new(stdout);
-        
+
         Ok(Self {
             process,
             stdin,
@@ -1121,78 +1121,78 @@ impl McpStdioTransport {
 impl McpTransport for McpStdioTransport {
     async fn execute_tool(&self, name: &str, arguments: &str) -> Result<String, ToolError> {
         use tokio::io::{AsyncWriteExt, AsyncBufReadExt};
-        
+
         let request = serde_json::json!({
             "action": "execute",
             "tool": name,
             "arguments": arguments
         });
-        
+
         // Write request to stdin
         let mut stdin = self.stdin.try_clone().map_err(ToolError::ProcessError)?;
         stdin.write_all(format!("{}\n", request.to_string()).as_bytes())
             .await
             .map_err(ToolError::ProcessError)?;
-            
+
         // Read response from stdout
         let mut stdout_reader = self.stdout_reader.clone();
         let mut line = String::new();
         stdout_reader.read_line(&mut line)
             .await
             .map_err(ToolError::ProcessError)?;
-            
+
         // Parse response
         let response: serde_json::Value = serde_json::from_str(&line)
             .map_err(ToolError::SerializationError)?;
-            
+
         if let Some(error) = response.get("error") {
             return Err(ToolError::ExecutionFailed(error.as_str()
                 .unwrap_or("Unknown error")
                 .to_string()));
         }
-        
+
         Ok(response.get("result")
             .and_then(|v| v.as_str())
             .unwrap_or_default()
             .to_string())
     }
-    
+
     async fn get_available_tools(&self) -> Result<Vec<Tool>, ToolError> {
         use tokio::io::{AsyncWriteExt, AsyncBufReadExt};
-        
+
         let request = serde_json::json!({
             "action": "list_tools"
         });
-        
+
         // Write request to stdin
         let mut stdin = self.stdin.try_clone().map_err(ToolError::ProcessError)?;
         stdin.write_all(format!("{}\n", request.to_string()).as_bytes())
             .await
             .map_err(ToolError::ProcessError)?;
-            
+
         // Read response from stdout
         let mut stdout_reader = self.stdout_reader.clone();
         let mut line = String::new();
         stdout_reader.read_line(&mut line)
             .await
             .map_err(ToolError::ProcessError)?;
-            
+
         // Parse response
         let response: serde_json::Value = serde_json::from_str(&line)
             .map_err(ToolError::SerializationError)?;
-            
+
         if let Some(error) = response.get("error") {
             return Err(ToolError::ExecutionFailed(error.as_str()
                 .unwrap_or("Unknown error")
                 .to_string()));
         }
-        
+
         let tools: Vec<Tool> = serde_json::from_value(
             response.get("tools")
                 .ok_or_else(|| ToolError::ExecutionFailed("No tools field in response".to_string()))?
                 .clone()
         ).map_err(ToolError::SerializationError)?;
-        
+
         Ok(tools)
     }
 }
@@ -1212,7 +1212,7 @@ impl McpToolClient<McpHttpTransport> {
             transport: McpHttpTransport::new(base_url),
         }
     }
-    
+
     /// Add authentication token for HTTP MCP server
     pub fn with_auth_token(mut self, auth_token: impl Into<String>) -> Self {
         self.transport = self.transport.with_auth_token(auth_token);
@@ -1223,7 +1223,7 @@ impl McpToolClient<McpHttpTransport> {
 impl McpToolClient<McpStdioTransport> {
     /// Create a new MCP client that communicates with a local process via stdio
     pub fn new_process(
-        command: impl AsRef<str>, 
+        command: impl AsRef<str>,
         args: &[impl AsRef<str>]
     ) -> Result<Self, ToolError> {
         Ok(Self {
@@ -1237,7 +1237,7 @@ impl<T: McpTransport + Send + Sync> ToolExecutor for McpToolClient<T> {
     async fn execute_tool(&self, name: &str, arguments: &str) -> Result<String, ToolError> {
         self.transport.execute_tool(name, arguments).await
     }
-    
+
     async fn get_available_tools(&self) -> Result<Vec<Tool>, ToolError> {
         self.transport.get_available_tools().await
     }
@@ -1295,34 +1295,34 @@ impl ProviderConfigBuilder {
             },
         }
     }
-    
+
     pub fn api_key(mut self, api_key: impl Into<ApiKey>) -> Self {
         self.config.api_key = Some(api_key.into());
         self
     }
-    
+
     pub fn base_url(mut self, base_url: impl Into<BaseUrl>) -> Self {
         self.config.base_url = Some(base_url.into());
         self
     }
-    
+
     pub fn organization(mut self, org: impl Into<OrganizationId>) -> Self {
         self.config.organization = Some(org.into());
         self
     }
-    
+
     pub fn mcp_http(
-        mut self, 
-        base_url: impl Into<BaseUrl>, 
+        mut self,
+        base_url: impl Into<BaseUrl>,
         auth_token: Option<String>
     ) -> Self {
-        self.config.tool_executor_config = Some(ToolExecutorConfig::McpHttp { 
-            base_url: base_url.into(), 
-            auth_token 
+        self.config.tool_executor_config = Some(ToolExecutorConfig::McpHttp {
+            base_url: base_url.into(),
+            auth_token
         });
         self
     }
-    
+
     pub fn mcp_process(
         mut self,
         command: impl Into<String>,
@@ -1334,17 +1334,17 @@ impl ProviderConfigBuilder {
         });
         self
     }
-    
+
     pub fn custom_tools(mut self, executor: Box<dyn ToolExecutor + Send + Sync>) -> Self {
         self.config.tool_executor_config = Some(ToolExecutorConfig::Custom(executor));
         self
     }
-    
+
     pub fn option(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.config.additional_options.insert(key.into(), value.into());
         self
     }
-    
+
     pub fn build(self) -> ProviderConfig {
         self.config
     }
@@ -1407,17 +1407,17 @@ fn create_openai_provider(
     let api_key = config.api_key.ok_or_else(|| {
         LlmError::ConfigurationError("API key required for OpenAI provider".to_string())
     })?;
-    
+
     let mut provider = OpenAiProvider::new(api_key);
-    
+
     if let Some(base_url) = config.base_url {
         provider = provider.with_base_url(base_url);
     }
-    
+
     if let Some(org) = config.organization {
         provider = provider.with_organization(org);
     }
-    
+
     // Add tool executor if configured
     let provider_with_tools = match config.tool_executor_config {
         Some(ToolExecutorConfig::McpHttp { base_url, auth_token }) => {
@@ -1433,7 +1433,7 @@ fn create_openai_provider(
             let args_slice: Vec<&str> = args.iter()
                 .map(AsRef::as_ref)
                 .collect();
-            
+
             match McpToolClient::new_process(&command, &args_slice) {
                 Ok(client) => provider.with_tool_executor(client),
                 Err(e) => return Err(e.into()),
@@ -1443,23 +1443,23 @@ fn create_openai_provider(
             // Requires a type erased approach because we can't name the concrete type here
             // Use dyn ToolExecutor at runtime
             struct DynToolExecutor(Box<dyn ToolExecutor + Send + Sync>);
-            
+
             #[async_trait]
             impl ToolExecutor for DynToolExecutor {
                 async fn execute_tool(&self, name: &str, arguments: &str) -> Result<String, ToolError> {
                     self.0.execute_tool(name, arguments).await
                 }
-                
+
                 async fn get_available_tools(&self) -> Result<Vec<Tool>, ToolError> {
                     self.0.get_available_tools().await
                 }
             }
-            
+
             provider.with_tool_executor(DynToolExecutor(executor))
         },
         None => provider,
     };
-    
+
     Ok(Box::new(provider_with_tools))
 }
 
@@ -1503,7 +1503,7 @@ Streaming responses are supported through the `stream_chat` method, which return
 
 ```rust
 async fn stream_chat<'a>(
-    &'a self, 
+    &'a self,
     request: &'a ChatRequest
 ) -> Result<Pin<Box<dyn Stream<Item = Result<Self::ChatChunk, LlmError>> + Send + 'a>>, LlmError>;
 ```
@@ -1515,7 +1515,7 @@ When streaming is combined with tool calling, the stream will pause when tool ca
 
 1. Start streaming the response
 2. If a tool call is detected in the stream, pause streaming
-3. Execute the tool call(s) 
+3. Execute the tool call(s)
 4. Resume streaming with a new request that includes the tool results
 
 This is handled transparently by the provider's implementation, but applications should be aware that there may be pauses in the stream while tools are being executed.
@@ -1543,12 +1543,12 @@ impl<P> RateLimitedProvider<P> {
 #[async_trait]
 impl<P: LlmProvider + Send + Sync> LlmProvider for RateLimitedProvider<P> {
     type ChatChunk = P::ChatChunk;
-    
+
     async fn chat(&self, request: &ChatRequest) -> Result<ChatResponse, LlmError> {
         self.rate_limiter.acquire().await?;
         self.inner.chat(request).await
     }
-    
+
     // Other method implementations delegate to inner provider after acquiring a permit
     // ...
 }
@@ -1562,25 +1562,25 @@ pub async fn process_batch<P, T>(
     provider: &P,
     requests: &[ChatRequest],
     max_concurrency: usize
-) -> Result<Vec<Result<ChatResponse, LlmError>>, LlmError> 
+) -> Result<Vec<Result<ChatResponse, LlmError>>, LlmError>
 where
     P: LlmProvider<ChatChunk = T> + Send + Sync,
     T: Send + 'static,
 {
     use futures::stream::{self, StreamExt};
-    
+
     // Create a stream of futures
     let futures = requests.iter().map(|req| {
         let provider_ref = provider;
         async move { provider_ref.chat(req).await }
     });
-    
+
     // Process with controlled concurrency
     let results = stream::iter(futures)
         .buffer_unordered(max_concurrency)
         .collect::<Vec<_>>()
         .await;
-    
+
     Ok(results)
 }
 ```
@@ -1619,19 +1619,19 @@ impl<P> RetryingProvider<P> {
             ],
         }
     }
-    
+
     /// Customize the retry delay
     pub fn with_retry_delay_ms(mut self, delay_ms: u64) -> Self {
         self.retry_delay_ms = delay_ms;
         self
     }
-    
+
     /// Customize which error types should be retried
     pub fn with_retryable_errors(mut self, error_types: Vec<RetryableErrorType>) -> Self {
         self.retryable_errors = error_types;
         self
     }
-    
+
     /// Execute a function with retries
     async fn retry<F, Fut, T, E>(&self, f: F) -> Result<T, E>
     where
@@ -1685,11 +1685,11 @@ impl<P> RetryCheck<LlmError> for RetryingProvider<P> {
 #[async_trait]
 impl<P: LlmProvider + Send + Sync> LlmProvider for RetryingProvider<P> {
     type ChatChunk = P::ChatChunk;
-    
+
     async fn chat(&self, request: &ChatRequest) -> Result<ChatResponse, LlmError> {
         self.retry(|| async { self.inner.chat(request).await }).await
     }
-    
+
     // Other method implementations similarly use retry...
     // ...
 }
@@ -1710,27 +1710,27 @@ impl NodeExecutable for NodeData::Llm {
     ) -> Result<(), OrchestrationError> {
         // Build the provider configuration
         let mut config_builder = ProviderConfigBuilder::new(self.config.provider.clone());
-        
+
         // Add API key if provided
         if let Some(api_key) = &self.config.api_key {
             config_builder = config_builder.api_key(api_key);
         }
-        
+
         // Add base URL if provided
         if let Some(base_url) = &self.config.base_url {
             config_builder = config_builder.base_url(base_url);
         }
-        
+
         // Add MCP tool executor if configured
         if self.config.use_mcp_tools {
             let base_url = self.config.mcp_base_url.clone()
                 .ok_or_else(|| OrchestrationError::ConfigurationError(
                     "MCP base URL is required when use_mcp_tools is true".to_string()
                 ))?;
-            
+
             // Use MCP over HTTP by default
             config_builder = config_builder.mcp_http(base_url, self.config.mcp_auth_token.clone());
-            
+
             // Check if we should use stdio instead (for local MCP servers)
             if let Some(true) = self.config.mcp_use_stdio {
                 if let Some(command) = &self.config.mcp_command {
@@ -1739,22 +1739,22 @@ impl NodeExecutable for NodeData::Llm {
                 }
             }
         }
-        
+
         // Create provider instance
         let provider = create_provider(config_builder.build())
             .map_err(|e| OrchestrationError::NodeExecutionError(Box::new(e)))?;
-        
+
         // Construct request from context
         let request = self.build_request_from_context(context)?;
-        
+
         // Execute request (tool execution happens automatically if needed)
         let response = provider.chat(&request)
             .await
             .map_err(|e| OrchestrationError::NodeExecutionError(Box::new(e)))?;
-        
+
         // Update context with response
         self.update_context_with_response(context, response)?;
-        
+
         Ok(())
     }
 }
@@ -1800,7 +1800,7 @@ impl NodeData::Llm {
     /// Build a chat request from the execution context
     fn build_request_from_context(&self, context: &ExecutionContext) -> Result<ChatRequest, OrchestrationError> {
         let mut messages = Vec::new();
-        
+
         // Add system prompt if configured
         if let Some(system_prompt) = &self.config.system_prompt {
             messages.push(ChatMessage {
@@ -1809,7 +1809,7 @@ impl NodeData::Llm {
                 ..Default::default()
             });
         }
-        
+
         // Add user message from input variables
         let mut user_content = String::new();
         for var_name in &self.config.input_variables {
@@ -1820,13 +1820,13 @@ impl NodeData::Llm {
                 return Err(OrchestrationError::VariableNotFound(var_name.clone()));
             }
         }
-        
+
         messages.push(ChatMessage {
             role: MessageRole::User,
             content: MessageContent::Text(user_content),
             ..Default::default()
         });
-        
+
         // Construct the request
         Ok(ChatRequest {
             messages,
@@ -1837,11 +1837,11 @@ impl NodeData::Llm {
             ..Default::default()
         })
     }
-    
+
     /// Update the execution context with the response
     fn update_context_with_response(
-        &self, 
-        context: &mut ExecutionContext, 
+        &self,
+        context: &mut ExecutionContext,
         response: ChatResponse
     ) -> Result<(), OrchestrationError> {
         // Extract text content from response
@@ -1859,10 +1859,10 @@ impl NodeData::Llm {
                     .join("")
             }
         };
-        
+
         // Update output variable
         context.set_variable(&self.config.output_variable, VariableValue::String(content));
-        
+
         // Store any tool calls if present
         if let Some(tool_calls) = &response.message.tool_calls {
             context.set_variable(
@@ -1870,7 +1870,7 @@ impl NodeData::Llm {
                 VariableValue::Json(serde_json::to_value(tool_calls).unwrap()),
             );
         }
-        
+
         // Store token usage if available
         if let Some(usage) = response.usage {
             context.set_variable(
@@ -1878,7 +1878,7 @@ impl NodeData::Llm {
                 VariableValue::Json(serde_json::to_value(usage).unwrap()),
             );
         }
-        
+
         Ok(())
     }
 }
@@ -1895,7 +1895,7 @@ use cogni::prelude::*;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a provider
     let provider = OpenAiProvider::new(std::env::var("OPENAI_API_KEY")?);
-    
+
     // Create a chat request using Default for optional fields
     let request = ChatRequest {
         messages: vec![
@@ -1909,16 +1909,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         temperature: Some(0.7),
         ..Default::default()
     };
-    
+
     // Send the request
     let response = provider.chat(&request).await?;
-    
+
     // Extract the response content
     match response.message.content {
         MessageContent::Text(text) => println!("Response: {}", text),
         MessageContent::MultiModal(_) => println!("Received multimodal response"),
     }
-    
+
     Ok(())
 }
 ```
@@ -1933,11 +1933,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create an MCP tool client that uses HTTP
     let mcp_client = McpToolClient::new_http("http://localhost:8080/mcp")
         .with_auth_token(std::env::var("MCP_AUTH_TOKEN")?);
-    
+
     // Create a provider with the MCP tool client
     let provider = OpenAiProvider::new(std::env::var("OPENAI_API_KEY")?)
         .with_tool_executor(mcp_client);
-    
+
     // Create a chat request
     let request = ChatRequest {
         messages: vec![
@@ -1956,16 +1956,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         temperature: Some(0.7),
         ..Default::default()
     };
-    
+
     // Send the request
     let response = provider.chat(&request).await?;
-    
+
     // Extract the response content
     match response.message.content {
         MessageContent::Text(text) => println!("Response: {}", text),
         MessageContent::MultiModal(_) => println!("Received multimodal response"),
     }
-    
+
     Ok(())
 }
 ```
@@ -1979,14 +1979,14 @@ use cogni::prelude::*;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create an MCP tool client that communicates with a local process
     let mcp_client = McpToolClient::new_process(
-        "python", 
+        "python",
         &["mcp_server.py", "--tools", "weather,calculator"]
     )?;
-    
+
     // Create a provider with the MCP tool client
     let provider = OpenAiProvider::new(std::env::var("OPENAI_API_KEY")?)
         .with_tool_executor(mcp_client);
-    
+
     // Create a chat request
     let request = ChatRequest {
         messages: vec![
@@ -2005,16 +2005,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         temperature: Some(0.7),
         ..Default::default()
     };
-    
+
     // Send the request
     let response = provider.chat(&request).await?;
-    
+
     // Extract the response content
     match response.message.content {
         MessageContent::Text(text) => println!("Response: {}", text),
         MessageContent::MultiModal(_) => println!("Received multimodal response"),
     }
-    
+
     Ok(())
 }
 ```
@@ -2056,7 +2056,7 @@ impl LocalToolExecutor {
                 }),
             },
         };
-        
+
         Self {
             tools: vec![calculator_tool],
         }
@@ -2069,19 +2069,19 @@ impl ToolExecutor for LocalToolExecutor {
         match name {
             "calculator" => {
                 let args: serde_json::Value = serde_json::from_str(arguments)?;
-                
+
                 let operation = args["operation"].as_str().ok_or_else(|| {
                     ToolError::InvalidArguments("Missing operation".to_string())
                 })?;
-                
+
                 let a = args["a"].as_f64().ok_or_else(|| {
                     ToolError::InvalidArguments("Missing or invalid 'a' parameter".to_string())
                 })?;
-                
+
                 let b = args["b"].as_f64().ok_or_else(|| {
                     ToolError::InvalidArguments("Missing or invalid 'b' parameter".to_string())
                 })?;
-                
+
                 let result = match operation {
                     "add" => a + b,
                     "subtract" => a - b,
@@ -2094,13 +2094,13 @@ impl ToolExecutor for LocalToolExecutor {
                     },
                     _ => return Err(ToolError::InvalidArguments(format!("Unknown operation: {}", operation))),
                 };
-                
+
                 Ok(result.to_string())
             },
             _ => Err(ToolError::ToolNotFound(format!("Unknown tool: {}", name))),
         }
     }
-    
+
     async fn get_available_tools(&self) -> Result<Vec<Tool>, ToolError> {
         Ok(self.tools.clone())
     }
@@ -2110,13 +2110,13 @@ impl ToolExecutor for LocalToolExecutor {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a tool executor
     let tool_executor = LocalToolExecutor::new();
-    
+
     // Create a provider with the tool executor
     let provider = OpenAiProvider::new_with_tools(
         std::env::var("OPENAI_API_KEY")?,
         tool_executor
     );
-    
+
     // Create a chat request (using Default for optional fields)
     let request = ChatRequest {
         messages: vec![
@@ -2130,12 +2130,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         temperature: Some(0.7),
         ..Default::default()
     };
-    
+
     // Send the request
     let response = provider.chat(&request).await?;
-    
+
     println!("Response: {:?}", response.message.content);
-    
+
     Ok(())
 }
 ```
@@ -2151,7 +2151,7 @@ use std::io::Write;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a provider
     let provider = AnthropicProvider::new(std::env::var("ANTHROPIC_API_KEY")?);
-    
+
     // Create a chat request
     let request = ChatRequest {
         messages: vec![
@@ -2165,10 +2165,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         temperature: Some(0.7),
         ..Default::default()
     };
-    
+
     // Stream the response
     let mut stream = provider.stream_chat(&request).await?;
-    
+
     while let Some(chunk_result) = stream.next().await {
         match chunk_result {
             Ok(chunk) => {
@@ -2180,9 +2180,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(e) => eprintln!("Error: {}", e),
         }
     }
-    
+
     println!();
-    
+
     Ok(())
 }
 ```
@@ -2200,11 +2200,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         mcp_client: McpToolClient<McpStdioTransport>,
         calculator_tool: Tool,
     }
-    
+
     impl CombinedToolExecutor {
         fn new(command: &str, args: &[&str]) -> Result<Self, ToolError> {
             let mcp_client = McpToolClient::new_process(command, args)?;
-            
+
             let calculator_tool = Tool {
                 r#type: ToolType::Function,
                 function: Function {
@@ -2224,14 +2224,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }),
                 },
             };
-            
+
             Ok(Self {
                 mcp_client,
                 calculator_tool,
             })
         }
     }
-    
+
     #[async_trait]
     impl ToolExecutor for CombinedToolExecutor {
         async fn execute_tool(&self, name: &str, arguments: &str) -> Result<String, ToolError> {
@@ -2241,15 +2241,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let operation = args["operation"].as_str().ok_or_else(|| {
                         ToolError::InvalidArguments("Missing operation".to_string())
                     })?;
-                    
+
                     let a = args["a"].as_f64().ok_or_else(|| {
                         ToolError::InvalidArguments("Missing or invalid 'a' parameter".to_string())
                     })?;
-                    
+
                     let b = args["b"].as_f64().ok_or_else(|| {
                         ToolError::InvalidArguments("Missing or invalid 'b' parameter".to_string())
                     })?;
-                    
+
                     let result = match operation {
                         "add" => a + b,
                         "subtract" => a - b,
@@ -2262,40 +2262,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         },
                         _ => return Err(ToolError::InvalidArguments(format!("Unknown operation: {}", operation))),
                     };
-                    
+
                     Ok(result.to_string())
                 },
                 // All other tools are delegated to MCP
                 _ => self.mcp_client.execute_tool(name, arguments).await,
             }
         }
-        
+
         async fn get_available_tools(&self) -> Result<Vec<Tool>, ToolError> {
             // Get MCP tools
             let mut tools = match self.mcp_client.get_available_tools().await {
                 Ok(t) => t,
                 Err(_) => Vec::new(), // If MCP fails, just use local tools
             };
-            
+
             // Add calculator tool
             tools.push(self.calculator_tool.clone());
-            
+
             Ok(tools)
         }
     }
-    
+
     // Create the combined executor
     let combined_executor = CombinedToolExecutor::new(
-        "python", 
+        "python",
         &["mcp_server.py", "--tools", "weather,news"]
     )?;
-    
+
     // Create a provider with the combined executor
     let provider = OpenAiProvider::new_with_tools(
         std::env::var("OPENAI_API_KEY")?,
         combined_executor
     );
-    
+
     // Create a chat request
     let request = ChatRequest {
         messages: vec![
@@ -2309,12 +2309,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         temperature: Some(0.7),
         ..Default::default()
     };
-    
+
     // Send the request
     let response = provider.chat(&request).await?;
-    
+
     println!("Response: {:?}", response.message.content);
-    
+
     Ok(())
 }
 ```
@@ -2328,14 +2328,14 @@ use cogni::prelude::*;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a basic provider
     let base_provider = OpenAiProvider::new(std::env::var("OPENAI_API_KEY")?);
-    
+
     // Wrap it with rate limiting
     let rate_limited = RateLimitedProvider::new(base_provider, 60); // 60 requests per minute
-    
+
     // Wrap again with retries
     let provider = RetryingProvider::new(rate_limited, 3) // Retry up to 3 times
         .with_retry_delay_ms(500); // Start with 500ms delay (will increase exponentially)
-    
+
     // Create a chat request
     let request = ChatRequest {
         messages: vec![
@@ -2348,7 +2348,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         model: "gpt-4".to_string(),
         ..Default::default()
     };
-    
+
     // Send the request - it will automatically retry on transient errors
     match provider.chat(&request).await {
         Ok(response) => {
@@ -2358,7 +2358,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         Err(e) => {
             eprintln!("Error after retries: {}", e);
-            
+
             // Handle specific error types
             match e {
                 LlmError::RateLimitExceeded => {
@@ -2376,7 +2376,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-    
+
     Ok(())
 }
 ```

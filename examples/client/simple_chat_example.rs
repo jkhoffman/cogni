@@ -23,7 +23,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let messages = vec![
         cogni_core::Message::system("You are a helpful assistant who speaks concisely"),
         cogni_core::Message::user("What is Rust?"),
-        cogni_core::Message::assistant("Rust is a systems programming language focused on safety, speed, and concurrency."),
+        cogni_core::Message::assistant(
+            "Rust is a systems programming language focused on safety, speed, and concurrency.",
+        ),
         cogni_core::Message::user("What makes it special?"),
     ];
 

@@ -347,7 +347,11 @@ pub struct StructuredRetryLayer {
   - Created `benches/context_bench.rs` for token counting benchmarks
   - Created `benches/state_bench.rs` for state persistence benchmarks
   - Benchmarks cover various scenarios and message sizes
-- ⏳ Additional example agents demonstrating real-world usage
+- ✅ Additional example agents demonstrating real-world usage
+  - Created `examples/code_review_agent.rs` - AI code reviewer with structured feedback
+  - Created `examples/customer_support_agent.rs` - Support ticket handling with sentiment analysis
+  - Created `examples/research_assistant_agent.rs` - Research agent with tool usage and citations
+  - Created `examples/data_analysis_agent.rs` - Data analysis with statistical insights
 
 ### D.3: Documentation (PENDING)
 - ⏳ Architecture guide explaining the agentic features

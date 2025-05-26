@@ -48,9 +48,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // List all conversations
         println!("\nAll conversations in memory:");
         for conv in stateful.list_conversations().await? {
-            println!("- {} ({}): {} messages", 
-                conv.id, 
-                conv.metadata.title.unwrap_or_else(|| "Untitled".to_string()),
+            println!(
+                "- {} ({}): {} messages",
+                conv.id,
+                conv.metadata
+                    .title
+                    .unwrap_or_else(|| "Untitled".to_string()),
                 conv.messages.len()
             );
         }
@@ -98,14 +101,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 3: Using State Middleware
     println!("\n=== Example 3: State Middleware ===");
     {
-        use cogni_middleware::{StateLayer, ProviderExt};
-        
+        use cogni_middleware::{ProviderExt, StateLayer};
+
         let store = Arc::new(MemoryStore::new());
         let layer = StateLayer::new(store);
-        
+
         // Apply middleware to provider
         let stateful_provider = provider.layer(layer);
-        
+
         // Now all requests through this provider will have automatic state management
         println!("State middleware configured - all requests will be tracked");
     }

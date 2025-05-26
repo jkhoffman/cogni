@@ -27,12 +27,12 @@
 //!     let provider = OpenAI::new(
 //!         OpenAIConfig::new("your-api-key")
 //!     )?;
-//!     
+//!
 //!     // Create a request
 //!     let request = Request::builder()
 //!         .message(Message::user("Hello, world!"))
 //!         .build();
-//!     
+//!
 //!     // Get a response
 //!     let response = provider.request(request).await?;
 //!     println!("{}", response.content);

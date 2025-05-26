@@ -5,7 +5,7 @@ A unified, high-performance Rust library for Large Language Model (LLM) interact
 ## Features
 
 - 🚀 **Unified API**: Single interface for multiple LLM providers
-- 🔒 **Type Safety**: Leverage Rust's type system for compile-time guarantees  
+- 🔒 **Type Safety**: Leverage Rust's type system for compile-time guarantees
 - ⚡ **Async First**: Built on Tokio for efficient async operations
 - 🌊 **Streaming**: First-class support for streaming responses
 - 🛠️ **Tool Calling**: Support for function/tool calling across providers
@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let response = client.chat("Hello! How are you?").await?;
     println!("{}", response);
-    
+
     Ok(())
 }
 ```
@@ -47,16 +47,16 @@ use cogni::prelude::*;
 use cogni::providers::Anthropic;
 use futures::StreamExt;
 
-#[tokio::main]  
+#[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::new(Anthropic::with_api_key("your-api-key"));
-    
+
     let mut stream = client.stream_chat("Tell me a story").await?;
-    
+
     while let Some(chunk) = stream.next().await {
         print!("{}", chunk?);
     }
-    
+
     Ok(())
 }
 ```
