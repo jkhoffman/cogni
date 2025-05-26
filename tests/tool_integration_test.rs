@@ -114,7 +114,7 @@ async fn create_test_registry() -> ToolRegistry {
             Ok(json!({ "result": result }))
         });
 
-    registry.register(calc).await.unwrap();
+    registry.register([calc]).await.unwrap();
 
     // Register time tool
     let time_tool = FunctionExecutorBuilder::new("get_current_time")
@@ -140,7 +140,7 @@ async fn create_test_registry() -> ToolRegistry {
             }))
         });
 
-    registry.register(time_tool).await.unwrap();
+    registry.register([time_tool]).await.unwrap();
 
     registry
 }
@@ -379,7 +379,7 @@ async fn test_tool_error_handling() {
             })
         });
 
-    registry.register(failing_tool).await.unwrap();
+    registry.register([failing_tool]).await.unwrap();
 
     // Try to execute the failing tool
     let call = ToolCall {
@@ -401,7 +401,7 @@ async fn test_tool_validation() {
 
     // Register calculator with strict validation
     let calc = builtin::calculator();
-    registry.register(calc).await.unwrap();
+    registry.register([calc]).await.unwrap();
 
     // Try with invalid arguments
     let call = ToolCall {

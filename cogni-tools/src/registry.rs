@@ -31,27 +31,20 @@ impl ToolRegistry {
         executors: impl IntoIterator<Item = Box<dyn ToolExecutor>>,
     ) -> Result<Self> {
         let registry = Self::new();
-        registry
-            .register_many(executors.into_iter().collect())
-            .await?;
+        registry.register(executors).await?;
         Ok(registry)
     }
 
-    /// Register a tool executor
-    pub async fn register(&self, executor: impl ToolExecutor + 'static) -> Result<()> {
-        let tool = executor.tool();
-        let name = tool.name.clone();
-
+    /// Register one or more tool executors
+    pub async fn register(
+        &self,
+        executors: impl IntoIterator<Item = impl ToolExecutor + 'static>,
+    ) -> Result<()> {
         let mut tools = self.tools.write().await;
-        tools.insert(name, Arc::new(executor));
-
-        Ok(())
-    }
-
-    /// Register multiple tools at once
-    pub async fn register_many(&self, executors: Vec<Box<dyn ToolExecutor>>) -> Result<()> {
         for executor in executors {
-            self.register(executor).await?;
+            let tool = executor.tool();
+            let name = tool.name.clone();
+            tools.insert(name, Arc::new(executor));
         }
         Ok(())
     }
@@ -172,7 +165,7 @@ impl RegistryBuilder {
     /// Build the registry
     pub async fn build(self) -> Result<ToolRegistry> {
         let registry = ToolRegistry::new();
-        registry.register_many(self.executors).await?;
+        registry.register(self.executors).await?;
         Ok(registry)
     }
 }
@@ -211,7 +204,7 @@ mod tests {
             });
 
         // Register the tool
-        registry.register(tool).await.unwrap();
+        registry.register([tool]).await.unwrap();
 
         // Check it exists
         assert!(registry.contains("test_tool").await);

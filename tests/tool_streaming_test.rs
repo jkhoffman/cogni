@@ -73,7 +73,7 @@ async fn create_streaming_registry() -> ToolRegistry {
             }))
         });
 
-    registry.register(analyzer).await.unwrap();
+    registry.register([analyzer]).await.unwrap();
     registry
 }
 

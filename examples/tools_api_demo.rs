@@ -146,10 +146,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // Method 3: Using individual tool registration
+    // Method 3: Using direct registration
     let registry2 = ToolRegistry::new();
-    registry2.register(create_weather_tool()).await?;
-    registry2.register(create_calculator_tool()).await?;
+    registry2
+        .register(tools_vec![create_weather_tool(), create_calculator_tool()])
+        .await?;
 
     println!(
         "\n\nAlternative registry has {} tools",
