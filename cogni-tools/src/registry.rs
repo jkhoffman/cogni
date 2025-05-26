@@ -48,27 +48,11 @@ impl ToolRegistry {
         Ok(())
     }
 
-    /// Register a boxed tool executor
-    pub async fn register_boxed(&self, executor: Box<dyn ToolExecutor>) -> Result<()> {
-        let tool = executor.tool();
-        let name = tool.name.clone();
-
-        let mut tools = self.tools.write().await;
-        tools.insert(name, Arc::from(executor));
-
-        Ok(())
-    }
-
     /// Register multiple tools at once
     pub async fn register_many(&self, executors: Vec<Box<dyn ToolExecutor>>) -> Result<()> {
-        let mut tools = self.tools.write().await;
-
         for executor in executors {
-            let tool = executor.tool();
-            let name = tool.name.clone();
-            tools.insert(name, Arc::from(executor));
+            self.register(executor).await?;
         }
-
         Ok(())
     }
 
