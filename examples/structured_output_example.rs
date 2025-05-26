@@ -9,7 +9,7 @@
 
 use cogni::prelude::*;
 use cogni::{
-    providers::{Anthropic, OpenAI},
+    providers::{Anthropic, Ollama, OpenAI},
     StructuredOutput,
 };
 use serde::{Deserialize, Serialize};
@@ -187,32 +187,74 @@ async fn main() -> Result<(), Box<dyn Error>> {
         println!();
     }
 
-    // Example 4: Using structured output with Anthropic (if supported)
+    // Example 4: Using structured output with Anthropic (via tool calling)
     if let Ok(api_key) = std::env::var("ANTHROPIC_API_KEY") {
         println!("=== Anthropic Structured Output Example ===\n");
 
         let provider = Anthropic::with_api_key(api_key);
         let client = Client::new(provider);
 
-        // Note: Anthropic's structured output support may vary
-        let response = client
+        // Anthropic uses tool calling for structured output
+        let weather: WeatherReport = client
             .request()
-            .system("You are a helpful assistant. Please respond with a JSON object containing weather information.")
-            .user("What's the weather like in New York? Respond in JSON format.")
-            .json_mode()
-            .model("claude-3-opus-20240229")
+            .system("You are a weather information assistant.")
+            .user("What's the weather like in New York? Please provide realistic data.")
+            .with_structured_output::<WeatherReport>()
+            .model("claude-3-haiku-20240307")
             .send()
-            .await?;
+            .await?
+            .parse_structured()?;
 
-        if let Ok(json) = response.parse_json() {
+        println!("Anthropic Weather Report:");
+        println!("  Location: {}", weather.location);
+        println!("  Temperature: {}°F", weather.temperature);
+        println!("  Conditions: {}", weather.conditions);
+        println!("  Humidity: {}%", weather.humidity);
+        println!("  Wind Speed: {} mph", weather.wind_speed);
+        println!();
+    }
+
+    // Example 5: Using structured output with Ollama
+    println!("=== Ollama Structured Output Example ===\n");
+
+    let provider = Ollama::local(); // Uses http://localhost:11434 by default
+    let client = Client::new(provider);
+
+    // Test if Ollama is running
+    match client
+        .request()
+        .model("llama3.2")
+        .system("You are a weather information assistant.")
+        .user("What's the weather like in Tokyo? Please provide realistic data.")
+        .with_structured_output::<WeatherReport>()
+        .send()
+        .await
+    {
+        Ok(response) => match response.parse_structured::<WeatherReport>() {
+            Ok(weather) => {
+                println!("Ollama Weather Report:");
+                println!("  Location: {}", weather.location);
+                println!("  Temperature: {}°F", weather.temperature);
+                println!("  Conditions: {}", weather.conditions);
+                println!("  Humidity: {}%", weather.humidity);
+                println!("  Wind Speed: {} mph", weather.wind_speed);
+            }
+            Err(e) => {
+                println!(
+                    "Failed to parse Ollama response as structured output: {}",
+                    e
+                );
+                println!("Raw response: {}", response.content);
+            }
+        },
+        Err(e) => {
             println!(
-                "Anthropic JSON Response: {}",
-                serde_json::to_string_pretty(&json)?
+                "Ollama request failed (is Ollama running on localhost:11434?): {}",
+                e
             );
-        } else {
-            println!("Response: {}", response.content);
         }
     }
+    println!();
 
     Ok(())
 }

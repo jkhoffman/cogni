@@ -128,13 +128,19 @@ impl<P: Provider> Client<P> {
         };
 
         let stream = self.provider.stream(request).await?;
-        Ok(Box::pin(stream.filter_map(|event| async move {
-            match event {
-                Ok(StreamEvent::Content(delta)) => Some(Ok(delta.text)),
-                Ok(_) => None,
-                Err(e) => Some(Err(e)),
-            }
-        })))
+
+        // Use take_while to stop the stream when Done is received
+        let content_stream = stream
+            .take_while(|event| futures::future::ready(!matches!(event, Ok(StreamEvent::Done))))
+            .filter_map(|event| async move {
+                match event {
+                    Ok(StreamEvent::Content(delta)) => Some(Ok(delta.text)),
+                    Ok(_) => None,
+                    Err(e) => Some(Err(e)),
+                }
+            });
+
+        Ok(Box::pin(content_stream))
     }
 
     /// Create a request builder for more complex scenarios

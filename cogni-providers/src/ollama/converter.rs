@@ -16,7 +16,7 @@ pub struct OllamaRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tools: Option<Vec<OllamaTool>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<String>,
+    pub format: Option<Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -179,8 +179,11 @@ pub fn to_ollama_request(request: &Request) -> OllamaRequest {
     };
 
     let format = request.response_format.as_ref().map(|format| match format {
-        ResponseFormat::JsonSchema { .. } => "json".to_string(),
-        ResponseFormat::JsonObject => "json".to_string(),
+        ResponseFormat::JsonSchema { schema, .. } => {
+            // Ollama supports passing the schema directly as a JSON value
+            schema.clone()
+        }
+        ResponseFormat::JsonObject => Value::String("json".to_string()),
     });
 
     OllamaRequest {

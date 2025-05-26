@@ -1,6 +1,6 @@
 //! Example demonstrating tool calling with multiple providers
 
-use cogni::providers::{Anthropic, OpenAI};
+use cogni::providers::{Anthropic, Ollama, OpenAI};
 use cogni::{Error, Function, Message, Provider, Request, Tool};
 use serde_json::json;
 use std::env;
@@ -159,6 +159,35 @@ async fn main() -> Result<(), Error> {
         .build();
     match stream_with_tools(&anthropic, anthropic_streaming_request).await {
         Ok(_) => println!(),
+        Err(e) => println!("Error: {}", e),
+    }
+
+    // Test with Ollama
+    let ollama = Ollama::local();
+
+    println!("\n\nOllama with tools:");
+    let ollama_request = Request::builder()
+        .message(Message::user(
+            "What is the weather like in Berlin? Use the weather tool to check.",
+        ))
+        .model("llama3.2")
+        .tools([weather_tool.clone()])
+        .build();
+
+    match ollama.request(ollama_request).await {
+        Ok(response) => {
+            if response.has_tool_calls() {
+                println!("Tool calls requested:");
+                for call in &response.tool_calls {
+                    println!("  - {} with args: {}", call.name, call.arguments);
+                }
+            } else {
+                println!("Response: {}", response.content);
+                if response.tool_calls.is_empty() {
+                    println!("(Note: Ollama model may not support tool calling)");
+                }
+            }
+        }
         Err(e) => println!("Error: {}", e),
     }
 

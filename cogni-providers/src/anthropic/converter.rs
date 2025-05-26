@@ -19,7 +19,7 @@ pub struct AnthropicRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub system: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub response_format: Option<Value>,
+    pub tool_choice: Option<ToolChoice>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -53,11 +53,23 @@ pub enum ContentBlock {
     },
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct AnthropicTool {
     pub name: String,
     pub description: String,
     pub input_schema: Value,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "type")]
+#[allow(dead_code)]
+pub enum ToolChoice {
+    #[serde(rename = "auto")]
+    Auto,
+    #[serde(rename = "any")]
+    Any,
+    #[serde(rename = "tool")]
+    Tool { name: String },
 }
 
 // Anthropic API response types
@@ -169,10 +181,48 @@ pub fn to_anthropic_request(request: &Request) -> AnthropicRequest {
         }
     }
 
-    let tools = if request.tools.is_empty() {
-        None
+    // Handle structured output via tool use workaround
+    let (tools, tool_choice) = if let Some(format) = &request.response_format {
+        // Create a tool for structured output
+        let structured_tool = match format {
+            ResponseFormat::JsonSchema { schema, .. } => AnthropicTool {
+                name: "structured_output".to_string(),
+                description: "Generate structured output according to the schema".to_string(),
+                input_schema: schema.clone(),
+            },
+            ResponseFormat::JsonObject => AnthropicTool {
+                name: "json_output".to_string(),
+                description: "Generate JSON output".to_string(),
+                input_schema: serde_json::json!({
+                    "type": "object",
+                    "additionalProperties": true
+                }),
+            },
+        };
+
+        // Combine with existing tools if any
+        let mut all_tools = request
+            .tools
+            .iter()
+            .map(|tool| AnthropicTool {
+                name: tool.name.clone(),
+                description: tool.description.clone(),
+                input_schema: tool.function.parameters.clone(),
+            })
+            .collect::<Vec<_>>();
+
+        let tool_name = structured_tool.name.clone();
+        all_tools.push(structured_tool);
+
+        // Force the use of our structured output tool
+        let tool_choice = Some(ToolChoice::Tool { name: tool_name });
+
+        (Some(all_tools), tool_choice)
+    } else if request.tools.is_empty() {
+        (None, None)
     } else {
-        Some(
+        // Regular tools without structured output
+        let tools = Some(
             request
                 .tools
                 .iter()
@@ -182,23 +232,9 @@ pub fn to_anthropic_request(request: &Request) -> AnthropicRequest {
                     input_schema: tool.function.parameters.clone(),
                 })
                 .collect(),
-        )
+        );
+        (tools, None)
     };
-
-    let response_format = request.response_format.as_ref().map(|format| match format {
-        ResponseFormat::JsonSchema { schema, strict } => {
-            serde_json::json!({
-                "type": "json_schema",
-                "json_schema": {
-                    "strict": strict,
-                    "schema": schema
-                }
-            })
-        }
-        ResponseFormat::JsonObject => {
-            serde_json::json!({ "type": "json_object" })
-        }
-    });
 
     AnthropicRequest {
         model: request.model.to_string(),
@@ -208,7 +244,7 @@ pub fn to_anthropic_request(request: &Request) -> AnthropicRequest {
         stream: None, // Will be set by the provider
         tools,
         system: system_message,
-        response_format,
+        tool_choice,
     }
 }
 
