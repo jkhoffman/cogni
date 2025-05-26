@@ -1,12 +1,14 @@
 //! High-level client implementation
 
-use crate::RequestBuilder;
+use crate::{RequestBuilder, StatefulClient};
 use cogni_core::{
     Content, Error, Message, Metadata, Model, Parameters, Provider, Request, Response, Role,
     StreamEvent,
 };
+use cogni_state::StateStore;
 use futures::{Stream, StreamExt};
 use std::pin::Pin;
+use std::sync::Arc;
 
 /// High-level client for LLM interactions
 ///
@@ -36,9 +38,9 @@ use std::pin::Pin;
 /// # }
 /// ```
 pub struct Client<P: Provider> {
-    provider: P,
-    default_model: Model,
-    default_parameters: Parameters,
+    pub(crate) provider: P,
+    pub(crate) default_model: Model,
+    pub(crate) default_parameters: Parameters,
 }
 
 impl<P: Provider> Client<P> {
@@ -61,6 +63,31 @@ impl<P: Provider> Client<P> {
     pub fn with_parameters(mut self, parameters: Parameters) -> Self {
         self.default_parameters = parameters;
         self
+    }
+
+    /// Create a stateful client with conversation persistence
+    /// 
+    /// # Examples
+    /// 
+    /// ```no_run
+    /// # use cogni_client::Client;
+    /// # use cogni_providers::OpenAI;
+    /// # use cogni_state::MemoryStore;
+    /// # use std::sync::Arc;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let provider = OpenAI::new("key");
+    /// let client = Client::new(provider);
+    /// let store = Arc::new(MemoryStore::new());
+    /// let mut stateful = client.with_state(store);
+    /// 
+    /// // Start a new conversation
+    /// stateful.new_conversation().await?;
+    /// let response = stateful.chat("Hello!").await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn with_state(self, store: Arc<dyn StateStore>) -> StatefulClient<P> {
+        StatefulClient::new(self, store)
     }
 
     /// Simple chat interface

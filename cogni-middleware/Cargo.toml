@@ -11,6 +11,7 @@ description = "Middleware system for the Cogni LLM library"
 
 [dependencies]
 cogni-core = { path = "../cogni-core" }
+cogni-state = { path = "../cogni-state" }
 async-trait = { workspace = true }
 futures = { workspace = true }
 futures-core = { workspace = true }
@@ -20,3 +21,4 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 sha2 = "0.10"
 indexmap = "2.0"
+uuid = { workspace = true }

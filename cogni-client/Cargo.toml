@@ -13,7 +13,10 @@ description = "High-level client API for the Cogni LLM library"
 cogni-core = { path = "../cogni-core" }
 cogni-providers = { path = "../cogni-providers" }
 cogni-middleware = { path = "../cogni-middleware" }
+cogni-state = { path = "../cogni-state" }
 async-trait = { workspace = true }
 futures = { workspace = true }
 tokio = { workspace = true }
 thiserror = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }

@@ -50,6 +50,9 @@ pub enum Error {
 
     /// Configuration errors
     Configuration(String),
+
+    /// Storage errors (for state management)
+    Storage(String),
 }
 
 impl fmt::Display for Error {
@@ -67,6 +70,7 @@ impl fmt::Display for Error {
             Error::Timeout => write!(f, "Operation timed out"),
             Error::Authentication(msg) => write!(f, "Authentication error: {}", msg),
             Error::Configuration(msg) => write!(f, "Configuration error: {}", msg),
+            Error::Storage(msg) => write!(f, "Storage error: {}", msg),
         }
     }
 }

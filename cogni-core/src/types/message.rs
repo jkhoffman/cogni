@@ -1,9 +1,10 @@
 //! Message types for conversations
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// The role of a message in a conversation
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum Role {
     /// System message (instructions)
@@ -17,7 +18,7 @@ pub enum Role {
 }
 
 /// Content types that can be included in a message
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Content {
     /// Plain text content
     Text(String),
@@ -30,7 +31,7 @@ pub enum Content {
 }
 
 /// Image content
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Image {
     /// Base64-encoded image data
     pub data: Option<String>,
@@ -41,7 +42,7 @@ pub struct Image {
 }
 
 /// Audio content
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Audio {
     /// Base64-encoded audio data
     pub data: String,
@@ -50,7 +51,7 @@ pub struct Audio {
 }
 
 /// Metadata associated with a message
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct Metadata {
     /// Arbitrary key-value pairs
     pub custom: HashMap<String, String>,
@@ -61,7 +62,7 @@ pub struct Metadata {
 }
 
 /// A message in a conversation
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Message {
     /// The role of the message sender
     pub role: Role,
@@ -94,6 +95,16 @@ impl Message {
     /// Create an assistant message
     pub fn assistant(text: impl Into<String>) -> Self {
         Self::text(Role::Assistant, text)
+    }
+}
+
+impl Content {
+    /// Get text content if this is a Text variant
+    pub fn as_text(&self) -> Option<&str> {
+        match self {
+            Content::Text(s) => Some(s),
+            _ => None,
+        }
     }
 }
 

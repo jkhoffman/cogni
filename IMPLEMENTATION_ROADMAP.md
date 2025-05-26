@@ -1,0 +1,393 @@
+# Cogni Agentic Features Implementation Roadmap
+
+## Overview
+
+This roadmap provides specific implementation steps for transforming Cogni into an agentic framework while maintaining its clean architecture and backwards compatibility.
+
+## Phase A: Conversation State Persistence (5-6 days)
+
+### A.1: Create cogni-state crate
+```toml
+# Cargo.toml addition
+[workspace.members]
+cogni-state = { path = "cogni-state" }
+
+# cogni-state/Cargo.toml
+[dependencies]
+cogni-core = { path = "../cogni-core" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+tokio = { version = "1.0", features = ["sync", "fs"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+```
+
+### A.2: Core State Types
+```rust
+// cogni-state/src/types.rs
+use cogni_core::{Message, Metadata};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use chrono::{DateTime, Utc};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConversationState {
+    pub id: Uuid,
+    pub messages: Vec<Message>,
+    pub metadata: StateMetadata,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct StateMetadata {
+    pub title: Option<String>,
+    pub tags: Vec<String>,
+    pub agent_config: Option<serde_json::Value>,
+    pub token_count: Option<u32>,
+    pub custom: std::collections::HashMap<String, String>,
+}
+```
+
+### A.3: StateStore Trait
+```rust
+// cogni-state/src/store.rs
+#[async_trait]
+pub trait StateStore: Send + Sync {
+    async fn save(&self, state: &ConversationState) -> Result<(), StateError>;
+    async fn load(&self, id: &Uuid) -> Result<ConversationState, StateError>;
+    async fn delete(&self, id: &Uuid) -> Result<(), StateError>;
+    async fn list(&self) -> Result<Vec<ConversationState>, StateError>;
+    async fn find_by_tags(&self, tags: &[String]) -> Result<Vec<ConversationState>, StateError>;
+}
+```
+
+### A.4: Integration with Client
+```rust
+// cogni-client/src/client.rs additions
+impl Client {
+    pub fn with_state(mut self, store: Arc<dyn StateStore>) -> StatefulClient {
+        StatefulClient::new(self, store)
+    }
+}
+
+// cogni-client/src/stateful.rs (new file)
+pub struct StatefulClient {
+    client: Client,
+    store: Arc<dyn StateStore>,
+    current_state: Option<ConversationState>,
+}
+
+impl StatefulClient {
+    pub async fn load_conversation(&mut self, id: Uuid) -> Result<(), Error> {
+        let state = self.store.load(&id).await?;
+        self.current_state = Some(state);
+        Ok(())
+    }
+
+    pub async fn chat(&mut self, message: &str) -> Result<Response, Error> {
+        // Add message to state
+        // Send request with full conversation history
+        // Update state with response
+        // Auto-save state
+    }
+}
+```
+
+### A.5: State Middleware
+```rust
+// cogni-middleware/src/state.rs
+pub struct StateLayer {
+    store: Arc<dyn StateStore>,
+    auto_save: bool,
+    save_interval: Duration,
+}
+
+impl<S> Layer<S> for StateLayer {
+    type Service = StateService<S>;
+    
+    fn layer(&self, inner: S) -> Self::Service {
+        StateService {
+            inner,
+            store: Arc::clone(&self.store),
+            state_cache: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+}
+```
+
+## Phase B: Context Management (4-5 days)
+
+### B.1: Create cogni-context crate
+```toml
+# cogni-context/Cargo.toml
+[dependencies]
+cogni-core = { path = "../cogni-core" }
+tiktoken-rs = "0.5"
+async-trait = "0.1"
+```
+
+### B.2: Token Counter Implementation
+```rust
+// cogni-context/src/counter.rs
+pub trait TokenCounter: Send + Sync {
+    fn count_text(&self, text: &str) -> usize;
+    fn count_message(&self, message: &Message) -> usize;
+    fn count_messages(&self, messages: &[Message]) -> usize;
+    fn model_context_window(&self) -> usize;
+}
+
+// cogni-context/src/tiktoken.rs
+pub struct TiktokenCounter {
+    encoder: Arc<CoreBPE>,
+    model_limits: HashMap<String, usize>,
+}
+
+impl TiktokenCounter {
+    pub fn for_model(model: &str) -> Result<Self, ContextError> {
+        let encoder = tiktoken_rs::get_bpe_from_model(model)?;
+        // Initialize with model limits
+    }
+}
+```
+
+### B.3: Context Manager
+```rust
+// cogni-context/src/manager.rs
+pub struct ContextManager {
+    counter: Box<dyn TokenCounter>,
+    max_tokens: usize,
+    reserve_output_tokens: usize,
+    pruning_strategy: Box<dyn PruningStrategy>,
+}
+
+impl ContextManager {
+    pub fn fit_messages(&self, messages: Vec<Message>) -> Result<Vec<Message>, ContextError> {
+        let total_tokens = self.counter.count_messages(&messages);
+        if total_tokens <= self.available_tokens() {
+            return Ok(messages);
+        }
+        
+        self.pruning_strategy.prune(messages, self.available_tokens(), &*self.counter)
+    }
+}
+```
+
+### B.4: Pruning Strategies
+```rust
+// cogni-context/src/strategies.rs
+pub trait PruningStrategy: Send + Sync {
+    fn prune(&self, messages: Vec<Message>, target_tokens: usize, counter: &dyn TokenCounter) -> Result<Vec<Message>, ContextError>;
+}
+
+pub struct SlidingWindowStrategy {
+    keep_system: bool,
+    keep_recent: usize,
+}
+
+pub struct ImportanceBasedStrategy {
+    importance_scorer: Box<dyn Fn(&Message) -> f32>,
+}
+
+pub struct SummarizationStrategy {
+    summarizer: Arc<dyn Provider>,
+    chunk_size: usize,
+}
+```
+
+### B.5: Client Integration
+```rust
+// cogni-client/src/builder.rs additions
+impl RequestBuilder {
+    pub fn with_context_manager(mut self, manager: ContextManager) -> Self {
+        self.context_manager = Some(manager);
+        self
+    }
+}
+
+// Automatically prune messages before sending
+```
+
+## Phase C: Structured Output (4-5 days)
+
+### C.1: Core Types
+```rust
+// cogni-core/src/types/structured.rs (new file)
+pub trait StructuredOutput: Serialize + DeserializeOwned {
+    fn schema() -> serde_json::Value;
+    fn examples() -> Vec<Self> { vec![] }
+}
+
+// Derive macro placeholder
+// #[derive(StructuredOutput)]
+// pub struct WeatherReport {
+//     temperature: f32,
+//     conditions: String,
+// }
+```
+
+### C.2: Request Extension
+```rust
+// cogni-core/src/types/request.rs additions
+pub struct Request {
+    // ... existing fields
+    pub response_format: Option<ResponseFormat>,
+}
+
+#[derive(Debug, Clone)]
+pub enum ResponseFormat {
+    JsonSchema {
+        schema: serde_json::Value,
+        strict: bool,
+    },
+    JsonObject,
+}
+```
+
+### C.3: Provider Updates
+```rust
+// cogni-providers/src/openai/converter.rs
+impl RequestConverter for OpenAIConverter {
+    fn convert_request(&self, request: Request) -> Result<OpenAIRequest, Error> {
+        let mut openai_req = // ... existing conversion
+        
+        if let Some(format) = request.response_format {
+            openai_req.response_format = Some(match format {
+                ResponseFormat::JsonSchema { schema, strict } => {
+                    json!({
+                        "type": "json_schema",
+                        "json_schema": {
+                            "name": "response",
+                            "strict": strict,
+                            "schema": schema
+                        }
+                    })
+                }
+                ResponseFormat::JsonObject => json!({ "type": "json_object" }),
+            });
+        }
+    }
+}
+```
+
+### C.4: Response Validation
+```rust
+// cogni-core/src/types/response.rs additions
+impl Response {
+    pub fn parse_structured<T: StructuredOutput>(&self) -> Result<T, Error> {
+        let json_str = self.content.as_text()
+            .ok_or(Error::InvalidFormat("Expected text content"))?;
+        
+        let value: T = serde_json::from_str(json_str)?;
+        
+        // Optional: validate against schema
+        if let Err(e) = validate_against_schema(&value, &T::schema()) {
+            return Err(Error::ValidationError(e));
+        }
+        
+        Ok(value)
+    }
+}
+```
+
+### C.5: Builder Support
+```rust
+// cogni-client/src/builder.rs additions
+impl RequestBuilder {
+    pub fn with_structured_output<T: StructuredOutput>() -> Self {
+        self.response_format(ResponseFormat::JsonSchema {
+            schema: T::schema(),
+            strict: true,
+        })
+    }
+}
+
+// High-level API
+impl Client {
+    pub async fn chat_structured<T: StructuredOutput>(&self, messages: Vec<Message>) -> Result<T, Error> {
+        let response = self.request()
+            .messages(messages)
+            .with_structured_output::<T>()
+            .send()
+            .await?;
+            
+        response.parse_structured()
+    }
+}
+```
+
+### C.6: Retry Middleware
+```rust
+// cogni-middleware/src/structured_retry.rs
+pub struct StructuredRetryLayer {
+    max_retries: usize,
+    include_error_context: bool,
+}
+
+// On validation failure, retry with error context
+```
+
+## Phase D: Integration & Polish (2-3 days)
+
+### D.1: Combined Features
+```rust
+// Example: Stateful, context-aware, structured agent
+let agent = Client::new(provider)
+    .with_state(FileStore::new("./conversations")?)
+    .with_context_manager(
+        ContextManager::new(TiktokenCounter::for_model("gpt-4")?)
+            .with_strategy(SummarizationStrategy::new())
+    );
+
+let analysis: DataAnalysis = agent
+    .load_conversation(conversation_id)?
+    .chat_structured("Analyze the sales data from our previous discussion")
+    .await?;
+```
+
+### D.2: Testing Strategy
+- Unit tests for each new component
+- Integration tests for feature combinations
+- Performance benchmarks for token counting and state operations
+- Example agents demonstrating real-world usage
+
+### D.3: Documentation
+- Architecture guide explaining the agentic features
+- Migration guide for existing users
+- Best practices for building agents
+- Performance tuning guide
+
+## Implementation Order
+
+1. **Week 1**: Phase A (State Persistence)
+   - Days 1-2: Core types and traits
+   - Days 3-4: Store implementations
+   - Days 5-6: Client integration and middleware
+
+2. **Week 2**: Phase B (Context Management) 
+   - Days 1-2: Token counting infrastructure
+   - Days 3-4: Context manager and strategies
+   - Day 5: Client integration
+
+3. **Week 3**: Phase C (Structured Output) and Phase D
+   - Days 1-2: Core types and provider updates
+   - Days 3-4: Validation and retry logic
+   - Days 5: Integration, examples, and polish
+
+## Breaking Changes
+
+While the goal is backwards compatibility, some changes may be necessary:
+
+1. **Request/Response Types**: Adding optional fields should be non-breaking
+2. **Client API**: New methods are additive, existing methods unchanged
+3. **Provider Trait**: May need default implementations for new methods
+4. **Error Enum**: Add new variants (non-exhaustive enum prevents breaking)
+
+## Success Criteria
+
+- [ ] All existing tests pass
+- [ ] New features have >90% test coverage
+- [ ] Performance benchmarks show acceptable overhead
+- [ ] Examples demonstrate practical agent implementations
+- [ ] Documentation is comprehensive and clear

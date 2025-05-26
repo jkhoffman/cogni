@@ -14,12 +14,14 @@ pub mod cache;
 pub mod logging;
 pub mod rate_limit;
 pub mod retry;
+pub mod state;
 
 // Re-export middleware implementations
 pub use cache::{CacheLayer, CacheService};
 pub use logging::{LogLevel, LoggingLayer, LoggingService};
 pub use rate_limit::{RateLimitLayer, RateLimitService};
 pub use retry::{RetryConfig, RetryLayer, RetryService};
+pub use state::{StateConfig, StateLayer, StateService};
 
 /// Type alias for boxed futures
 pub type BoxFuture<T> = Pin<Box<dyn Future<Output = T> + Send>>;
@@ -217,5 +219,36 @@ impl<L> ServiceBuilder<L> {
 impl Default for ServiceBuilder<Identity> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use super::*;
+    use cogni_core::ResponseMetadata;
+
+    /// A simple echo service for testing
+    #[derive(Clone)]
+    pub struct EchoService;
+
+    impl Service<Request> for EchoService {
+        type Response = Response;
+        type Error = Error;
+        type Future = BoxFuture<Result<Response, Error>>;
+
+        fn call(&mut self, request: Request) -> Self::Future {
+            Box::pin(async move {
+                let content = request.messages
+                    .last()
+                    .and_then(|m| m.content.as_text())
+                    .unwrap_or("No message");
+                
+                Ok(Response {
+                    content: format!("Echo: {}", content),
+                    tool_calls: vec![],
+                    metadata: ResponseMetadata::default(),
+                })
+            })
+        }
     }
 }
