@@ -24,7 +24,7 @@
 //! #     #[cfg(feature = "providers")]
 //! #     {
 //!     // Create a provider
-//!     let provider = OpenAI::with_api_key("your-api-key");
+//!     let provider = OpenAI::with_api_key("your-api-key")?;
 //!
 //!     // Create a request
 //!     let request = Request::builder()

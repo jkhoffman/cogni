@@ -25,7 +25,7 @@ use std::sync::Arc;
 /// use futures::StreamExt;
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// let provider = OpenAI::with_api_key("your-api-key".to_string());
+/// let provider = OpenAI::with_api_key("your-api-key".to_string())?;
 /// let client = Client::new(provider);
 ///
 /// // Simple chat
@@ -78,7 +78,7 @@ impl<P: Provider> Client<P> {
     /// # use cogni_state::MemoryStore;
     /// # use std::sync::Arc;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let provider = OpenAI::with_api_key("key".to_string());
+    /// # let provider = OpenAI::with_api_key("key".to_string())?;
     /// let client = Client::new(provider);
     /// let store = Arc::new(MemoryStore::new());
     /// let mut stateful = client.with_state(store);
@@ -152,7 +152,7 @@ impl<P: Provider> Client<P> {
     /// # use cogni_providers::OpenAI;
     /// # use cogni_core::Role;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let provider = OpenAI::with_api_key("key".to_string());
+    /// # let provider = OpenAI::with_api_key("key".to_string())?;
     /// # let client = Client::new(provider);
     /// let response = client
     ///     .request()
@@ -206,7 +206,7 @@ impl<P: Provider> Client<P> {
     /// # }
     /// #
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let provider = OpenAI::with_api_key("key".to_string());
+    /// # let provider = OpenAI::with_api_key("key".to_string())?;
     /// # let client = Client::new(provider);
     /// let weather: WeatherReport = client
     ///     .chat_structured("What's the weather like in San Francisco?")
@@ -381,7 +381,7 @@ impl<P: Provider> ConnectedRequestBuilder<'_, P> {
     /// # use cogni_context::{ContextManager, TiktokenCounter};
     /// # use std::sync::Arc;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let provider = OpenAI::with_api_key("key".to_string());
+    /// # let provider = OpenAI::with_api_key("key".to_string())?;
     /// # let client = Client::new(provider);
     /// let counter = Arc::new(TiktokenCounter::for_model("gpt-4")?);
     /// let context_manager = Arc::new(ContextManager::new(counter));

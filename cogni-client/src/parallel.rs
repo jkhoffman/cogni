@@ -21,8 +21,8 @@ use std::sync::Arc;
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// // Note: All providers must be the same type
 /// let providers = vec![
-///     OpenAI::with_api_key("key1".to_string()),
-///     OpenAI::with_api_key("key2".to_string()),
+///     OpenAI::with_api_key("key1".to_string())?,
+///     OpenAI::with_api_key("key2".to_string())?,
 /// ];
 ///
 /// let request = Request::builder()
@@ -80,8 +80,8 @@ where
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// // Note: All providers must be the same type
 /// let providers = vec![
-///     OpenAI::with_api_key("key1".to_string()),
-///     OpenAI::with_api_key("key2".to_string()),
+///     OpenAI::with_api_key("key1".to_string())?,
+///     OpenAI::with_api_key("key2".to_string())?,
 /// ];
 ///
 /// let results = parallel_chat(providers, "What is the capital of France?").await;
@@ -137,9 +137,9 @@ where
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// // Note: All providers must be the same type for ParallelClient
 /// let providers = vec![
-///     OpenAI::with_api_key("key1".to_string()),
-///     OpenAI::with_api_key("key2".to_string()),
-///     OpenAI::with_api_key("key3".to_string()),
+///     OpenAI::with_api_key("key1".to_string())?,
+///     OpenAI::with_api_key("key2".to_string())?,
+///     OpenAI::with_api_key("key3".to_string())?,
 /// ];
 ///
 /// let client = ParallelClient::new(providers)
