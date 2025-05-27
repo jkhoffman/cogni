@@ -9,10 +9,10 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 pub struct OllamaStream {
-    inner: Pin<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Send>>,
-    buffer: String,
-    model: Option<String>,
-    current_tool_calls: Vec<(String, String, String)>, // (id, name, arguments)
+    pub(super) inner: Pin<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Send>>,
+    pub(super) buffer: String,
+    pub(super) model: Option<String>,
+    pub(super) current_tool_calls: Vec<(String, String, String)>, // (id, name, arguments)
 }
 
 impl OllamaStream {
@@ -25,7 +25,7 @@ impl OllamaStream {
         }
     }
 
-    fn parse_line(&mut self, line: &str) -> Result<Option<StreamEvent>, Error> {
+    pub(super) fn parse_line(&mut self, line: &str) -> Result<Option<StreamEvent>, Error> {
         if line.is_empty() {
             return Ok(None);
         }

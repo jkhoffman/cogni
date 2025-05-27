@@ -1,11 +1,11 @@
 [package]
 name = "cogni-context"
-version = "0.1.0"
-edition = "2021"
-authors = ["Cogni Contributors"]
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
 description = "Context management and token counting for Cogni"
-repository = "https://github.com/yourusername/cogni"
-license = "MIT OR Apache-2.0"
+repository.workspace = true
+license.workspace = true
 keywords = ["llm", "context", "tokens", "ai"]
 categories = ["api-bindings", "asynchronous"]
 
